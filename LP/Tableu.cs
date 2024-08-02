@@ -157,7 +157,7 @@ namespace LPR381.LP
 
             // Row Names
             var rowNamesList = new List<string>();
-            rowNamesList.Add($"{objectiveLine.Last()} z");
+            rowNamesList.Add($"{objectiveLine.First()} z");
             for (int i = 0; i < constraintLines.Length; i++)
                 rowNamesList.Add($"c{1 + i}");
             var rowNames = rowNamesList.ToArray();
@@ -174,9 +174,9 @@ namespace LPR381.LP
                 var ineq = matches[1].Value;
                 var rhs = matches[2].Value;
                 line[line.Length - 1] = rhs;
-                if (ineq == "=" || ineq == "<=") 
+                if (ineq == "=" || ineq == "<=")
                     columnNamesList.Add($"s{1 + i}"); // add a slack varaible
-                if (ineq == "=" || ineq == ">=") 
+                if (ineq == "=" || ineq == ">=")
                     columnNamesList.Add($"e{1 + i}"); // add an excess variable
             }
             var columnNames = columnNamesList.ToArray();
@@ -211,7 +211,7 @@ namespace LPR381.LP
                 values[i, j] = s ? 1 : e ? -1 : 0;
             }    
 
-                return new Tableu()
+            return new Tableu()
             {
                 RowNames = rowNames,
                 ColumnNames = columnNames,
