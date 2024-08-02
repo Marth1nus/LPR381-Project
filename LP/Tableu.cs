@@ -175,6 +175,10 @@ namespace LPR381.LP
                 var rhs = matches[2].Value;
                 line[line.Length - 1] = rhs;
                 if (ineq == "=" || ineq == "<=")
+                    columnNamesList.Add($"s{1 + i}");
+                if (ineq == "=" || ineq == ">=")
+                    columnNamesList.Add($"e{1 + i}");
+                if (ineq == "=" || ineq == "<=") 
                     columnNamesList.Add($"s{1 + i}"); // add a slack varaible
                 if (ineq == "=" || ineq == ">=")
                     columnNamesList.Add($"e{1 + i}"); // add an excess variable
