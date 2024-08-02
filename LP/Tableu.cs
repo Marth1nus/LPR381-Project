@@ -13,12 +13,24 @@ namespace LPR381.LP
     public struct Tableu
     {
         public string[] RowNames { get; set; } // example [max z, c1, c2]
-        public string[] ColumnNames { get; set; } // example [x1, x2, s1, s2] (rhs is excluded)
+        public string[] ColumnNames { get; set; } // example [x1, x2, s1, s2, rhs]
         public string[] ColumnRestrictions { get; set; } // one of [+, -, urs, int, bin]
         public double[,] Values { get; set; } // contains Width, Height, and the values in the tableu.
         public int TableIteration { get; set; } // Just keeps track of how many pivots have been done.
         public uint Height { get { return (uint)Values.GetLength(0); } }
         public uint Width { get { return (uint)Values.GetLength(1); } }
+
+        public void ValidateLengths()
+        {
+            if (!(Height >= 2 && Width >= 3))
+                throw new Exception("Table must be at least 2x3");
+            if (!(RowNames.Length == Height))
+                throw new Exception("Row Length inconsistent");
+            if (!(ColumnNames.Length == Width))
+                throw new Exception("Column Length inconsistent");
+            if (!(ColumnRestrictions.Length <= Width))
+                throw new Exception("Column Restriction Length too long");
+        }
 
         public string Pivot(uint rowI, uint colI)
         {
@@ -98,9 +110,9 @@ namespace LPR381.LP
             StringBuilder sb = new StringBuilder();
             /* | T1     |     x1 |     s1 |    rhs | */
             sb.Append($"| T{TableIteration,1 - colWidth} ");
-            for (uint j = 0; j < Width - 1; j++)
+            for (uint j = 0; j < Width; j++)
                 sb.Append($"| {ColumnNames[j], colWidth} ");
-            sb.AppendLine($"| {"rhs", colWidth}");
+            sb.AppendLine($"|");
             /* | -----: | -----: | -----: | -----: | */
             for (uint j = 0; j < Width + 1; j++)
                 sb.Append($"| {"-----:", colWidth} ");
@@ -115,10 +127,10 @@ namespace LPR381.LP
                 sb.AppendLine($"|");
             }
             /* |   Sign |    int |      + |        | */
-            sb.Append($"| {"Sign", colWidth} ");
-            for (uint j = 0; j < Width - 1; j++)
-                sb.Append($"| {ColumnRestrictions[j], colWidth} ");
-            sb.AppendLine($"| {"", colWidth} |");
+            sb.Append($"| {"", colWidth} ");
+            for (uint j = 0; j < Width; j++)
+                sb.Append($"| {(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : ""), colWidth} ");
+            sb.AppendLine($"|");
             return sb.ToString();
         }
 
@@ -156,8 +168,7 @@ namespace LPR381.LP
                 throw new Exception("Restrictions Row contains unknown symbol");
 
             // Row Names
-            var rowNamesList = new List<string>();
-            rowNamesList.Add($"{objectiveLine.First()} z");
+            var rowNamesList = new List<string> { $"{objectiveLine.First()} z" };
             for (int i = 0; i < constraintLines.Length; i++)
                 rowNamesList.Add($"c{1 + i}");
             var rowNames = rowNamesList.ToArray();
@@ -174,15 +185,12 @@ namespace LPR381.LP
                 var ineq = matches[1].Value;
                 var rhs = matches[2].Value;
                 line[line.Length - 1] = rhs;
-                if (ineq == "=" || ineq == "<=")
-                    columnNamesList.Add($"s{1 + i}");
-                if (ineq == "=" || ineq == ">=")
-                    columnNamesList.Add($"e{1 + i}");
                 if (ineq == "=" || ineq == "<=") 
                     columnNamesList.Add($"s{1 + i}"); // add a slack varaible
                 if (ineq == "=" || ineq == ">=")
                     columnNamesList.Add($"e{1 + i}"); // add an excess variable
             }
+            columnNamesList.Add($"rhs");
             var columnNames = columnNamesList.ToArray();
             columnNamesList = null;
 
@@ -191,7 +199,7 @@ namespace LPR381.LP
 
             // Values
             var height = 1 + constraintLines.Length;
-            var width = columnNames.Length + 1;
+            var width = columnNames.Length;
             var values = new double[height, width];
             for (int i = 1; i < height; i++)
                 for (int j = 0; j < width; j++)
@@ -205,7 +213,7 @@ namespace LPR381.LP
                         : j == width - 1 // RHS
                         ? double.Parse(constraintLines[i - 1].Last())
                         : 0;
-            for (int j = 1; j < height; j++)
+            for (int j = 1; j < width; j++)
             {
                 var s = columnNames[j].StartsWith("s");
                 var e = columnNames[j].StartsWith("e");
@@ -215,7 +223,8 @@ namespace LPR381.LP
                 values[i, j] = s ? 1 : e ? -1 : 0;
             }    
 
-            return new Tableu()
+            // return
+            return new Tableu
             {
                 RowNames = rowNames,
                 ColumnNames = columnNames,
