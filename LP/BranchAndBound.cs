@@ -11,7 +11,7 @@ namespace LPR381.LP.Algorithm
         public static List<String> Solve(ref Tableu tableu)
         {
             var steps = new List<String>();
-            return (steps);
+            return steps;
         }
     }
 }

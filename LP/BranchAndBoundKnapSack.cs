@@ -8,10 +8,10 @@ namespace LPR381.LP.Algorithm
 {
     public static class BranchAndBoundKnapSack
     {
-        public static String Solve(ref Tableu tableu)
+        public static List<String> Solve(ref Tableu tableu)
         {
-            StringBuilder steps = new StringBuilder();
-            return steps.ToString();
+            var steps = new List<String>();
+            return steps;
         }
     }
 }
