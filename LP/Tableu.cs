@@ -17,8 +17,8 @@ namespace LPR381.LP
         public string[] ColumnRestrictions { get; set; } // one of [+, -, urs, int, bin]
         public double[,] Values { get; set; } // contains Width, Height, and the values in the tableu.
         public int TableIteration { get; set; } // Just keeps track of how many pivots have been done.
-        public uint Height { get { return (uint)Values.GetLength(0); } }
-        public uint Width { get { return (uint)Values.GetLength(1); } }
+        public int Height { get { return Values.GetLength(0); } }
+        public int Width { get { return Values.GetLength(1); } }
 
         public void ValidateLengths()
         {
@@ -32,25 +32,25 @@ namespace LPR381.LP
                 throw new Exception("Column Restriction Length too long");
         }
 
-        public string Pivot(uint rowI, uint colI)
+        public string Pivot(int rowI, int colI)
         {
             double pivot = Values[rowI, colI];
-            for (uint j = 0; j < Values.GetLength(1); j++)
+            for (int j = 0; j < Values.GetLength(1); j++)
             {
                 Values[rowI, j] /= pivot;
             }
-            for (uint i = 0; i < Values.GetLength(0); i++)
+            for (int i = 0; i < Values.GetLength(0); i++)
             {
                 if (i == rowI)
                     continue;
                 double factor = Values[i, colI];
-                for (uint j = 0; j < Values.GetLength(1); j++)
+                for (int j = 0; j < Values.GetLength(1); j++)
                 {
                     Values[i, j] -= factor * Values[rowI, j];
                 }
             }
             TableIteration++;
-            return $"Pivot on {RowNames[rowI]}, {ColumnNames[colI]}";
+            return $"Pivot on {RowNames[rowI]}, {ColumnNames[colI]}\n\n{this}\n\n";
         }
 
         public void AddRow(double[] values, string name)
@@ -59,22 +59,22 @@ namespace LPR381.LP
                 throw new ArgumentException($"New row must have {Values.GetLength(0)} values");
             var oldValues = Values;
             Values = new double[oldValues.GetLength(0) + 1, oldValues.GetLength(1)];
-            for (uint i = 0; i < oldValues.GetLength(0); i++)
-                for (uint j = 0; j < oldValues.GetLength(1); j++)
+            for (int i = 0; i < oldValues.GetLength(0); i++)
+                for (int j = 0; j < oldValues.GetLength(1); j++)
                     Values[i, j] = oldValues[i, j];
-            for (uint j = 0; j < values.Length; j++)
+            for (int j = 0; j < values.Length; j++)
                 Values[Values.GetLength(0) - 1, j] = values[j];
             RowNames.Append(name);
         }
 
-        public void RemoveRow(uint rowI)
+        public void RemoveRow(int rowI)
         {
             if (rowI >= Values.GetLength(0))
                 throw new ArgumentException($"Out of range rowI:{rowI} parameter");
             var oldValues = Values;
             Values = new double[oldValues.GetLength(0) - 1, oldValues.GetLength(1)];
-            for (uint i = 0; i < oldValues.GetLength(0); i++)
-                for (uint j = 0; j < oldValues.GetLength(1); j++)
+            for (int i = 0; i < oldValues.GetLength(0); i++)
+                for (int j = 0; j < oldValues.GetLength(1); j++)
                     Values[i - (i > rowI ? 1 : 0), j] = oldValues[i, j];
         }
 
@@ -84,23 +84,23 @@ namespace LPR381.LP
                 throw new ArgumentException($"New row must have {Values.GetLength(0)} values");
             var oldValues = Values;
             Values = new double[oldValues.GetLength(0), oldValues.GetLength(1) + 1];
-            for (uint i = 0; i < oldValues.GetLength(0); i++)
-                for (uint j = 0; j < oldValues.GetLength(1); j++)
+            for (int i = 0; i < oldValues.GetLength(0); i++)
+                for (int j = 0; j < oldValues.GetLength(1); j++)
                     Values[i, j] = oldValues[i, j];
-            for (uint i = 0; i < values.Length; i++)
+            for (int i = 0; i < values.Length; i++)
                 Values[i, Values.GetLength(1) - 1] = values[i];
             ColumnNames.Append(name);
             ColumnRestrictions.Append(restriction);
         }
 
-        public void RemoveColumn(uint colI)
+        public void RemoveColumn(int colI)
         {
             if (colI >= Values.GetLength(1))
                 throw new ArgumentException($"Out of range colI:{colI} parameter");
             var oldValues = Values;
             Values = new double[oldValues.GetLength(0), oldValues.GetLength(1) - 1];
-            for (uint i = 0; i < oldValues.GetLength(0); i++)
-                for (uint j = 0; j < oldValues.GetLength(1); j++)
+            for (int i = 0; i < oldValues.GetLength(0); i++)
+                for (int j = 0; j < oldValues.GetLength(1); j++)
                     Values[i, j - (j > colI ? 1 : 0)] = oldValues[i, j];
         }
 
@@ -110,25 +110,25 @@ namespace LPR381.LP
             StringBuilder sb = new StringBuilder();
             /* | T1     |     x1 |     s1 |    rhs | */
             sb.Append($"| T{TableIteration,1 - colWidth} ");
-            for (uint j = 0; j < Width; j++)
+            for (int j = 0; j < Width; j++)
                 sb.Append($"| {ColumnNames[j], colWidth} ");
             sb.AppendLine($"|");
             /* | -----: | -----: | -----: | -----: | */
-            for (uint j = 0; j < Width + 1; j++)
+            for (int j = 0; j < Width + 1; j++)
                 sb.Append($"| {"-----:", colWidth} ");
             sb.AppendLine($"|");
             /* |  max Z | 00.000 | 00.000 | 00.000 | */
             /* |     C1 | 00.000 | 00.000 | 00.000 | */
-            for (uint i = 0; i < Height; i++)
+            for (int i = 0; i < Height; i++)
             {
                 sb.Append($"| {RowNames[i], colWidth} ");
-                for (uint j = 0; j < Width; j++)
+                for (int j = 0; j < Width; j++)
                     sb.Append($"| {Values[i, j], colWidth:F3} ");
                 sb.AppendLine($"|");
             }
             /* |   Sign |    int |      + |        | */
             sb.Append($"| {"", colWidth} ");
-            for (uint j = 0; j < Width; j++)
+            for (int j = 0; j < Width; j++)
                 sb.Append($"| {(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : ""), colWidth} ");
             sb.AppendLine($"|");
             return sb.ToString();
