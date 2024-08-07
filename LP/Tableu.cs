@@ -23,6 +23,9 @@ namespace LPR381.LP
         public int Width { get { return Values.GetLength(1); } }
         public double this[int i, int j] { get { return Values[i, j]; } set { Values[i, j] = value; } }
 
+        // Assume Values[, Width-1] is the RHS column
+        // Assume Values[0,] is the Objective row
+
         public int[] BasicVariableIndices() => ColumnNames.Select((_, j) => j).Where(IsBasicVariable).ToArray();
 
         public bool IsBasicVariable(int j) => BasicVariableValue(j) != null;
