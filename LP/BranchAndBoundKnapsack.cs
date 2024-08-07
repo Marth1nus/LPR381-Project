@@ -6,28 +6,17 @@ namespace LPR381.LP
 {
     public static class BranchAndBoundKnapsack
     {
-        public static List<string> Solve(ref LP.Tableu tableu)
-        {
-            // TODO Impliment conversion OR use LP.Tablue in main Solve overload
-            throw new Exception("Incomplete implimentation"); // TODO Remove
-            var tableuBranchAndBoundKnapsack = new LP.Tableu();
-            // TODO Convert LP.Table to BranchAndBoundKnapsack.Tableu
-            var steps = Solve(ref tableuBranchAndBoundKnapsack);
-            // TODO Convert modified BranchAndBoundKnapsack.Tableu back to LP.Table
-            return steps;
-        }
-
         public static List<string> Solve(ref Tableu tableu)
         {
             var steps = new List<string>();
 
             // Convert Tableu to List of Items and capacity
             var items = new List<Item>();
-            for (int i = 0; i < tableu.ObjectiveFunction.Count; i++)
+            for (int j = 0; j < tableu.Height; j++)
             {
-                items.Add(new Item(tableu.ObjectiveFunction[i], tableu.Constraints[0].Coefficients[i]));
+                items.Add(new Item(tableu[0, j], tableu[1, j]));
             }
-            int knapsackCapacity = tableu.Constraints[0].RightHandSide;
+            double knapsackCapacity = tableu[0, tableu.Width - 1];
 
             // Sort items by value/weight ratio
             items = items.OrderByDescending(item => (float)item.Value / item.Weight).ToList();
@@ -42,7 +31,7 @@ namespace LPR381.LP
             priorityQueue.Add(currentNode);
             steps.Add($"Initial node added with Bound: {currentNode.Bound}");
 
-            int maxProfit = 0;
+            double maxProfit = 0;
 
             while (priorityQueue.Any())
             {
@@ -95,13 +84,13 @@ namespace LPR381.LP
             return steps;
         }
 
-        private static float CalculateBound(Node node, int knapsackCapacity, List<Item> items)
+        private static double CalculateBound(Node node, double knapsackCapacity, List<Item> items)
         {
             if (node.Weight >= knapsackCapacity)
                 return 0;
 
-            float upperBound = node.Profit;
-            int totalWeight = node.Weight;
+            double upperBound = node.Profit;
+            double totalWeight = node.Weight;
             int index = node.Level + 1;
 
             while (index < items.Count && totalWeight + items[index].Weight <= knapsackCapacity)
@@ -116,12 +105,13 @@ namespace LPR381.LP
 
             return upperBound;
         }
-        public class Item
-        {
-            public int Value { get; set; }
-            public int Weight { get; set; }
 
-            public Item(int value, int weight)
+        public struct Item
+        {
+            public double Value { get; set; }
+            public double Weight { get; set; }
+
+            public Item(double value, double weight)
             {
                 Value = value;
                 Weight = weight;
@@ -131,28 +121,16 @@ namespace LPR381.LP
         public class Node
         {
             public int Level { get; set; }
-            public int Profit { get; set; }
-            public int Weight { get; set; }
-            public float Bound { get; set; }
+            public double Profit { get; set; }
+            public double Weight { get; set; }
+            public double Bound { get; set; }
 
-            public Node(int level, int profit, int weight)
+            public Node(int level, double profit, double weight)
             {
                 Level = level;
                 Profit = profit;
                 Weight = weight;
             }
-        }
-
-        public class Tableu
-        {
-            public List<int> ObjectiveFunction { get; set; }
-            public List<Constraint> Constraints { get; set; }
-        }
-
-        public class Constraint
-        {
-            public List<int> Coefficients { get; set; }
-            public int RightHandSide { get; set; }
         }
     }
 }
