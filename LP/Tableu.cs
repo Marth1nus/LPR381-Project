@@ -10,6 +10,8 @@ using System.Windows.Forms;
 
 namespace LPR381.LP
 {
+    public delegate List<string> Solver(ref Tableu tableu);
+
     public struct Tableu
     {
         public string[] RowNames { get; set; } // example [max z, c1, c2]
@@ -19,6 +21,23 @@ namespace LPR381.LP
         public int TableIteration { get; set; } // Just keeps track of how many pivots have been done.
         public int Height { get { return Values.GetLength(0); } }
         public int Width { get { return Values.GetLength(1); } }
+        public double this[int i, int j] { get { return Values[i, j]; } set { Values[i, j] = value; } }
+
+        public int[] BasicVariableIndices() => ColumnNames.Select((_, j) => j).Where(IsBasicVariable).ToArray();
+
+        public bool IsBasicVariable(int j) => BasicVariableValue(j) != null;
+        public double? BasicVariableValue(int j) => BasicVariableValue(j, out int _);
+        public double? BasicVariableValue(int j, out int oneI)
+        {
+            int zeros = 0, ones = 0; oneI = 0;
+            for (int i = 0; i < Height; i++)
+                if (Values[i, j] == 0) zeros += 1;
+                else if (Values[i, j] == 1) { ones += 1; oneI = i; }
+                else return null;
+            if (!(zeros == Height - 1 && ones == 1))
+                return null;
+            return Values[oneI, Width - 1];
+        }
 
         public void ValidateLengths()
         {
@@ -50,58 +69,74 @@ namespace LPR381.LP
                 }
             }
             TableIteration++;
-            return $"Pivot on {RowNames[rowI]}, {ColumnNames[colI]}\n\n{this}\n\n";
+            return $"Pivot on {RowNames[rowI]}, {ColumnNames[colI]}\n\n{this}";
         }
 
-        public void AddRow(double[] values, string name)
+        public void AddRow(double[] newRow, string name = null)
         {
-            if (values.Length != Values.GetLength(0))
+            if (newRow.Length != Values.GetLength(0))
                 throw new ArgumentException($"New row must have {Values.GetLength(0)} values");
             var oldValues = Values;
-            Values = new double[oldValues.GetLength(0) + 1, oldValues.GetLength(1)];
-            for (int i = 0; i < oldValues.GetLength(0); i++)
-                for (int j = 0; j < oldValues.GetLength(1); j++)
+            Values = new double[Height + 1, Width];
+            int i = 0;
+            for (; i < Height - 1; i++)
+                for (int j = 0; i < Width; j++)
                     Values[i, j] = oldValues[i, j];
-            for (int j = 0; j < values.Length; j++)
-                Values[Values.GetLength(0) - 1, j] = values[j];
-            RowNames.Append(name);
+            for (; i < Height; i++)
+                for (int j = 0; i < Width; j++)
+                    Values[i, j] = newRow[j];
+            RowNames.Append(name ?? $"c{RowNames.Length}");
         }
 
         public void RemoveRow(int rowI)
         {
-            if (rowI >= Values.GetLength(0))
+            if (rowI < 0 || Height <= rowI)
                 throw new ArgumentException($"Out of range rowI:{rowI} parameter");
             var oldValues = Values;
-            Values = new double[oldValues.GetLength(0) - 1, oldValues.GetLength(1)];
-            for (int i = 0; i < oldValues.GetLength(0); i++)
-                for (int j = 0; j < oldValues.GetLength(1); j++)
-                    Values[i - (i > rowI ? 1 : 0), j] = oldValues[i, j];
+            Values = new double[Height - 1, Width];
+            int i = 0;
+            for (; i < rowI; i++)
+                for (int j = 0; j < Width; j++)
+                    Values[i, j] = oldValues[i, j];
+            for (; i < Height; i++)
+                for (int j = 0; j < Width; j++)
+                    Values[i, j] = oldValues[i + 1, j];
         }
 
-        public void AddColumn(double[] values, string name, string restriction = "urs")
+        public void AddColumn(double[] newColumn, string name = null, string restriction = "urs")
         {
-            if (values.Length != Values.GetLength(0))
-                throw new ArgumentException($"New row must have {Values.GetLength(0)} values");
+            if (newColumn.Length != Height)
+                throw new ArgumentException($"New row must have {Height} values");
             var oldValues = Values;
-            Values = new double[oldValues.GetLength(0), oldValues.GetLength(1) + 1];
-            for (int i = 0; i < oldValues.GetLength(0); i++)
-                for (int j = 0; j < oldValues.GetLength(1); j++)
+            Values = new double[Height, Width + 1];
+            int j = 0;
+            for (; j < Width - 2; j++)
+                for (int i = 0; i < Height; i++)
                     Values[i, j] = oldValues[i, j];
-            for (int i = 0; i < values.Length; i++)
-                Values[i, Values.GetLength(1) - 1] = values[i];
-            ColumnNames.Append(name);
+            for (; j < Width - 1; j++)
+                for (int i = 0; i < Height; i++)
+                    Values[i, j] = newColumn[i];
+            for (; j < Width; j++)
+                for (int i = 0; i < Height; i++)
+                    Values[i, j] = oldValues[i, j];
+            ColumnNames.Append(name ?? $"s{Height}");
             ColumnRestrictions.Append(restriction);
         }
 
         public void RemoveColumn(int colI)
         {
-            if (colI >= Values.GetLength(1))
+            if (colI < 0 || Width <= colI)
                 throw new ArgumentException($"Out of range colI:{colI} parameter");
             var oldValues = Values;
-            Values = new double[oldValues.GetLength(0), oldValues.GetLength(1) - 1];
-            for (int i = 0; i < oldValues.GetLength(0); i++)
-                for (int j = 0; j < oldValues.GetLength(1); j++)
-                    Values[i, j - (j > colI ? 1 : 0)] = oldValues[i, j];
+            Values = new double[Height, Width - 1];
+            for (int i = 0; i < Height; i++)
+            {
+                int j = 0;
+                for (; j < colI; j++)
+                    Values[i, j] = oldValues[i, j];
+                for (; j < Width; j++)
+                    Values[i, j] = oldValues[i, j + 1];
+            }
         }
 
         public override string ToString()
