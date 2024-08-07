@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace LPR381.LP.Algorithm
+namespace LPR381.LP
 {
     public static class DualSimplex
     {

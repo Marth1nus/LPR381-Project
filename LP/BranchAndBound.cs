@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LPR381.LP.Algorithm
+namespace LPR381.LP
 {
     public static class BranchAndBound
     {

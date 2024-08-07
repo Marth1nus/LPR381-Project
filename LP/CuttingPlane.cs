@@ -5,7 +5,7 @@ using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LPR381.LP.Algorithm
+namespace LPR381.LP
 {
     public static class CuttingPlane
     {

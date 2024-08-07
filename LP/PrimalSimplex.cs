@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace LPR381.LP.Algorithm
+namespace LPR381.LP
 {
     public static class PrimalSimplex
     {
@@ -53,8 +53,7 @@ namespace LPR381.LP.Algorithm
                 }
 
                 // Perform the pivot operation
-                steps.Add(tableu.Pivot((uint)pivotRow, (uint)pivotColumn));
-                steps.Add(tableu.ToString());
+                steps.Add(tableu.Pivot(pivotRow, pivotColumn));
             }
         }
 

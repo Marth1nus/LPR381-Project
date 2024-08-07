@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LPR381.LP.Algorithm
+namespace LPR381.LP
 {
     public static class BranchAndBoundKnapsack
     {
