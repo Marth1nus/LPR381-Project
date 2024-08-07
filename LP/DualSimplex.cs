@@ -12,6 +12,7 @@ namespace LPR381.LP.Algorithm
         public static List<String> Solve(ref Tableu tableu)
         {
             var steps = new List<String>();
+            bool first = true;
             while (true)
             {
                 // get pivot row IndexMin(rhs)
@@ -22,7 +23,17 @@ namespace LPR381.LP.Algorithm
 
                 // break if all rhs are positive
                 if (tableu.Values[pivotI, tableu.Width - 1] >= 0)
+                {
+                    if (!first)
+                        steps.Add("End Dual Simplex");
                     break;
+                }
+
+                if (first)
+                {
+                    steps.Add("Start Dual Simplex");
+                    first = false;
+                }
 
                 // get pivot column
                 int pivotJ = -1;
