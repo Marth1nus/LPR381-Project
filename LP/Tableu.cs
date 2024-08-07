@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -25,6 +26,17 @@ namespace LPR381.LP
 
         // Assume Values[, Width-1] is the RHS column
         // Assume Values[0,] is the Objective row
+
+        public Tableu(int height = 2, int width = 3)
+        {
+            RowNames = Enumerable.Range(0, height).Select(i => $"c{i}").ToArray();
+            RowNames[0] = "max z";
+            ColumnNames = Enumerable.Range(0, width).Select(j => $"x{1 + j}").ToArray();
+            ColumnNames[ColumnNames.Length - 1] = "rhs";
+            ColumnRestrictions = Enumerable.Repeat("+", width).ToArray();
+            Values = new double[height, width];
+            TableIteration = 0;
+        }
 
         public int[] BasicVariableIndices() => ColumnNames.Select((_, j) => j).Where(IsBasicVariable).ToArray();
 
@@ -161,7 +173,7 @@ namespace LPR381.LP
             {
                 sb.Append($"| {RowNames[i], colWidth} ");
                 for (int j = 0; j < Width; j++)
-                    sb.Append($"| {Values[i, j], colWidth:F3} ");
+                    sb.Append($"| {Values[i, j].ToString("F3", CultureInfo.InvariantCulture), colWidth} ");
                 sb.AppendLine($"|");
             }
             /* |   Sign |    int |      + |        | */
