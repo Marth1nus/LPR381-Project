@@ -4,35 +4,19 @@ using System.Linq;
 
 namespace LPR381.LP.Algorithm
 {
-    public class Item
-    {
-        public int Value { get; set; }
-        public int Weight { get; set; }
-
-        public Item(int value, int weight)
-        {
-            Value = value;
-            Weight = weight;
-        }
-    }
-
-    public class Node
-    {
-        public int Level { get; set; }
-        public int Profit { get; set; }
-        public int Weight { get; set; }
-        public float Bound { get; set; }
-
-        public Node(int level, int profit, int weight)
-        {
-            Level = level;
-            Profit = profit;
-            Weight = weight;
-        }
-    }
-
     public static class BranchAndBoundKnapsack
     {
+        public static List<string> Solve(ref LP.Tableu tableu)
+        {
+            // TODO Impliment conversion OR use LP.Tablue in main Solve overload
+            throw new Exception("Incomplete implimentation"); // TODO Remove
+            var tableuBranchAndBoundKnapsack = new LP.Tableu();
+            // TODO Convert LP.Table to BranchAndBoundKnapsack.Tableu
+            var steps = Solve(ref tableuBranchAndBoundKnapsack);
+            // TODO Convert modified BranchAndBoundKnapsack.Tableu back to LP.Table
+            return steps;
+        }
+
         public static List<string> Solve(ref Tableu tableu)
         {
             var steps = new List<string>();
@@ -132,17 +116,43 @@ namespace LPR381.LP.Algorithm
 
             return upperBound;
         }
-    }
+        public class Item
+        {
+            public int Value { get; set; }
+            public int Weight { get; set; }
 
-    public class Tableu
-    {
-        public List<int> ObjectiveFunction { get; set; }
-        public List<Constraint> Constraints { get; set; }
-    }
+            public Item(int value, int weight)
+            {
+                Value = value;
+                Weight = weight;
+            }
+        }
 
-    public class Constraint
-    {
-        public List<int> Coefficients { get; set; }
-        public int RightHandSide { get; set; }
+        public class Node
+        {
+            public int Level { get; set; }
+            public int Profit { get; set; }
+            public int Weight { get; set; }
+            public float Bound { get; set; }
+
+            public Node(int level, int profit, int weight)
+            {
+                Level = level;
+                Profit = profit;
+                Weight = weight;
+            }
+        }
+
+        public class Tableu
+        {
+            public List<int> ObjectiveFunction { get; set; }
+            public List<Constraint> Constraints { get; set; }
+        }
+
+        public class Constraint
+        {
+            public List<int> Coefficients { get; set; }
+            public int RightHandSide { get; set; }
+        }
     }
 }
