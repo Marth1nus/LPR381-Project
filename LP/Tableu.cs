@@ -176,21 +176,15 @@ namespace LPR381.LP
 
             // Column Names
             var columnNamesList = new List<string>();
-            for (int j = 0; j < objectiveLine.Length - 1; j++)
+            for (int j = 0; j < objectiveLine.Length - 1; j++) // Decision variables
                 columnNamesList.Add($"x{1 + j}");
-            for (int i = 0; i < constraintLines.Length; i++)
-            {
-                var line = constraintLines[i];
-                var matches = Regex.Matches(line.Last(), @"^(=|<=|>=)(\d+)$");
-                var ineq = matches[1].Value;
-                var rhs = matches[2].Value;
-                line[line.Length - 1] = rhs;
-                if (ineq == "=" || ineq == "<=") 
-                    columnNamesList.Add($"s{1 + i}"); // add a slack varaible
-                if (ineq == "=" || ineq == ">=")
-                    columnNamesList.Add($"e{1 + i}"); // add an excess variable
-            }
-            columnNamesList.Add($"rhs");
+            for (int i = 0; i < constraintLines.Length; i++) // Slack/Excess variables
+                columnNamesList.AddRange(
+                    constraintLines[i].Last().StartsWith("<=") ? new[] { $"s{1 + i}" } :
+                    constraintLines[i].Last().StartsWith(">=") ? new[] { $"e{1 + i}" } :
+                    constraintLines[i].Last().StartsWith("=") ? new[] { $"s{1 + i}", $"e{1 + i}" } :
+                    throw new Exception("Unkown constraint ineqality"));
+            columnNamesList.Add($"rhs"); // RHS
             var columnNames = columnNamesList.ToArray();
             columnNamesList = null;
 
@@ -199,29 +193,41 @@ namespace LPR381.LP
 
             // Values
             var height = 1 + constraintLines.Length;
-            var width = columnNames.Length;
+            var widthWithoutSlacks = constraintLines.First().Length;
+            var widthOfSlacks = constraintLines.Sum(line => line.Last().StartsWith("=") ? 2 /*slack and excess*/ : 1 /* slack xor excess */);
+            var width = widthWithoutSlacks + widthOfSlacks;
             var values = new double[height, width];
-            for (int i = 1; i < height; i++)
-                for (int j = 0; j < width; j++)
-                    values[i, j] = 
-                        i == 0 // Objective row
-                        ? j < objectiveLine.Length - 1 
-                            ? -double.Parse(objectiveLine[1 + j]) 
-                            : 0
-                        : j < constraintLines[i - 1].Length - 1 // Constaint coefficients
-                        ? double.Parse(constraintLines[i - 1][j]) 
-                        : j == width - 1 // RHS
-                        ? double.Parse(constraintLines[i - 1].Last())
-                        : 0;
-            for (int j = 1; j < width; j++)
             {
-                var s = columnNames[j].StartsWith("s");
-                var e = columnNames[j].StartsWith("e");
-                if (!s && !e)
-                    continue;
-                int i = int.Parse(columnNames[j].Substring(1));
-                values[i, j] = s ? 1 : e ? -1 : 0;
-            }    
+                int i = 0;
+                int jSlackOrExcess = widthWithoutSlacks;
+                for (; i < 1; i++) // Objective Row
+                {
+                    int j = 0;
+                    for (; j < objectiveLine.Length - 1; j++) // Decision Variables
+                        values[i, j] = -double.Parse(objectiveLine[1 + j]);
+                    for (; j < width; j++) // Slack|Excess Variables and RHS 
+                        values[i, j] = 0;
+                }
+                for (; i < height; i++) // Constraint Rows
+                {
+                    var rhs = constraintLines[i].Last();
+                    var hasS = rhs.StartsWith("<=") || rhs.StartsWith("=");
+                    var hasE = rhs.StartsWith(">=") || rhs.StartsWith("=");
+                    rhs = rhs.Substring(rhs.StartsWith("=") ? 1 : 2);
+
+                    int j = 0;
+                    for (; j < constraintLines[i].Length - 1; j++) // Decision Variables
+                        values[i, j] = double.Parse(constraintLines[i][j]);
+                    for (; j < width - 1; j++) // Slack|excess Variables
+                        values[i, j] = 0;
+                    for (; j < width; j++) // RHS
+                        values[i, j] = double.Parse(rhs);
+
+                    if (hasS) values[i, jSlackOrExcess++] = 1;
+                    if (hasE) values[i, jSlackOrExcess++] = -1;
+                    if (hasE) for (j = 0; j < width; j++) values[i, j] *= -1;
+                }
+            }
 
             // return
             return new Tableu
