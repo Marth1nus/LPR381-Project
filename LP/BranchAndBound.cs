@@ -9,6 +9,8 @@ namespace LPR381.LP
         public static List<string> Solve(ref Tableu tableu)
         {
             var steps = new List<string>();
+
+            
             double bestSolutionValue = double.NegativeInfinity;
             Tableu bestTableu = null;
 
@@ -16,6 +18,8 @@ namespace LPR381.LP
 
             // LP relaxation
             steps.AddRange(PrimalSimplex.Solve(ref tableu)); // Ensure PrimalSimplex.Solve uses the same Tableu
+            //steps.AddRange(PrimalSimplex.Solve(ref tableu)); taken from knapsack
+
 
             nodeQueue.Add(new Node(tableu, null, 0));
 
