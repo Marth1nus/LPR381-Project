@@ -60,6 +60,7 @@
     <Compile Include="LP\CuttingPlane.cs" />
     <Compile Include="LP\DualSimplex.cs" />
     <Compile Include="LP\PrimalSimplex.cs" />
+    <Compile Include="LP\SensitivityAnalysis.cs" />
     <Compile Include="LP\Tableu.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
