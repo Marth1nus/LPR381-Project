@@ -24,11 +24,7 @@ namespace LPR381.LP
 
                 // break if all rhs are positive
                 if (tableu.Values[pivotI, tableu.Width - 1] >= 0)
-                {
-                    if (!first)
-                        steps.Add("End Dual Simplex");
                     break;
-                }
 
                 if (first)
                 {
@@ -39,7 +35,7 @@ namespace LPR381.LP
                 // get pivot column
                 int pivotJ = -1;
                 double minRatio = double.PositiveInfinity;
-                for (int j = 0; j < tableu.Width; j++)
+                for (int j = 0; j < tableu.Width - 1; j++)
                 {
                     var ratio = Math.Abs(tableu.Values[0, j] / tableu.Values[pivotI, j]);
                     if (ratio < minRatio)
@@ -49,10 +45,18 @@ namespace LPR381.LP
                     }
                 }
 
+                if (pivotJ == -1)
+                {
+                    steps.Add("Infeasible");
+                    break;
+                }
+
                 // Pivot
                 steps.Add(tableu.Pivot(pivotI, pivotJ));
             }
 
+            if (!first)
+                steps.Add("End Dual Simplex");
             return steps;
         }
 
