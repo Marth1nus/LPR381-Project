@@ -17,7 +17,7 @@ namespace LPR381.LP
 
             var B = Matrix<double>.Build.DenseOfColumnArrays(
                 basicVariableIndices.Select(
-                    j => Enumerable.Range(1, tableau.InitialTable.Height).Select(
+                    j => Enumerable.Range(1, tableau.InitialTable.Height - 1).Select(
                     i => tableau.InitialTable[i, j]).ToArray()).ToArray());
             var BInverse = B.Inverse();
 
@@ -44,7 +44,7 @@ namespace LPR381.LP
                         allowableDecrease = Math.Min(allowableDecrease, -shadowPrices[i - 1] / coefficient);
                 }
 
-                analysis.AppendLine($"C{tableau.ColumnNames[j]} can range from ({Cb} - {allowableDecrease} = {Cb - allowableDecrease}) to ({Cb} + {allowableIncrease} = {Cb + allowableDecrease})");
+                analysis.AppendLine($"C{tableau.ColumnNames[j]} can range from ({Cb} - {allowableDecrease} = {Cb - allowableDecrease}) to ({Cb} + {allowableIncrease} = {Cb + allowableIncrease})");
             }
 
             return analysis.ToString();

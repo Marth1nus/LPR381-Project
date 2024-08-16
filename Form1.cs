@@ -43,13 +43,13 @@ namespace LPR381
         
         private void solveToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            try
             {
                 var newTableau = tableau.Copy();
                 var steps = Solver(newTableau);
                 richTextBox1.Text += $"# Solve Using {SolverName}\n\n{string.Join("\n\n", steps)}\n\n";
                 tableau = newTableau;
             }
-            try { }
             catch (Exception err)
             {
                 Console.WriteLine(err.ToString());
@@ -58,11 +58,11 @@ namespace LPR381
 
         private void sensitivityAnalysisToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            try
             {
                 var analysis = SensitivityAnalysis.Analise(tableau.Copy());
                 richTextBox1.Text += $"{analysis}\n\n";
             }
+            try { }
             catch (Exception err) 
             { 
                 Console.WriteLine(err.ToString()); 
