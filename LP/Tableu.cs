@@ -21,49 +21,64 @@ namespace LPR381.LP
         public double[,] Values { get; set; } // contains Width, Height, and the values in the tableu.
         public int TableIteration { get; set; } // Just keeps track of how many pivots have been done.
         public Tableu InitialTable { get; set; } // Tracks The intial table
-        public int Height { get { return Values.GetLength(0); } }
-        public int Width { get { return Values.GetLength(1); } }
-        public double this[int i, int j] { get { return Values[i, j]; } set { Values[i, j] = value; } }
+        public int Height { get => Values.GetLength(0); }
+        public int Width { get => Values.GetLength(1); }
+        public double ObjectiveValue { get => Values[0, Width - 1]; }
+        public double this[int i, int j] { get => Values[i, j]; set => Values[i, j] = value; }
 
         // Assume Values[, Width-1] is the RHS column
         // Assume Values[0,] is the Objective row
 
-        public Tableu(int height = 2, int width = 3)
+        public Tableu(int height = 2, int width = 3, bool maxElseMin = true)
         {
-            RowNames /*           */ = Enumerable.Range(1, height).Select(i => $"c{i}").Prepend("max z").ToArray();
+            RowNames /*           */ = Enumerable.Range(1, height).Select(i => $"c{i}").Prepend(maxElseMin ? "max z" : "min z").ToArray();
             ColumnNames /*        */ = Enumerable.Range(1, width).Select(j => $"x{j}").Append("rhs").ToArray();
             ColumnRestrictions /* */ = Enumerable.Repeat("+", width).ToArray();
             Values /*             */ = new double[height, width];
             TableIteration /*     */ = 0;
         }
 
-        public Tableu Copy()
+        public Tableu Copy() => new Tableu
         {
-            return new Tableu
-            {
-                RowNames /*           */ = RowNames.ToArray(),
-                ColumnNames /*        */ = ColumnNames.ToArray(),
-                ColumnRestrictions /* */ = ColumnRestrictions.ToArray(),
-                Values /*             */ = Copy(Values),
-                TableIteration /*     */ = TableIteration
-            };
+            RowNames /*           */ = RowNames.ToArray(),
+            ColumnNames /*        */ = ColumnNames.ToArray(),
+            ColumnRestrictions /* */ = ColumnRestrictions.ToArray(),
+            Values /*             */ = Copy(Values),
+            TableIteration /*     */ = TableIteration,
+            InitialTable /*       */ = InitialTable
+        };
+
+        public int GetBasicVariableI(int j)
+        {
+            if (!(0 <= j && j < Width - 1))
+                throw new ArgumentOutOfRangeException($"{nameof(j)} must be in range [{0}..{Width - 2}]");
+            int indexOf1 = -1;
+            var column = Enumerable.Range(0, Height).Select(i => (v: Values[i, j], i)).Skip(1);
+            return column.All(p => 
+                p.v == 0.0 ||
+                p.v == 1.0 && indexOf1 == -1 && (indexOf1 = p.i) != -1
+            ) ? indexOf1 : -1;
         }
 
-        public int[] GetBasicVariableIndices() => ColumnNames.Select((_, j) => j).Where(IsBasicVariable).ToArray();
+        public double GetVariableValue(int j) /*          */ => GetBasicVariableValue(j) ?? 0.0;
+        public double? GetBasicVariableValue(int j) /*    */ { var i = GetBasicVariableI(j); return i < 0 ? (double?)null : Values[i, Width - 1]; }
+        public double? GetNonBasicVariableValue(int j) /* */ => GetBasicVariableValue(j).HasValue ? (double?)null : 0.0;
 
-        public bool IsBasicVariable(int j) => BasicVariableValue(j) != null;
-        public double? BasicVariableValue(int j) => BasicVariableValue(j, out int _);
-        public double? BasicVariableValue(int j, out int oneI)
-        {
-            int zeros = 0, ones = 0; oneI = 0;
-            for (int i = 0; i < Height; i++)
-                if (Values[i, j] == 0) zeros += 1;
-                else if (Values[i, j] == 1) { ones += 1; oneI = i; }
-                else return null;
-            if (!(zeros == Height - 1 && ones == 1))
-                return null;
-            return Values[oneI, Width - 1];
-        }
+        public bool IsVariable(int j) /*         */ => 0 <= j && j < Width - 1;
+        public bool IsBasicVariable(int j) /*    */ => GetBasicVariableValue(j).HasValue;
+        public bool IsNonBasicVariable(int j) /* */ => !GetBasicVariableValue(j).HasValue;
+
+        public IEnumerable<int> GetVariableIndices() /*         */ => Enumerable.Range(0, Width - 1);
+        public IEnumerable<int> GetBasicVariableIndices() /*    */ => GetVariableIndices().Where(IsBasicVariable);
+        public IEnumerable<int> GetNonBasicVariableIndices() /* */ => GetVariableIndices().Where(IsNonBasicVariable);
+
+        public IEnumerable<double> GetVariableValues() /*         */ => GetVariableIndices().Select(GetVariableValue);
+        public IEnumerable<double> GetBasicVariableValues() /*    */ => GetVariableIndices().Select(GetBasicVariableValue).Where(v => v.HasValue).Select(v => v.Value);
+        public IEnumerable<double> GetNonBasicVariableValues() /* */ => GetVariableIndices().Select(GetNonBasicVariableValue).Where(v => v.HasValue).Select(v => v.Value);
+
+        public Dictionary<string, double> GetVariableValuesNamed() /*         */ => GetVariableValues().Select((v, j) => (key: ColumnNames[j], value: v)).ToDictionary(p => p.key, p => p.value);
+        public Dictionary<string, double> GetBasicVariableValuesNamed() /*    */ => GetBasicVariableValues().Select((v, j) => (key: ColumnNames[j], value: v)).ToDictionary(p => p.key, p => p.value);
+        public Dictionary<string, double> GetNonBasicVariableValuesNamed() /* */ => GetNonBasicVariableValues().Select((v, j) => (key: ColumnNames[j], value: v)).ToDictionary(p => p.key, p => p.value);
 
         public void ValidateLengths()
         {
@@ -292,15 +307,16 @@ namespace LPR381.LP
                 }
             }
 
-            // return
-            return new Tableu
+            var res = new Tableu
             {
-                RowNames = rowNames,
-                ColumnNames = columnNames,
-                ColumnRestrictions = columnRestrictions,
-                Values = values,
-                TableIteration = 0
+                RowNames /*           */ = rowNames,
+                ColumnNames /*        */ = columnNames,
+                ColumnRestrictions /* */ = columnRestrictions,
+                Values /*             */ = values,
+                TableIteration /*     */ = 0
             };
+            res.InitialTable = res.Copy();
+            return res;
         }
 
         private static double[,] Copy(double[,] from, double[,] to = null,
