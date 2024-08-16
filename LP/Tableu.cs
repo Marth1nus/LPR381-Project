@@ -213,6 +213,7 @@ namespace LPR381.LP
 
         public static Tableu FromFile(string filename)
         {
+            // TODO: canonical form out param
             var lines = File.ReadAllLines(filename, Encoding.UTF8)
                 .Select(line => Regex.Split(line, @"\s+"))
                 .ToArray();

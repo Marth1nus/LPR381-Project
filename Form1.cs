@@ -33,6 +33,7 @@ namespace LPR381
             comboBox1.DataSource = new BindingSource(AlgorithmDict, null);
             comboBox1.DisplayMember = "Key";
             comboBox1.ValueMember = "Value";
+            comboBox1.SelectedValue = AlgorithmDict["Primal Simplex"];
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e) => openFileDialog1.ShowDialog(this);
@@ -41,7 +42,13 @@ namespace LPR381
         
         private void solveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            try { richTextBox1.Text += string.Join("\n\n", GetSolver()(tableu).ToArray()) + "\n"; }
+            try 
+            {
+                var newTableu = tableu.Copy();
+                var steps = GetSolver()(newTableu).ToArray();
+                richTextBox1.Text += string.Join("\n\n", steps) + "\n";
+                tableu = newTableu;
+            }
             catch (Exception err) { Console.WriteLine(err.ToString()); }
         }
 
