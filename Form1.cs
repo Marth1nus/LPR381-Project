@@ -43,16 +43,16 @@ namespace LPR381
         
         private void solveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            try
             {
                 var newTableau = tableau.Copy();
                 var steps = Solver(newTableau);
                 richTextBox1.Text += $"# Solve Using {SolverName}\n\n{string.Join("\n\n", steps)}\n\n";
                 tableau = newTableau;
             }
-            catch (Exception err) 
-            { 
-                Console.WriteLine(err.ToString()); 
+            try { }
+            catch (Exception err)
+            {
+                Console.WriteLine(err.ToString());
             }
         }
 

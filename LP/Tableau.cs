@@ -161,7 +161,7 @@ namespace LPR381.LP
                     Values[i, j] = newColumn[i];
             for (; j < Width; j++)
                 for (int i = 0; i < Height; i++)
-                    Values[i, j] = oldValues[i, j];
+                    Values[i, j] = oldValues[i, j - 1];
             ColumnNames = ColumnNames.Append(name ?? $"s{Height}").ToArray();
             ColumnRestrictions = ColumnRestrictions.Append(restriction).ToArray();
         }
