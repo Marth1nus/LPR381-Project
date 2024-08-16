@@ -9,21 +9,21 @@ namespace LPR381.LP
 {
     public static class DualSimplex
     {
-        public static List<String> Solve(Tableu tableu)
+        public static List<String> Solve(Tableau tableau)
         {
             var steps = new List<String>();
-            DualFrom(tableu, steps);
+            DualFrom(tableau, steps);
             bool first = true;
             while (true)
             {
                 // get pivot row IndexMin(rhs)
                 int pivotI = 1;
-                for (int i = 1 + pivotI; i < tableu.Height; i++)
-                    if (tableu.Values[i, tableu.Width - 1] < tableu.Values[pivotI, tableu.Width - 1])
+                for (int i = 1 + pivotI; i < tableau.Height; i++)
+                    if (tableau[i, tableau.Width - 1] < tableau[pivotI, tableau.Width - 1])
                         pivotI = i;
 
                 // break if all rhs are positive
-                if (tableu.Values[pivotI, tableu.Width - 1] >= 0)
+                if (tableau[pivotI, tableau.Width - 1] >= 0)
                     break;
 
                 if (first)
@@ -35,9 +35,9 @@ namespace LPR381.LP
                 // get pivot column
                 int pivotJ = -1;
                 double minRatio = double.PositiveInfinity;
-                for (int j = 0; j < tableu.Width - 1; j++)
+                for (int j = 0; j < tableau.Width - 1; j++)
                 {
-                    var ratio = Math.Abs(tableu.Values[0, j] / tableu.Values[pivotI, j]);
+                    var ratio = Math.Abs(tableau[0, j] / tableau[pivotI, j]);
                     if (ratio < minRatio)
                     {
                         minRatio = ratio;
@@ -47,12 +47,12 @@ namespace LPR381.LP
 
                 if (pivotJ == -1)
                 {
-                    steps.Add("Infeasible");
+                    steps.Add($"Infeasible. Ratio Test has no valid minimum.\nrow:{tableau.RowNames[pivotI]}\n\n{tableau}");
                     break;
                 }
 
                 // Pivot
-                steps.Add(tableu.Pivot(pivotI, pivotJ));
+                steps.Add(tableau.Pivot(pivotI, pivotJ));
             }
 
             if (!first)
@@ -60,22 +60,22 @@ namespace LPR381.LP
             return steps;
         }
 
-        public static (Tableu tableu, bool madeChanges) DualFrom(Tableu tableu, List<string> steps = null)
+        public static (Tableau tableau, bool madeChanges) DualFrom(Tableau tableau, List<string> steps = null)
         {
             bool madeChanges = false;
-            for (int j = 0; j < tableu.Width; j++)
+            for (int j = 0; j < tableau.Width; j++)
             {
                 int indexOfNegative1 = -1;
                 // indentify basic-like column. remember i of -1
-                if (!Enumerable.Range(0, tableu.Height).Skip(1).Select(i => (v: tableu.Values[i, j], i))
+                if (!Enumerable.Range(0, tableau.Height).Skip(1).Select(i => (v: tableau[i, j], i))
                     .All(p => p.v == 0.0 || p.v == -1.0 && indexOfNegative1 == -1 && (indexOfNegative1 = p.i) != -1))
                     continue;
-                steps?.Add($"Multiply row {indexOfNegative1} by -1\n{tableu}");
+                steps?.Add($"Multiply row {indexOfNegative1} by -1\n{tableau}");
                 // Multiply the row by -1
-                for (int k = 0; k < tableu.Width; k++)
-                    tableu.Values[indexOfNegative1, k] *= -1;
+                for (int k = 0; k < tableau.Width; k++)
+                    tableau[indexOfNegative1, k] *= -1;
             }
-            return (tableu, madeChanges);
+            return (tableau, madeChanges);
         }
     }
 }

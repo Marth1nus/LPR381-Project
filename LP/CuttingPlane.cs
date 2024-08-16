@@ -9,15 +9,15 @@ namespace LPR381.LP
 {
     public static class CuttingPlane
     {
-        public static List<String> Solve(Tableu tableu)
+        public static List<String> Solve(Tableau tableau)
         {
             var steps = new List<String>();
-            steps.AddRange(PrimalSimplex.Solve(tableu));
+            steps.AddRange(PrimalSimplex.Solve(tableau));
             bool first = true;
             
-            for (int iFractionalRow = 1; iFractionalRow < tableu.Height; iFractionalRow++)
+            for (int iFractionalRow = 1; iFractionalRow < tableau.Height; iFractionalRow++)
             {
-                var value = tableu.Values[iFractionalRow, tableu.Width - 1];
+                var value = tableau[iFractionalRow, tableau.Width - 1];
                 if (value == Math.Floor(value))
                     continue;
 
@@ -27,19 +27,19 @@ namespace LPR381.LP
                     first = false;
                 }
 
-                tableu.AddColumn(new double[tableu.Height]);
-                tableu.AddRow(new double[tableu.Width]);
+                tableau.AddColumn(new double[tableau.Height]);
+                tableau.AddRow(new double[tableau.Width]);
                 int j = 0;
-                for (; j < tableu.Width - 2; j++)
-                    tableu.Values[tableu.Height - 1, j] = Math.Floor(tableu.Values[iFractionalRow, j]) - tableu.Values[iFractionalRow, j];
-                for (; j < tableu.Width - 1; j++)
-                    tableu.Values[tableu.Height-1, tableu.Width - 2] = 1;
-                for (; j < tableu.Width; j++)
-                    tableu.Values[tableu.Height-1, j] = Math.Floor(tableu.Values[iFractionalRow, j]) - tableu.Values[iFractionalRow, j];
+                for (; j < tableau.Width - 2; j++)
+                    tableau[tableau.Height - 1, j] = Math.Floor(tableau[iFractionalRow, j]) - tableau[iFractionalRow, j];
+                for (; j < tableau.Width - 1; j++)
+                    tableau[tableau.Height-1, tableau.Width - 2] = 1;
+                for (; j < tableau.Width; j++)
+                    tableau[tableau.Height-1, j] = Math.Floor(tableau[iFractionalRow, j]) - tableau[iFractionalRow, j];
 
-                steps.Add($"Add Fractional cutting constraint\n\n{tableu}");
-                steps.AddRange(DualSimplex.Solve(tableu));
-                steps.AddRange(PrimalSimplex.Solve(tableu));
+                steps.Add($"Add Fractional cutting constraint\n\n{tableau}");
+                steps.AddRange(DualSimplex.Solve(tableau));
+                steps.AddRange(PrimalSimplex.Solve(tableau));
             }
             if (!first)
                 steps.Add("End Cutting Plane");

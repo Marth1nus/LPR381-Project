@@ -23,7 +23,7 @@ namespace LPR381
             { "Cutting Plane", CuttingPlane.Solve },
             { "Primal Simplex", PrimalSimplex.Solve },
         };
-        private Tableu tableu;
+        private Tableau tableau;
 
         private Solver Solver => comboBox1.SelectedValue as Solver;
         private string SolverName => AlgorithmDict.FirstOrDefault(kv => kv.Value == Solver).Key;
@@ -45,10 +45,10 @@ namespace LPR381
         {
             try
             {
-                var newTableu = tableu.Copy();
-                var steps = Solver(newTableu);
+                var newTableau = tableau.Copy();
+                var steps = Solver(newTableau);
                 richTextBox1.Text += $"# Solve Using {SolverName}\n\n{string.Join("\n\n", steps)}\n\n";
-                tableu = newTableu;
+                tableau = newTableau;
             }
             catch (Exception err) 
             { 
@@ -60,7 +60,7 @@ namespace LPR381
         {
             try
             {
-                var analysis = SensitivityAnalysis.Analise(tableu.Copy());
+                var analysis = SensitivityAnalysis.Analise(tableau.Copy());
                 richTextBox1.Text += $"{analysis}\n\n";
             }
             catch (Exception err) 
@@ -73,9 +73,9 @@ namespace LPR381
         {
             try
             {
-                tableu = Tableu.FromFile(openFileDialog1.FileName);
+                tableau = Tableau.FromFile(openFileDialog1.FileName);
                 textBox1.Text = openFileDialog1.FileName.Split('\\').Last();
-                richTextBox1.Text = $"{Tableu.FromFileCanonicalForm(openFileDialog1.FileName)}\n\n# Tableu\n\n{tableu}\n\n";
+                richTextBox1.Text = $"{Tableau.FromFileCanonicalForm(openFileDialog1.FileName)}\n\n# Tableau\n\n{tableau}\n\n";
             }
             catch (Exception ex)
             {

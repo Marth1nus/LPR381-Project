@@ -6,12 +6,12 @@ namespace LPR381.LP
 {
     public static class BranchAndBound
     {
-        public static List<string> Solve(Tableu tableu)
+        public static List<string> Solve(Tableau tableau)
         {
             //List that will store the steps of the algorhitm
             var steps = new List<string>();
 
-            bool isMaximization = tableu.RowNames[0] == "max z";
+            bool isMaximization = tableau.RowNames[0] == "max z";
 
             //Initialization of the best solution
             double bestSolutionValue = isMaximization ? double.NegativeInfinity : double.PositiveInfinity;
@@ -28,10 +28,10 @@ namespace LPR381.LP
             }));
 
             // LP relaxation of original problem
-            steps.AddRange(PrimalSimplex.Solve(tableu));
+            steps.AddRange(PrimalSimplex.Solve(tableau));
 
             //Add OG node to the search tree
-            nodeQueue.Add(new Node(tableu, null, 0));
+            nodeQueue.Add(new Node(tableau, null, 0));
 
 
             //Main branch and bound loop
@@ -42,9 +42,9 @@ namespace LPR381.LP
 
                 // Solve LP relaxation at the current level
                 steps.Add($"Solving LP relaxation at level {currentNode.Level}");
-                Tableu currentTableu = currentNode.Tableu;
+                Tableau currentTableau = currentNode.Tableau;
 
-                var currentSolution = ExtractSolution(currentTableu);
+                var currentSolution = ExtractSolution(currentTableau);
                 if (currentSolution == null)
                 {
                     steps.Add("Infeasible solution, skipping node.");
@@ -54,7 +54,7 @@ namespace LPR381.LP
                 // Check if current solution is a integer solution
                 if (IsIntegerSolution(currentSolution))
                 {
-                    double currentValue = CalculateObjectiveValue(currentSolution, currentTableu);
+                    double currentValue = CalculateObjectiveValue(currentSolution, currentTableau);
 
                     //Update best solution if the current solution is in fact better
                     if (isMaximization ? currentValue > bestSolutionValue : currentValue < bestSolutionValue)
@@ -70,18 +70,18 @@ namespace LPR381.LP
                     var fractionalIndex = GetFirstFractionalIndex(currentSolution);
 
                     // Create two new branches
-                    var leftTableu = currentTableu.Copy();
-                    var rightTableu = currentTableu.Copy();
+                    var leftTableau = currentTableau.Copy();
+                    var rightTableau = currentTableau.Copy();
 
                     //Create constraints for the newly created branches
-                    AddConstraint(leftTableu, fractionalIndex, Math.Floor(currentSolution[fractionalIndex]), true, steps);
-                    AddConstraint(rightTableu, fractionalIndex, Math.Ceiling(currentSolution[fractionalIndex]), false, steps);
+                    AddConstraint(leftTableau, fractionalIndex, Math.Floor(currentSolution[fractionalIndex]), true, steps);
+                    AddConstraint(rightTableau, fractionalIndex, Math.Ceiling(currentSolution[fractionalIndex]), false, steps);
 
                     steps.Add($"Branching on variable x{fractionalIndex}");
 
                     //Add new nodes to the queue for each new branch
-                    nodeQueue.Add(new Node(leftTableu, currentNode, currentNode.Level + 1));
-                    nodeQueue.Add(new Node(rightTableu, currentNode, currentNode.Level + 1));
+                    nodeQueue.Add(new Node(leftTableau, currentNode, currentNode.Level + 1));
+                    nodeQueue.Add(new Node(rightTableau, currentNode, currentNode.Level + 1));
                 }
             }
 
@@ -99,34 +99,34 @@ namespace LPR381.LP
             return steps;
         }
 
-        private static void AddConstraint(Tableu tableu, int index, double value, bool isUpperBound, List<string> steps)
+        private static void AddConstraint(Tableau Tableau, int index, double value, bool isUpperBound, List<string> steps)
         {
             // Add new constraint row
-            tableu.AddRow(Enumerable.Range(0, tableu.Width - 1)
+            Tableau.AddRow(Enumerable.Range(0, Tableau.Width - 1)
                 .Select(j => (j == index) ? (isUpperBound ? 1.0 : -1.0) : 0.0) // variable selector
                 .Append(isUpperBound ? value : -value) // rhs
                 .ToArray());
             // if Dual needed 
-            if (tableu.Values[tableu.Height - 1, tableu.Width - 1] < 0)
-                steps.AddRange(DualSimplex.Solve(tableu));
+            if (Tableau[Tableau.Height - 1, Tableau.Width - 1] < 0)
+                steps.AddRange(DualSimplex.Solve(Tableau));
             // Recalculate the objective value after adding the constraint
-            steps.AddRange(PrimalSimplex.Solve(tableu)); // Resolve with the new constraint
+            steps.AddRange(PrimalSimplex.Solve(Tableau)); // Resolve with the new constraint
         }
 
-        private static Dictionary<int, double> ExtractSolution(Tableu tableu)
+        private static Dictionary<int, double> ExtractSolution(Tableau Tableau)
         {
             var solution = new Dictionary<int, double>();
 
             // Go through each row to extract solution
-            for (int i = 0; i < tableu.Height; i++)
+            for (int i = 0; i < Tableau.Height; i++)
             {
                 // Find coefficient 1
-                for (int j = 0; j < tableu.Width - 1; j++)
+                for (int j = 0; j < Tableau.Width - 1; j++)
                 {
-                    if (Math.Abs(tableu.Values[i, j] - 1.0) < 1e-6)
+                    if (Math.Abs(Tableau[i, j] - 1.0) < 1e-6)
                     {
                         // Store the variable index, RHS
-                        solution[j] = tableu.Values[i, tableu.Width - 1];
+                        solution[j] = Tableau[i, Tableau.Width - 1];
                         break;
                     }
                 }
@@ -162,7 +162,7 @@ namespace LPR381.LP
             return -1;
         }
 
-        private static double CalculateObjectiveValue(Dictionary<int, double> solution, Tableu tableu)
+        private static double CalculateObjectiveValue(Dictionary<int, double> solution, Tableau Tableau)
         {
             double objectiveValue = 0.0;
 
@@ -171,7 +171,7 @@ namespace LPR381.LP
             {
                 if (solution.ContainsKey(i))
                 {
-                    objectiveValue += solution[i] * tableu.Values[tableu.Height - 1, i];
+                    objectiveValue += solution[i] * Tableau[Tableau.Height - 1, i];
                 }
             }
 
@@ -180,17 +180,17 @@ namespace LPR381.LP
 
         private class Node
         {
-            public Tableu Tableu { get; }
+            public Tableau Tableau { get; }
             public Node Parent { get; }
             public int Level { get; }
             public double Bound { get; }
 
-            public Node(Tableu tableu, Node parent, int level)
+            public Node(Tableau Tableau, Node parent, int level)
             {
-                Tableu = tableu;
+                Tableau = Tableau;
                 Parent = parent;
                 Level = level;
-                Bound = tableu[0, tableu.Width - 1];
+                Bound = Tableau[0, Tableau.Width - 1];
             }
         }
     }

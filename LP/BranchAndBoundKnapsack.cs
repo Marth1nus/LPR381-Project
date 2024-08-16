@@ -6,17 +6,17 @@ namespace LPR381.LP
 {
     public static class BranchAndBoundKnapsack
     {
-        public static List<string> Solve(Tableu tableu)
+        public static List<string> Solve(Tableau tableau)
         {
             var steps = new List<string>();
 
-            // Convert Tableu to List of Items and capacity
+            // Convert Tableau to List of Items and capacity
             var items = new List<Item>();
-            for (int j = 0; j < tableu.Height; j++)
+            for (int j = 0; j < tableau.Height; j++)
             {
-                items.Add(new Item(tableu[0, j], tableu[1, j]));
+                items.Add(new Item(tableau[0, j], tableau[1, j]));
             }
-            double knapsackCapacity = tableu[0, tableu.Width - 1];
+            double knapsackCapacity = tableau[0, tableau.Width - 1];
 
             // Sort items by value/weight ratio
             items = items.OrderByDescending(item => (float)item.Value / item.Weight).ToList();

@@ -8,7 +8,7 @@ namespace LPR381.LP
 {
     public class SensitivityAnalysis
     {
-        public static string Analise(Tableu tableu)
+        public static string Analise(Tableau tableau)
         {
             return "";
         }

@@ -12,16 +12,16 @@ using System.Xml;
 
 namespace LPR381.LP
 {
-    public delegate List<string> Solver(Tableu tableu);
+    public delegate List<string> Solver(Tableau tableau);
 
-    public class Tableu
+    public class Tableau
     {
         public string[] RowNames { get; set; } // example [max z, c1, c2]
         public string[] ColumnNames { get; set; } // example [x1, x2, s1, s2, rhs]
         public string[] ColumnRestrictions { get; set; } // one of [+, -, urs, int, bin]
-        public double[,] Values { get; set; } // contains Width, Height, and the values in the tableu.
+        public double[,] Values { get; set; } // contains Width, Height, and the values in the tableau.
         public int TableIteration { get; set; } // Just keeps track of how many pivots have been done.
-        public Tableu InitialTable { get; set; } // Tracks The intial table
+        public Tableau InitialTable { get; set; } // Tracks The intial table
         public int Height => Values.GetLength(0); 
         public int Width => Values.GetLength(1); 
         public double ObjectiveValue => Values[0, Width - 1]; 
@@ -30,7 +30,7 @@ namespace LPR381.LP
         // Assume Values[, Width-1] is the RHS column
         // Assume Values[0,] is the Objective row
 
-        public Tableu(int height = 2, int width = 3, bool maxElseMin = true)
+        public Tableau(int height = 2, int width = 3, bool maxElseMin = true)
         {
             RowNames /*           */ = Enumerable.Range(1, height).Select(i => $"c{i}").Prepend(maxElseMin ? "max z" : "min z").ToArray();
             ColumnNames /*        */ = Enumerable.Range(1, width).Select(j => $"x{j}").Append("rhs").ToArray();
@@ -39,7 +39,7 @@ namespace LPR381.LP
             TableIteration /*     */ = 0;
         }
 
-        public Tableu Copy() => new Tableu
+        public Tableau Copy() => new Tableau
         {
             RowNames /*           */ = RowNames.ToArray(),
             ColumnNames /*        */ = ColumnNames.ToArray(),
@@ -249,7 +249,7 @@ namespace LPR381.LP
             return (objectiveLine, constraintLines, restrictionsLine);
         }
 
-        public static Tableu FromFile(string filename)
+        public static Tableau FromFile(string filename)
         {
             var (objectiveLine, constraintLines, restrictionsLine) = FromFileValidateFile(filename);
 
@@ -315,7 +315,7 @@ namespace LPR381.LP
                 }
             }
 
-            var res = new Tableu
+            var res = new Tableau
             {
                 RowNames /*           */ = rowNames,
                 ColumnNames /*        */ = columnNames,
