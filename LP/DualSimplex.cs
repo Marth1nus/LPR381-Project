@@ -12,6 +12,7 @@ namespace LPR381.LP
         public static List<String> Solve(Tableu tableu)
         {
             var steps = new List<String>();
+            DualFrom(tableu, steps);
             bool first = true;
             while (true)
             {
@@ -52,9 +53,27 @@ namespace LPR381.LP
                 steps.Add(tableu.Pivot(pivotI, pivotJ));
             }
 
-            steps.AddRange(PrimalSimplex.Solve(ref tableu));
+            steps.AddRange(PrimalSimplex.Solve(tableu));
 
             return steps;
+        }
+
+        public static (Tableu tableu, bool madeChanges) DualFrom(Tableu tableu, List<string> steps = null)
+        {
+            bool madeChanges = false;
+            for (int j = 0; j < tableu.Width; j++)
+            {
+                int indexOfNegative1 = -1;
+                // indentify basic-like column. remember i of -1
+                if (!Enumerable.Range(0, tableu.Height).Skip(1).Select(i => (v: tableu.Values[i, j], i))
+                    .All(p => p.v == 0.0 || p.v == -1.0 && indexOfNegative1 == -1 && (indexOfNegative1 = p.i) != -1))
+                    continue;
+                steps?.Add($"Multiply row {indexOfNegative1} by -1\n{tableu}");
+                // Multiply the row by -1
+                for (int k = 0; k < tableu.Width; k++)
+                    tableu.Values[indexOfNegative1, k] *= -1;
+            }
+            return (tableu, madeChanges);
         }
     }
 }
