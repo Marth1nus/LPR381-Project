@@ -277,7 +277,7 @@ namespace LPR381.LP
             var values = new double[height, width];
             {
                 int i = 0;
-                int jSlackOrExcess = widthWithoutSlacks;
+                int jSlackOrExcess = widthWithoutSlacks - 1;
                 for (; i < 1; i++) // Objective Row
                 {
                     int j = 0;
@@ -327,8 +327,12 @@ namespace LPR381.LP
             to = to ?? new double[from.GetLength(0), from.GetLength(1)];
             CountI = CountI > 0 ? CountI : from.GetLength(0);
             CountJ = CountJ > 0 ? CountJ : from.GetLength(1);
+            if (!(to.GetLength(0) <= toStartI + CountI)) throw new ArgumentOutOfRangeException($"Out of Range");
+            if (!(to.GetLength(1) <= toStartJ + CountJ)) throw new ArgumentOutOfRangeException($"Out of Range");
+            if (!(from.GetLength(0) <= fromStartI + CountI)) throw new ArgumentOutOfRangeException($"Out of Range");
+            if (!(from.GetLength(1) <= fromStartJ + CountJ)) throw new ArgumentOutOfRangeException($"Out of Range");
             for (int i = 0; i < CountI; i++) 
-                for (int j = 0; j <= CountJ; j++)
+                for (int j = 0; j < CountJ; j++)
                     to[toStartI + i, toStartJ + j] = from[fromStartI + i, fromStartJ + j];
             return to;
         }
