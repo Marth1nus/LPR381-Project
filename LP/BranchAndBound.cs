@@ -6,10 +6,12 @@ namespace LPR381.LP
 {
     public static class BranchAndBound
     {
-        public static List<string> Solve(Tableu tableu, bool isMaximization = true)
+        public static List<string> Solve(Tableu tableu)
         {
             //List that will store the steps of the algorhitm
             var steps = new List<string>();
+
+            bool isMaximization = tableu.RowNames[0] == "max z";
 
             //Initialization of the best solution
             double bestSolutionValue = isMaximization ? double.NegativeInfinity : double.PositiveInfinity;
@@ -26,7 +28,7 @@ namespace LPR381.LP
             }));
 
             // LP relaxation of original problem
-            steps.AddRange(PrimalSimplex.Solve(ref tableu));
+            steps.AddRange(PrimalSimplex.Solve(tableu));
 
             //Add OG node to the search tree
             nodeQueue.Add(new Node(tableu, null, 0));
@@ -68,12 +70,12 @@ namespace LPR381.LP
                     var fractionalIndex = GetFirstFractionalIndex(currentSolution);
 
                     // Create two new branches
-                    var leftTableu = (Tableu)currentTableu.Clone();
-                    var rightTableu = (Tableu)currentTableu.Clone();
+                    var leftTableu = currentTableu.Copy();
+                    var rightTableu = currentTableu.Copy();
 
                     //Create constraints for the newly created branches
-                    leftTableu.AddConstraint(fractionalIndex, Math.Floor(currentSolution[fractionalIndex]), true);
-                    rightTableu.AddConstraint(fractionalIndex, Math.Ceiling(currentSolution[fractionalIndex]), false);
+                    AddConstraint(leftTableu, fractionalIndex, Math.Floor(currentSolution[fractionalIndex]), true, steps);
+                    AddConstraint(rightTableu, fractionalIndex, Math.Ceiling(currentSolution[fractionalIndex]), false, steps);
 
                     steps.Add($"Branching on variable x{fractionalIndex}");
 
@@ -97,54 +99,18 @@ namespace LPR381.LP
             return steps;
         }
 
-        public class Tableu : ICloneable
+        private static void AddConstraint(Tableu tableu, int index, double value, bool isUpperBound, List<string> steps)
         {
-            public double[,] Values { get; set; }
-            public int Width { get; set; }
-            public int Height { get; set; }
-            public double ObjectiveValue { get; set; }
-
-            public object Clone()
-            {
-                var clonedTableu = new Tableu
-                {
-                    Width = this.Width,
-                    Height = this.Height,
-                    Values = (double[,])this.Values.Clone(),
-                    ObjectiveValue = this.ObjectiveValue
-                };
-                return clonedTableu;
-            }
-
-            //New constraint is added
-            public void AddConstraint(int index, double value, bool isUpperBound)
-            {
-                // Create a new matrix with an additional row for the new constraint
-                double[,] newValues = new double[this.Height + 1, this.Width];
-
-                // Copy existing values
-                for (int i = 0; i < this.Height; i++)
-                {
-                    for (int j = 0; j < this.Width; j++)
-                    {
-                        newValues[i, j] = this.Values[i, j];
-                    }
-                }
-
-                // Add new constraint row
-                for (int j = 0; j < this.Width - 1; j++)
-                {
-                    newValues[this.Height, j] = (j == index) ? (isUpperBound ? 1.0 : -1.0) : 0.0;
-                }
-                newValues[this.Height, this.Width - 1] = isUpperBound ? value : -value; // Add RHS value
-
-                // Update dimensions and values
-                this.Height++;
-                this.Values = newValues;
-
-                // Recalculate the objective value after adding the constraint
-                PrimalSimplex.Solve(ref this); // Resolve with the new constraint
-            }
+            // Add new constraint row
+            tableu.AddRow(Enumerable.Range(0, tableu.Width - 1)
+                .Select(j => (j == index) ? (isUpperBound ? 1.0 : -1.0) : 0.0) // variable selector
+                .Append(isUpperBound ? value : -value) // rhs
+                .ToArray());
+            // if Dual needed 
+            if (tableu.Values[tableu.Height - 1, tableu.Width - 1] < 0)
+                steps.AddRange(DualSimplex.Solve(tableu));
+            // Recalculate the objective value after adding the constraint
+            steps.AddRange(PrimalSimplex.Solve(tableu)); // Resolve with the new constraint
         }
 
         private static Dictionary<int, double> ExtractSolution(Tableu tableu)
@@ -224,7 +190,7 @@ namespace LPR381.LP
                 Tableu = tableu;
                 Parent = parent;
                 Level = level;
-                Bound = tableu.ObjectiveValue;
+                Bound = tableu[0, tableu.Width - 1];
             }
         }
     }
