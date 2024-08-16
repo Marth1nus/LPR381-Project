@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml;
 
 namespace LPR381.LP
 {
@@ -54,7 +55,7 @@ namespace LPR381.LP
                 throw new ArgumentOutOfRangeException($"{nameof(j)} must be in range [{0}..{Width - 2}]");
             int indexOf1 = -1;
             var column = Enumerable.Range(0, Height).Select(i => (v: Values[i, j], i)).Skip(1);
-            return column.All(p => 
+            return column.All(p =>
                 p.v == 0.0 ||
                 p.v == 1.0 && indexOf1 == -1 && (indexOf1 = p.i) != -1
             ) ? indexOf1 : -1;
@@ -66,7 +67,7 @@ namespace LPR381.LP
 
         public bool IsVariable(int j) /*         */ => 0 <= j && j < Width - 1;
         public bool IsBasicVariable(int j) /*    */ => GetBasicVariableValue(j).HasValue;
-        public bool IsNonBasicVariable(int j) /* */ => !GetBasicVariableValue(j).HasValue;
+        public bool IsNonBasicVariable(int j) /* */ => GetNonBasicVariableValue(j).HasValue;
 
         public IEnumerable<int> GetVariableIndices() /*         */ => Enumerable.Range(0, Width - 1);
         public IEnumerable<int> GetBasicVariableIndices() /*    */ => GetVariableIndices().Where(IsBasicVariable);
@@ -188,30 +189,30 @@ namespace LPR381.LP
             /* | T1     |     x1 |     s1 |    rhs | */
             sb.Append($"| T{TableIteration,1 - colWidth} ");
             for (int j = 0; j < Width; j++)
-                sb.Append($"| {ColumnNames[j], colWidth} ");
+                sb.Append($"| {ColumnNames[j],colWidth} ");
             sb.AppendLine($"|");
             /* | -----: | -----: | -----: | -----: | */
             for (int j = 0; j < Width + 1; j++)
-                sb.Append($"| {"-----:", colWidth} ");
+                sb.Append($"| {"-----:",colWidth} ");
             sb.AppendLine($"|");
             /* |  max Z | 00.000 | 00.000 | 00.000 | */
             /* |     C1 | 00.000 | 00.000 | 00.000 | */
             for (int i = 0; i < Height; i++)
             {
-                sb.Append($"| {RowNames[i], colWidth} ");
+                sb.Append($"| {RowNames[i],colWidth} ");
                 for (int j = 0; j < Width; j++)
-                    sb.Append($"| {Values[i, j].ToString("F3", CultureInfo.InvariantCulture), colWidth} ");
+                    sb.Append($"| {Values[i, j].ToString("F3", CultureInfo.InvariantCulture),colWidth} ");
                 sb.AppendLine($"|");
             }
             /* |   Sign |    int |      + |        | */
-            sb.Append($"| {"", colWidth} ");
+            sb.Append($"| {"",colWidth} ");
             for (int j = 0; j < Width; j++)
-                sb.Append($"| {(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : ""), colWidth} ");
+                sb.Append($"| {(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : ""),colWidth} ");
             sb.AppendLine($"|");
             return sb.ToString();
         }
 
-        public static Tableu FromFile(string filename)
+        private static (string[] objectiveLine, string[][] constraintLines, string[] restrictionsLine) FromFileValidateFile(string filename)
         {
             // TODO: canonical form out param
             var lines = File.ReadAllLines(filename, Encoding.UTF8)
@@ -245,6 +246,12 @@ namespace LPR381.LP
                 throw new Exception("Restrictions Row have inconsistent lengths");
             if (!restrictionsLine.All(col => Regex.IsMatch(lastChecked = col, @"^(\+|-|urs|int|bin)$"))) // restrictions row must have valid restrictions
                 throw new Exception($"Restrictions Row contains unknown symbol. While checking: {lastChecked}");
+            return (objectiveLine, constraintLines, restrictionsLine);
+        }
+
+        public static Tableu FromFile(string filename)
+        {
+            var (objectiveLine, constraintLines, restrictionsLine) = FromFileValidateFile(filename);
 
             // Row Names
             var rowNamesList = new List<string> { $"{objectiveLine.First()} z" };
@@ -318,6 +325,21 @@ namespace LPR381.LP
             };
             res.InitialTable = res.Copy();
             return res;
+        }
+
+        public static string FromFileCanonicalForm(string filename)
+        {
+            var canonicalForm = "";
+            var (objectiveLine, constraintLines, restrictionsLine) = FromFileValidateFile(filename);
+            canonicalForm += $"# Canonical Form";
+            canonicalForm += $"\n\n## Objective\n\n{objectiveLine[0]} z = {string.Join(" + ", objectiveLine.Skip(1).Select((col, j) => $"{-double.Parse(col)}x{1 + j}"))}";
+            canonicalForm += $"\n\n## Constraints\n\n" + string.Join("\n", constraintLines.Select((line, i) =>
+                string.Join(" + ", line.Take(line.Length - 1).Select((col, j) => $"{double.Parse(col)}x{1 + j}")) +
+                (line.Last().StartsWith("=") || line.Last().StartsWith("<=") ? $" + s{1 + i}" : "") +
+                (line.Last().StartsWith("=") || line.Last().StartsWith(">=") ? $" + -e{1 + i}" : "") +
+                $" = {double.Parse(line.Last().Substring(line.Last().StartsWith("=") ? 1 /* = */ : 2 /* <= or >= */))}"));
+            canonicalForm += $"\n\n## Restrictions\n\n{string.Join(", ", restrictionsLine.Select((v, j) => $"x{1 + j}:{v}"))}\n";
+            return canonicalForm;
         }
 
         private static double[,] Copy(double[,] from, double[,] to = null,
