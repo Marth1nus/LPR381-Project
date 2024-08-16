@@ -36,7 +36,14 @@ namespace LPR381
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e) => openFileDialog1.ShowDialog(this);
+        
         private void saveToolStripMenuItem_Click(object sender, EventArgs e) => saveFileDialog1.ShowDialog(this);
+        
+        private void solveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try { richTextBox1.Text += string.Join("\n\n", GetSolver()(tableu).ToArray()) + "\n"; }
+            catch (Exception err) { Console.WriteLine(err.ToString()); }
+        }
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
         {
@@ -64,6 +71,11 @@ namespace LPR381
                 Console.WriteLine(ex.ToString());
                 textBox2.Text = "Failed";
             }
+        }
+
+        private void clearOutputToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            richTextBox1.Text = "";
         }
     }
 }
