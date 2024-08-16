@@ -58,11 +58,11 @@ namespace LPR381
 
         private void sensitivityAnalysisToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            try
             {
                 var analysis = SensitivityAnalysis.Analise(tableau.Copy());
-                richTextBox1.Text += $"{analysis}\n\n";
+                richTextBox1.Text += $"# Sensitivity Analysis\n\n{analysis}\n\n";
             }
-            try { }
             catch (Exception err) 
             { 
                 Console.WriteLine(err.ToString()); 
@@ -100,6 +100,12 @@ namespace LPR381
         private void clearOutputToolStripMenuItem_Click(object sender, EventArgs e)
         {
             richTextBox1.Text = "";
+        }
+
+        private void richTextBox1_TextChanged(object sender, EventArgs e)
+        {
+            richTextBox1.SelectionStart = richTextBox1.Text.Length;
+            richTextBox1.ScrollToCaret();
         }
     }
 }

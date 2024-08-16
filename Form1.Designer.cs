@@ -278,6 +278,7 @@
             this.richTextBox1.TabStop = false;
             this.richTextBox1.Text = "";
             this.richTextBox1.WordWrap = false;
+            this.richTextBox1.TextChanged += new System.EventHandler(this.richTextBox1_TextChanged);
             // 
             // menuStrip1
             // 
