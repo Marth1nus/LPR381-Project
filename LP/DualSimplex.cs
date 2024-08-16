@@ -9,7 +9,7 @@ namespace LPR381.LP
 {
     public static class DualSimplex
     {
-        public static List<String> Solve(ref Tableu tableu)
+        public static List<String> Solve(Tableu tableu)
         {
             var steps = new List<String>();
             bool first = true;

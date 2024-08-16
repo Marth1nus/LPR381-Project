@@ -6,7 +6,7 @@ namespace LPR381.LP
 {
     public static class BranchAndBoundKnapsack
     {
-        public static List<string> Solve(ref Tableu tableu)
+        public static List<string> Solve(Tableu tableu)
         {
             var steps = new List<string>();
 

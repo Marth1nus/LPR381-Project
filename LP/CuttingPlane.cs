@@ -9,7 +9,7 @@ namespace LPR381.LP
 {
     public static class CuttingPlane
     {
-        public static List<String> Solve(ref Tableu tableu)
+        public static List<String> Solve(Tableu tableu)
         {
             var steps = new List<String>();
             steps.AddRange(PrimalSimplex.Solve(ref tableu));

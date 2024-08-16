@@ -6,7 +6,7 @@ namespace LPR381.LP
 {
     public static class BranchAndBound
     {
-        public static List<string> Solve(ref Tableu tableu, bool isMaximization = true)
+        public static List<string> Solve(Tableu tableu, bool isMaximization = true)
         {
             //List that will store the steps of the algorhitm
             var steps = new List<string>();

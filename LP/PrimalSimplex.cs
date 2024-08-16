@@ -7,7 +7,7 @@ namespace LPR381.LP
     public static class PrimalSimplex
     {
         // Solve method implements Primal Simplex algorithm
-        public static List<string> Solve(ref Tableu tableu)
+        public static List<string> Solve(Tableu tableu)
         {
             var steps = new List<string>(); 
             while (true)

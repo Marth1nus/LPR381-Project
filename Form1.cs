@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,6 +23,7 @@ namespace LPR381
             { "Cutting Plane", CuttingPlane.Solve },
             { "Primal Simplex", PrimalSimplex.Solve },
         };
+        private Tableu tableu;
 
         private Solver GetSolver() => comboBox1.SelectedValue as Solver;
 
@@ -33,16 +35,35 @@ namespace LPR381
             comboBox1.ValueMember = "Value";
         }
 
+        private void openToolStripMenuItem_Click(object sender, EventArgs e) => openFileDialog1.ShowDialog(this);
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e) => saveFileDialog1.ShowDialog(this);
 
-        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
         {
-            var openFileResult = openFileDialog1.ShowDialog(this);
+            try
+            {
+                tableu = Tableu.FromFile(openFileDialog1.FileName);
+                textBox1.Text = openFileDialog1.FileName.Split('\\').Last();
+                richTextBox1.Text = $"{tableu}\n";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                textBox1.Text = "Failed";
+            }
         }
-
-        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        private void saveFileDialog1_FileOk(object sender, CancelEventArgs e)
         {
-            var saveFileResult = saveFileDialog1.ShowDialog(this);
-            richTextBox1.Text = saveFileResult.ToString();
+            try
+            {
+                File.WriteAllText(saveFileDialog1.FileName, richTextBox1.Text);
+                textBox2.Text = saveFileDialog1.FileName.Split('\\').Last();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                textBox2.Text = "Failed";
+            }
         }
     }
 }

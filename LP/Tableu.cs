@@ -11,15 +11,16 @@ using System.Windows.Forms;
 
 namespace LPR381.LP
 {
-    public delegate List<string> Solver(ref Tableu tableu);
+    public delegate List<string> Solver(Tableu tableu);
 
-    public struct Tableu
+    public class Tableu
     {
         public string[] RowNames { get; set; } // example [max z, c1, c2]
         public string[] ColumnNames { get; set; } // example [x1, x2, s1, s2, rhs]
         public string[] ColumnRestrictions { get; set; } // one of [+, -, urs, int, bin]
         public double[,] Values { get; set; } // contains Width, Height, and the values in the tableu.
         public int TableIteration { get; set; } // Just keeps track of how many pivots have been done.
+        public Tableu InitialTable { get; set; } // Tracks The intial table
         public int Height { get { return Values.GetLength(0); } }
         public int Width { get { return Values.GetLength(1); } }
         public double this[int i, int j] { get { return Values[i, j]; } set { Values[i, j] = value; } }
@@ -29,16 +30,26 @@ namespace LPR381.LP
 
         public Tableu(int height = 2, int width = 3)
         {
-            RowNames = Enumerable.Range(0, height).Select(i => $"c{i}").ToArray();
-            RowNames[0] = "max z";
-            ColumnNames = Enumerable.Range(0, width).Select(j => $"x{1 + j}").ToArray();
-            ColumnNames[ColumnNames.Length - 1] = "rhs";
-            ColumnRestrictions = Enumerable.Repeat("+", width).ToArray();
-            Values = new double[height, width];
-            TableIteration = 0;
+            RowNames /*           */ = Enumerable.Range(1, height).Select(i => $"c{i}").Prepend("max z").ToArray();
+            ColumnNames /*        */ = Enumerable.Range(1, width).Select(j => $"x{j}").Append("rhs").ToArray();
+            ColumnRestrictions /* */ = Enumerable.Repeat("+", width).ToArray();
+            Values /*             */ = new double[height, width];
+            TableIteration /*     */ = 0;
         }
 
-        public int[] BasicVariableIndices() => ColumnNames.Select((_, j) => j).Where(IsBasicVariable).ToArray();
+        public Tableu Copy()
+        {
+            return new Tableu
+            {
+                RowNames /*           */ = RowNames.ToArray(),
+                ColumnNames /*        */ = ColumnNames.ToArray(),
+                ColumnRestrictions /* */ = ColumnRestrictions.ToArray(),
+                Values /*             */ = Copy(Values),
+                TableIteration /*     */ = TableIteration
+            };
+        }
+
+        public int[] GetBasicVariableIndices() => ColumnNames.Select((_, j) => j).Where(IsBasicVariable).ToArray();
 
         public bool IsBasicVariable(int j) => BasicVariableValue(j) != null;
         public double? BasicVariableValue(int j) => BasicVariableValue(j, out int _);
@@ -68,6 +79,8 @@ namespace LPR381.LP
 
         public string Pivot(int rowI, int colI)
         {
+            InitialTable = InitialTable ?? Copy();
+            TableIteration++;
             double pivot = Values[rowI, colI];
             for (int j = 0; j < Values.GetLength(1); j++)
             {
@@ -83,7 +96,6 @@ namespace LPR381.LP
                     Values[i, j] -= factor * Values[rowI, j];
                 }
             }
-            TableIteration++;
             return $"Pivot on {RowNames[rowI]}, {ColumnNames[colI]}\n\n{this}";
         }
 
@@ -197,25 +209,26 @@ namespace LPR381.LP
             var restrictionsLine = lines.Last();
             var rowLength = objectiveLine.Length;
             lines = null; // use named variables instead
+            var lastChecked = "";
 
             if (objectiveLine.Length < 2) // must include at least one decision variable
                 throw new Exception("Objective Row has too few columns");
-            if (!objectiveLine.Skip(1).All(col => Regex.IsMatch(col, @"^[+-]\d$"))) // validate coefficients
-                throw new Exception("Objective Row contains invalid coefficient");
-            if (!objectiveLine.Take(1).All(col => Regex.IsMatch(col, @"^(min|max)$"))) // ojective row must start with min/max
-                throw new Exception("Objecive Row must start with min/max");
+            if (!objectiveLine.Skip(1).All(col => Regex.IsMatch(lastChecked = col, @"^[+-]\d$"))) // validate coefficients
+                throw new Exception($"Objective Row contains invalid coefficient. While checking: {lastChecked}");
+            if (!objectiveLine.Take(1).All(col => Regex.IsMatch(lastChecked = col, @"^(min|max)$"))) // ojective row must start with min/max
+                throw new Exception($"Objecive Row must start with min/max. While checking: {lastChecked}");
 
             if (!constraintLines.All(line => line.Length == rowLength)) // object and constaint rows must have the same width
-                throw new Exception("Constraint Rows have inconsistent lengths");
-            if (!constraintLines.All(line => line.Reverse().Skip(1).All(col => Regex.IsMatch(col, @"^[+-]\d$"))))
-                throw new Exception("Constraint Rows contains invalid coefficient");
-            if (!constraintLines.All(line => line.Reverse().Take(1).All(col => Regex.IsMatch(col, @"^(=|<=|>=)\d+$"))))
-                throw new Exception("Constraint Rows contains invalid rhs");
+                throw new Exception($"Constraint Rows have inconsistent lengths");
+            if (!constraintLines.All(line => line.Reverse().Skip(1).All(col => Regex.IsMatch(lastChecked = col, @"^[+-]\d+$"))))
+                throw new Exception($"Constraint Rows contains invalid coefficient. While checking: {lastChecked}");
+            if (!constraintLines.All(line => line.Reverse().Take(1).All(col => Regex.IsMatch(lastChecked = col, @"^(=|<=|>=)\d+$"))))
+                throw new Exception($"Constraint Rows contains invalid rhs. While checking: {lastChecked}");
 
-            if (!restrictionsLine.All(line => line.Length == rowLength)) // object and constaint rows must have the same width
+            if (!(restrictionsLine.Length == rowLength - 1)) // object and constaint rows must have the same width
                 throw new Exception("Restrictions Row have inconsistent lengths");
-            if (!restrictionsLine.All(col => Regex.IsMatch(col, @"^(\+|-|urs|int|bin)$"))) // restrictions row must have valid restrictions
-                throw new Exception("Restrictions Row contains unknown symbol");
+            if (!restrictionsLine.All(col => Regex.IsMatch(lastChecked = col, @"^(\+|-|urs|int|bin)$"))) // restrictions row must have valid restrictions
+                throw new Exception($"Restrictions Row contains unknown symbol. While checking: {lastChecked}");
 
             // Row Names
             var rowNamesList = new List<string> { $"{objectiveLine.First()} z" };
@@ -260,14 +273,14 @@ namespace LPR381.LP
                 }
                 for (; i < height; i++) // Constraint Rows
                 {
-                    var rhs = constraintLines[i].Last();
+                    var rhs = constraintLines[i - 1].Last();
                     var hasS = rhs.StartsWith("<=") || rhs.StartsWith("=");
                     var hasE = rhs.StartsWith(">=") || rhs.StartsWith("=");
                     rhs = rhs.Substring(rhs.StartsWith("=") ? 1 : 2);
 
                     int j = 0;
-                    for (; j < constraintLines[i].Length - 1; j++) // Decision Variables
-                        values[i, j] = double.Parse(constraintLines[i][j]);
+                    for (; j < constraintLines[i - 1].Length - 1; j++) // Decision Variables
+                        values[i, j] = double.Parse(constraintLines[i - 1][j]);
                     for (; j < width - 1; j++) // Slack|excess Variables
                         values[i, j] = 0;
                     for (; j < width; j++) // RHS
@@ -288,6 +301,20 @@ namespace LPR381.LP
                 Values = values,
                 TableIteration = 0
             };
+        }
+
+        private static double[,] Copy(double[,] from, double[,] to = null,
+            int /*     */ CountI = 0, int /*      */ CountJ = 0, // 0 means use `from`'s dimention
+            int /* */ fromStartI = 0, int /*  */ fromStartJ = 0,
+            int /*   */ toStartI = 0, int /*    */ toStartJ = 0)
+        {
+            to = to ?? new double[from.GetLength(0), from.GetLength(1)];
+            CountI = CountI > 0 ? CountI : from.GetLength(0);
+            CountJ = CountJ > 0 ? CountJ : from.GetLength(1);
+            for (int i = 0; i < CountI; i++) 
+                for (int j = 0; j <= CountJ; j++)
+                    to[toStartI + i, toStartJ + j] = from[fromStartI + i, fromStartJ + j];
+            return to;
         }
     }
 }
