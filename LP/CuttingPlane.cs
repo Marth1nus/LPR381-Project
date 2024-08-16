@@ -39,6 +39,7 @@ namespace LPR381.LP
 
                 steps.Add($"Add Fractional cutting constraint\n\n{tableu}");
                 steps.AddRange(DualSimplex.Solve(tableu));
+                steps.AddRange(PrimalSimplex.Solve(tableu));
             }
             if (!first)
                 steps.Add("End Cutting Plane");

@@ -53,8 +53,6 @@ namespace LPR381.LP
                 steps.Add(tableu.Pivot(pivotI, pivotJ));
             }
 
-            steps.AddRange(PrimalSimplex.Solve(tableu));
-
             return steps;
         }
 
