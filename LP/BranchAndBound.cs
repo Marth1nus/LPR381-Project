@@ -38,6 +38,7 @@ namespace LPR381.LP
             while (nodeQueue.Count > 0)
             {
                 var currentNode = nodeQueue.Min;
+
                 nodeQueue.Remove(currentNode);
 
                 // Solve LP relaxation at the current level
@@ -99,34 +100,34 @@ namespace LPR381.LP
             return steps;
         }
 
-        private static void AddConstraint(Tableau Tableau, int index, double value, bool isUpperBound, List<string> steps)
+        private static void AddConstraint(Tableau tableau, int index, double value, bool isUpperBound, List<string> steps)
         {
             // Add new constraint row
-            Tableau.AddRow(Enumerable.Range(0, Tableau.Width - 1)
+            tableau.AddRow(Enumerable.Range(0, tableau.Width - 1)
                 .Select(j => (j == index) ? (isUpperBound ? 1.0 : -1.0) : 0.0) // variable selector
                 .Append(isUpperBound ? value : -value) // rhs
                 .ToArray());
             // if Dual needed 
-            if (Tableau[Tableau.Height - 1, Tableau.Width - 1] < 0)
-                steps.AddRange(DualSimplex.Solve(Tableau));
+            if (tableau[tableau.Height - 1, tableau.Width - 1] < 0)
+                steps.AddRange(DualSimplex.Solve(tableau));
             // Recalculate the objective value after adding the constraint
-            steps.AddRange(PrimalSimplex.Solve(Tableau)); // Resolve with the new constraint
+            steps.AddRange(PrimalSimplex.Solve(tableau)); // Resolve with the new constraint
         }
 
-        private static Dictionary<int, double> ExtractSolution(Tableau Tableau)
+        private static Dictionary<int, double> ExtractSolution(Tableau tableau)
         {
             var solution = new Dictionary<int, double>();
 
             // Go through each row to extract solution
-            for (int i = 0; i < Tableau.Height; i++)
+            for (int i = 0; i < tableau.Height; i++)
             {
                 // Find coefficient 1
-                for (int j = 0; j < Tableau.Width - 1; j++)
+                for (int j = 0; j < tableau.Width - 1; j++)
                 {
-                    if (Math.Abs(Tableau[i, j] - 1.0) < 1e-6)
+                    if (Math.Abs(tableau[i, j] - 1.0) < 1e-6)
                     {
                         // Store the variable index, RHS
-                        solution[j] = Tableau[i, Tableau.Width - 1];
+                        solution[j] = tableau[i, tableau.Width - 1];
                         break;
                     }
                 }
@@ -162,7 +163,7 @@ namespace LPR381.LP
             return -1;
         }
 
-        private static double CalculateObjectiveValue(Dictionary<int, double> solution, Tableau Tableau)
+        private static double CalculateObjectiveValue(Dictionary<int, double> solution, Tableau tableau)
         {
             double objectiveValue = 0.0;
 
@@ -171,7 +172,7 @@ namespace LPR381.LP
             {
                 if (solution.ContainsKey(i))
                 {
-                    objectiveValue += solution[i] * Tableau[Tableau.Height - 1, i];
+                    objectiveValue += solution[i] * tableau[tableau.Height - 1, i];
                 }
             }
 
@@ -185,12 +186,12 @@ namespace LPR381.LP
             public int Level { get; }
             public double Bound { get; }
 
-            public Node(Tableau Tableau, Node parent, int level)
+            public Node(Tableau tableau, Node parent, int level)
             {
-                Tableau = Tableau;
+                Tableau = tableau;
                 Parent = parent;
                 Level = level;
-                Bound = Tableau[0, Tableau.Width - 1];
+                Bound = tableau[0, tableau.Width - 1];
             }
         }
     }
