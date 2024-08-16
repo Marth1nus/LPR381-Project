@@ -17,7 +17,7 @@ namespace LPR381.LP
 
             var B = Matrix<double>.Build.DenseOfColumnArrays(
                 basicVariableIndices.Select(
-                    j => Enumerable.Range(1, tableau.InitialTable.Height).Select(
+                    j => Enumerable.Range(1, tableau.InitialTable.Height - 1).Select(
                     i => tableau.InitialTable[i, j]).ToArray()).ToArray());
             var BInverse = B.Inverse();
 
