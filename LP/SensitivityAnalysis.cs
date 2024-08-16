@@ -14,6 +14,7 @@ namespace LPR381.LP
             var analysis = new StringBuilder();
 
             var basicVariableIndices = tableau.GetBasicVariableIndices().ToArray();
+            var nonBasicVariableIndices = tableau.GetNonBasicVariableIndices().ToArray();
 
             var B = Matrix<double>.Build.DenseOfColumnArrays(
                 basicVariableIndices.Select(
@@ -44,7 +45,28 @@ namespace LPR381.LP
                         allowableDecrease = Math.Min(allowableDecrease, -shadowPrices[i - 1] / coefficient);
                 }
 
-                analysis.AppendLine($"C{tableau.ColumnNames[j]} can range from ({Cb} - {allowableDecrease} = {Cb - allowableDecrease}) to ({Cb} + {allowableIncrease} = {Cb + allowableIncrease})");
+                analysis.AppendLine(
+                    $"Coefficient of {tableau.ColumnNames[j]} (    Basic) can range " +
+                    $"from ({Cb,4} - {allowableDecrease,4} = {Cb - allowableDecrease,4}) " +
+                    $"to ({Cb,4} + {allowableIncrease,4} = {Cb + allowableIncrease,4})");
+            }
+
+            // Analyze non-basic variables
+            for (int k = 0; k < nonBasicVariableIndices.Length; k++)
+            {
+                var j = nonBasicVariableIndices[k];
+                var cj = tableau.InitialTable[0, j];
+                var reducedCost = cj - shadowPrices * Vector<double>.Build.DenseOfEnumerable(
+                        Enumerable.Range(1, tableau.InitialTable.Height - 1).Select(
+                            i => tableau.InitialTable[i, j]));
+
+                var allowableIncrease = -reducedCost;
+                var allowableDecrease = reducedCost;
+
+                analysis.AppendLine(
+                    $"Coefficient of {tableau.ColumnNames[j]} (Non-Basic) can range "+
+                    $"from ({cj,4} - {allowableDecrease,4} = {cj - allowableDecrease,4}) " +
+                    $"to ({cj,4} + {allowableIncrease,4} = {cj + allowableIncrease,4})");
             }
 
             return analysis.ToString();
