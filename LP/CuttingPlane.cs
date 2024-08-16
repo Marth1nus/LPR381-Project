@@ -27,18 +27,13 @@ namespace LPR381.LP
                     first = false;
                 }
 
-                tableau.AddColumn(new double[tableau.Height]);
-                tableau.AddRow(new double[tableau.Width]);
-                int j = 0;
-                for (; j < tableau.Width - 2; j++)
-                    tableau[tableau.Height - 1, j] = Math.Floor(tableau[iFractionalRow, j]) - tableau[iFractionalRow, j];
-                for (; j < tableau.Width - 1; j++)
-                    tableau[tableau.Height-1, tableau.Width - 2] = 1;
-                for (; j < tableau.Width; j++)
-                    tableau[tableau.Height-1, j] = Math.Floor(tableau[iFractionalRow, j]) - tableau[iFractionalRow, j];
+                tableau.AddRow(Enumerable.Range(0, tableau.Width).Select(j =>
+                    Math.Floor(tableau[iFractionalRow, j]) - tableau[iFractionalRow, j]).ToArray());
+                tableau.AddColumn(Enumerable.Repeat(0.0, tableau.Height - 1).Append(1.0).ToArray());
 
                 steps.Add($"Add Fractional cutting constraint\n\n{tableau}");
-                steps.AddRange(DualSimplex.Solve(tableau));
+                if (tableau[tableau.Height - 1, tableau.Width - 1] < 0)
+                    steps.AddRange(DualSimplex.Solve(tableau));
                 steps.AddRange(PrimalSimplex.Solve(tableau));
             }
             if (!first)
