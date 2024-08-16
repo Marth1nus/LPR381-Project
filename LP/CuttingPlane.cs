@@ -12,7 +12,7 @@ namespace LPR381.LP
         public static List<String> Solve(Tableu tableu)
         {
             var steps = new List<String>();
-            steps.AddRange(PrimalSimplex.Solve(ref tableu));
+            steps.AddRange(PrimalSimplex.Solve(tableu));
             bool first = true;
             
             for (int iFractionalRow = 1; iFractionalRow < tableu.Height; iFractionalRow++)
@@ -38,7 +38,7 @@ namespace LPR381.LP
                     tableu.Values[tableu.Height-1, j] = Math.Floor(tableu.Values[iFractionalRow, j]) - tableu.Values[iFractionalRow, j];
 
                 steps.Add($"Add Fractional cutting constraint\n\n{tableu}");
-                steps.AddRange(DualSimplex.Solve(ref tableu));
+                steps.AddRange(DualSimplex.Solve(tableu));
             }
             if (!first)
                 steps.Add("End Cutting Plane");
