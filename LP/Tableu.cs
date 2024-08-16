@@ -22,9 +22,9 @@ namespace LPR381.LP
         public double[,] Values { get; set; } // contains Width, Height, and the values in the tableu.
         public int TableIteration { get; set; } // Just keeps track of how many pivots have been done.
         public Tableu InitialTable { get; set; } // Tracks The intial table
-        public int Height { get => Values.GetLength(0); }
-        public int Width { get => Values.GetLength(1); }
-        public double ObjectiveValue { get => Values[0, Width - 1]; }
+        public int Height => Values.GetLength(0); 
+        public int Width => Values.GetLength(1); 
+        public double ObjectiveValue => Values[0, Width - 1]; 
         public double this[int i, int j] { get => Values[i, j]; set => Values[i, j] = value; }
 
         // Assume Values[, Width-1] is the RHS column
@@ -338,7 +338,7 @@ namespace LPR381.LP
                 (line.Last().StartsWith("=") || line.Last().StartsWith("<=") ? $" + s{1 + i}" : "") +
                 (line.Last().StartsWith("=") || line.Last().StartsWith(">=") ? $" + -e{1 + i}" : "") +
                 $" = {double.Parse(line.Last().Substring(line.Last().StartsWith("=") ? 1 /* = */ : 2 /* <= or >= */))}"));
-            canonicalForm += $"\n\n## Restrictions\n\n{string.Join(", ", restrictionsLine.Select((v, j) => $"x{1 + j}:{v}"))}\n";
+            canonicalForm += $"\n\n## Restrictions\n\n{string.Join(", ", restrictionsLine.Select((v, j) => $"x{1 + j}:{v}"))}";
             return canonicalForm;
         }
 

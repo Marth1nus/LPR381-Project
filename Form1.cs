@@ -25,7 +25,8 @@ namespace LPR381
         };
         private Tableu tableu;
 
-        private Solver GetSolver() => comboBox1.SelectedValue as Solver;
+        private Solver Solver => comboBox1.SelectedValue as Solver;
+        private string SolverName => AlgorithmDict.FirstOrDefault(kv => kv.Value == Solver).Key;
 
         public Form1()
         {
@@ -45,11 +46,27 @@ namespace LPR381
             try 
             {
                 var newTableu = tableu.Copy();
-                var steps = GetSolver()(newTableu).ToArray();
-                richTextBox1.Text += string.Join("\n\n", steps) + "\n";
+                var steps = Solver(newTableu).ToArray();
+                richTextBox1.Text += $"# Solve Using {SolverName}\n\n{string.Join("\n\n", steps)}\n\n";
                 tableu = newTableu;
             }
-            catch (Exception err) { Console.WriteLine(err.ToString()); }
+            catch (Exception err) 
+            { 
+                Console.WriteLine(err.ToString()); 
+            }
+        }
+
+        private void sensitivityAnalysisToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var analysis = SensitivityAnalysis.Analise(tableu.Copy());
+                richTextBox1.Text += $"{analysis}\n\n";
+            }
+            catch (Exception err) 
+            { 
+                Console.WriteLine(err.ToString()); 
+            }
         }
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
@@ -58,7 +75,7 @@ namespace LPR381
             {
                 tableu = Tableu.FromFile(openFileDialog1.FileName);
                 textBox1.Text = openFileDialog1.FileName.Split('\\').Last();
-                richTextBox1.Text = $"{tableu}\n";
+                richTextBox1.Text = $"{Tableu.FromFileCanonicalForm(openFileDialog1.FileName)}\n\n# Tableu\n\n{tableu}\n\n";
             }
             catch (Exception ex)
             {
