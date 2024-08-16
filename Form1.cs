@@ -43,10 +43,10 @@ namespace LPR381
         
         private void solveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            try 
+            try
             {
                 var newTableu = tableu.Copy();
-                var steps = Solver(newTableu).ToArray();
+                var steps = Solver(newTableu);
                 richTextBox1.Text += $"# Solve Using {SolverName}\n\n{string.Join("\n\n", steps)}\n\n";
                 tableu = newTableu;
             }

@@ -98,16 +98,16 @@ namespace LPR381.LP
             InitialTable = InitialTable ?? Copy();
             TableIteration++;
             double pivot = Values[rowI, colI];
-            for (int j = 0; j < Values.GetLength(1); j++)
+            for (int j = 0; j < Width; j++)
             {
                 Values[rowI, j] /= pivot;
             }
-            for (int i = 0; i < Values.GetLength(0); i++)
+            for (int i = 0; i < Height; i++)
             {
                 if (i == rowI)
                     continue;
                 double factor = Values[i, colI];
-                for (int j = 0; j < Values.GetLength(1); j++)
+                for (int j = 0; j < Width; j++)
                 {
                     Values[i, j] -= factor * Values[rowI, j];
                 }
@@ -117,18 +117,18 @@ namespace LPR381.LP
 
         public void AddRow(double[] newRow, string name = null)
         {
-            if (newRow.Length != Values.GetLength(0))
-                throw new ArgumentException($"New row must have {Values.GetLength(0)} values");
+            if (newRow.Length != Width)
+                throw new ArgumentException($"New row must have {Width} values");
             var oldValues = Values;
             Values = new double[Height + 1, Width];
             int i = 0;
             for (; i < Height - 1; i++)
-                for (int j = 0; i < Width; j++)
+                for (int j = 0; j < Width; j++)
                     Values[i, j] = oldValues[i, j];
             for (; i < Height; i++)
-                for (int j = 0; i < Width; j++)
+                for (int j = 0; j < Width; j++)
                     Values[i, j] = newRow[j];
-            RowNames.Append(name ?? $"c{RowNames.Length}");
+            RowNames = RowNames.Append(name ?? $"c{RowNames.Length}").ToArray();
         }
 
         public void RemoveRow(int rowI)
@@ -162,8 +162,8 @@ namespace LPR381.LP
             for (; j < Width; j++)
                 for (int i = 0; i < Height; i++)
                     Values[i, j] = oldValues[i, j];
-            ColumnNames.Append(name ?? $"s{Height}");
-            ColumnRestrictions.Append(restriction);
+            ColumnNames = ColumnNames.Append(name ?? $"s{Height}").ToArray();
+            ColumnRestrictions = ColumnRestrictions.Append(restriction).ToArray();
         }
 
         public void RemoveColumn(int colI)

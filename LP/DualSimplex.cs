@@ -39,7 +39,7 @@ namespace LPR381.LP
                 // get pivot column
                 int pivotJ = -1;
                 double minRatio = double.PositiveInfinity;
-                for (int j = 0; j < tableu.Width; j++)
+                for (int j = 0; j < tableu.Width - 1; j++)
                 {
                     var ratio = Math.Abs(tableu.Values[0, j] / tableu.Values[pivotI, j]);
                     if (ratio < minRatio)
@@ -47,6 +47,12 @@ namespace LPR381.LP
                         minRatio = ratio;
                         pivotI = j;
                     }
+                }
+
+                if (pivotJ == -1)
+                {
+                    steps.Add("Infeasible");
+                    break;
                 }
 
                 // Pivot
