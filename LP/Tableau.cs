@@ -32,8 +32,8 @@ namespace LPR381.LP
 
         public Tableau(int height = 2, int width = 3, bool maxElseMin = true)
         {
-            RowNames /*           */ = Enumerable.Range(1, height).Select(i => $"c{i}").Prepend(maxElseMin ? "max z" : "min z").ToArray();
-            ColumnNames /*        */ = Enumerable.Range(1, width).Select(j => $"x{j}").Append("rhs").ToArray();
+            RowNames /*           */ = Enumerable.Range(1, height - 1).Select(i => $"c{i}").Prepend(maxElseMin ? "max z" : "min z").ToArray();
+            ColumnNames /*        */ = Enumerable.Range(1, width - 1).Select(j => $"x{j}").Append("rhs").ToArray();
             ColumnRestrictions /* */ = Enumerable.Repeat("+", width).ToArray();
             Values /*             */ = new double[height, width];
             TableIteration /*     */ = 0;
