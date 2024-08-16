@@ -61,7 +61,7 @@ namespace LPR381.LP
         {
             var result = new StringBuilder();
             result.AppendLine("Optimal Solution:");
-            double optimalValue = -tableu.Values[0, tableu.Width - 1]; // Extract optimal value from RHS of objective row
+            double optimalValue = tableu.Values[0, tableu.Width - 1]; // Extract optimal value from RHS of objective row
             result.AppendLine($"Optimal Value: {optimalValue:F3}");
 
             // Extract values of decision variables from the final tableau
