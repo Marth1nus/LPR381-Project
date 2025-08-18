@@ -2,14 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 
@@ -23,6 +19,7 @@ namespace LPR381
             { "Branch and Bound", BranchAndBound.Solve },
             { "Branch and Bound Knapsack", BranchAndBoundKnapsack.Solve },
             { "Cutting Plane", CuttingPlane.Solve },
+            { "Dual Simplex", PrimalSimplex.Solve },
             { "Primal Simplex", PrimalSimplex.Solve },
         };
         private Tableau tableau;
