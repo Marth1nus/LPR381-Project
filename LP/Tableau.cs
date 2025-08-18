@@ -49,20 +49,29 @@ namespace LPR381.LP
             InitialTable /*       */ = InitialTable
         };
 
-        public int GetBasicVariableI(int j)
+        public int? GetBasicVariableI(int j)
         {
             if (!(0 <= j && j < Width - 1))
                 throw new ArgumentOutOfRangeException($"{nameof(j)} must be in range [{0}..{Width - 2}]");
-            int indexOf1 = -1;
-            var column = Enumerable.Range(0, Height).Select(i => (v: Values[i, j], i)).Skip(1);
-            return column.All(p =>
-                p.v == 0.0 ||
-                p.v == 1.0 && indexOf1 == -1 && (indexOf1 = p.i) != -1
-            ) ? indexOf1 : -1;
+            int? indexOf1 = null;
+            for (int i = 0; i < Height; i++)
+            {
+                /**/
+                if (Values[i, j] == 1.0)
+                {
+                    if (indexOf1 != null)
+                        return null;
+                    indexOf1 = i;
+                    continue;
+                }
+                else if (Values[i, j] != 0.0)
+                    return null;
+            }
+            return indexOf1;
         }
 
         public double GetVariableValue(int j) /*          */ => GetBasicVariableValue(j) ?? 0.0;
-        public double? GetBasicVariableValue(int j) /*    */ { var i = GetBasicVariableI(j); return i < 0 ? (double?)null : Values[i, Width - 1]; }
+        public double? GetBasicVariableValue(int j) /*    */ { var optI = GetBasicVariableI(j); return !optI.HasValue ? (double?)null : Values[optI.Value, Width - 1]; }
         public double? GetNonBasicVariableValue(int j) /* */ => GetBasicVariableValue(j).HasValue ? (double?)null : 0.0;
 
         public bool IsVariable(int j) /*         */ => 0 <= j && j < Width - 1;
@@ -112,7 +121,7 @@ namespace LPR381.LP
                     Values[i, j] -= factor * Values[rowI, j];
                 }
             }
-            return $"Pivot on {RowNames[rowI]}, {ColumnNames[colI]}\n\n{this}";
+            return $"Pivot on **{RowNames[rowI]}**, **{ColumnNames[colI]}**\n\n{this}";
         }
 
         public void AddRow(double[] newRow, string name = null)
