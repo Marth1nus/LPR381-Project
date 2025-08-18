@@ -18,9 +18,10 @@ namespace LPR381.LP
         public double[,] Values { get; set; } // contains Width, Height, and the values in the tableau.
         public int TableIteration { get; set; } // Just keeps track of how many pivots have been done.
         public Tableau InitialTable { get; set; } // Tracks The intial table
-        public int Height => Values.GetLength(0); 
-        public int Width => Values.GetLength(1); 
-        public double ObjectiveValue => Values[0, Width - 1]; 
+        public bool MarkedInfeasible { get; set; } = false; // Used to mark infeasible solutions
+        public int Height => Values.GetLength(0);
+        public int Width => Values.GetLength(1);
+        public double ObjectiveValue => Values[0, Width - 1];
         public double this[int i, int j] { get => Values[i, j]; set => Values[i, j] = value; }
 
         // Assume Values[, Width-1] is the RHS column
@@ -45,18 +46,39 @@ namespace LPR381.LP
             InitialTable /*       */ = InitialTable
         };
 
-        public (int? i, int?j) getInoptimal()
+        public (int i, bool feasible)? GetDualInoptimal()
         {
             for (int i = 1; i < Height; i++)
+            {
                 if (Values[i, Width - 1] < 0.0)
-                    return (i, null);
-            for (int j = 0; j < Width - 1; j++)
-                if (Values[0, j /*   */] < 0.0)
-                    return (null, j);
-            return (null, null);
+                {
+                    int NegativeCount = 0;
+                    for (int j = 0; j < Width; j++)
+                        if (Values[i, j] < 0.0)
+                            NegativeCount++;
+                    return (i, NegativeCount > 0);
+                }
+            }
+            return null; // Dual Optimal
         }
-        public bool isOptimal { get { var inoptimal = getInoptimal(); return inoptimal.i == null && inoptimal.j == null; } }
-        public bool isInoptimal => !isOptimal;
+        public bool IsDualOptimal => GetDualInoptimal() == null;
+        public bool IsDualInoptimal => !IsDualOptimal;
+        public bool IsDualFeasible => GetDualInoptimal().GetValueOrDefault((0, true)).feasible;
+        public bool IsDualInfeasible => !IsDualFeasible;
+
+        public (int j, bool feasible, bool dualNeeded)? GetPrimalInoptimal()
+        {
+            if (!IsDualOptimal)
+                return (-1, false, true); // Dual Simplex needed
+            for (int j = 0; j < Width - 1; j++)
+                if (Values[0, j] < 0.0)
+                    return (j, true, false);
+            return null; // Primal Optimal
+        }
+        public bool IsPrimalOptimal => GetPrimalInoptimal() == null;
+        public bool IsPrimalInoptimal => !IsPrimalOptimal;
+        public bool IsPrimalFeasible => GetPrimalInoptimal().GetValueOrDefault((0, true, false)).feasible;
+        public bool IsPrimalInfeasible => !IsPrimalFeasible;
 
         public int? GetBasicVariableI(int j)
         {
@@ -65,7 +87,6 @@ namespace LPR381.LP
             int? indexOf1 = null;
             for (int i = 0; i < Height; i++)
             {
-                /**/
                 if (Values[i, j] == 1.0)
                 {
                     if (indexOf1 != null)
@@ -372,7 +393,7 @@ namespace LPR381.LP
             if (!(to.GetLength(1) <= toStartJ + CountJ)) throw new ArgumentOutOfRangeException($"Out of Range");
             if (!(from.GetLength(0) <= fromStartI + CountI)) throw new ArgumentOutOfRangeException($"Out of Range");
             if (!(from.GetLength(1) <= fromStartJ + CountJ)) throw new ArgumentOutOfRangeException($"Out of Range");
-            for (int i = 0; i < CountI; i++) 
+            for (int i = 0; i < CountI; i++)
                 for (int j = 0; j < CountJ; j++)
                     to[toStartI + i, toStartJ + j] = from[fromStartI + i, fromStartJ + j];
             return to;
