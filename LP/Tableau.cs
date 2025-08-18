@@ -45,6 +45,19 @@ namespace LPR381.LP
             InitialTable /*       */ = InitialTable
         };
 
+        public (int? i, int?j) getInoptimal()
+        {
+            for (int i = 1; i < Height; i++)
+                if (Values[i, Width - 1] < 0.0)
+                    return (i, null);
+            for (int j = 0; j < Width - 1; j++)
+                if (Values[0, j /*   */] < 0.0)
+                    return (null, j);
+            return (null, null);
+        }
+        public bool isOptimal { get { var inoptimal = getInoptimal(); return inoptimal.i == null && inoptimal.j == null; } }
+        public bool isInoptimal => !isOptimal;
+
         public int? GetBasicVariableI(int j)
         {
             if (!(0 <= j && j < Width - 1))
