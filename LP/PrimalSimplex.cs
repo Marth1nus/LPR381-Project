@@ -36,7 +36,11 @@ namespace LPR381.LP
                 {
                     if (tableau[i, pivotColumn] > 0)
                     {
-                        double ratio = tableau[i, tableau.Width - 1] / tableau[i, pivotColumn];
+                        double numerator   = tableau[i, tableau.Width - 1],
+                               demoninator = tableau[i, pivotColumn],
+                               ratio       = numerator / demoninator;
+                        if (ratio < 0) continue;
+                        if (ratio == 0 && (numerator < 0) != (demoninator < 0)) continue;
                         if (ratio < minRatio)
                         {
                             minRatio = ratio;
