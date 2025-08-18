@@ -34,13 +34,16 @@ namespace LPR381.LP
 
                 // get pivot column
                 int pivotJ = -1;
-                double minRatio = double.PositiveInfinity;
+                double minAbsRatio = double.PositiveInfinity;
                 for (int j = 0; j < tableau.Width - 1; j++)
                 {
-                    var ratio = Math.Abs(tableau[0, j] / tableau[pivotI, j]);
-                    if (ratio < minRatio)
+                    double numerator = tableau[0, j],
+                           demoninator = tableau[pivotI, j],
+                           absRatio = Math.Abs(numerator / demoninator);
+                    if (demoninator >= 0) continue;
+                    if (absRatio < minAbsRatio)
                     {
-                        minRatio = ratio;
+                        minAbsRatio = absRatio;
                         pivotI = j;
                     }
                 }
@@ -70,10 +73,11 @@ namespace LPR381.LP
                 if (!Enumerable.Range(0, tableau.Height).Skip(1).Select(i => (v: tableau[i, j], i))
                     .All(p => p.v == 0.0 || p.v == -1.0 && indexOfNegative1 == -1 && (indexOfNegative1 = p.i) != -1))
                     continue;
-                steps?.Add($"Multiply row {indexOfNegative1} by -1\n{tableau}");
                 // Multiply the row by -1
                 for (int k = 0; k < tableau.Width; k++)
                     tableau[indexOfNegative1, k] *= -1;
+                steps?.Add($"Multiplied row **{tableau.RowNames[indexOfNegative1]}** by -1\nTo make **{tableau.ColumnNames[j]}** basic\n{tableau}");
+                madeChanges = true;
             }
             return (tableau, madeChanges);
         }
