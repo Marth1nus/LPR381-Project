@@ -151,7 +151,7 @@ namespace LPR381.LP
             for (; i < Height; i++)
                 for (int j = 0; j < Width; j++)
                     Values[i, j] = newRow[j];
-            RowNames = RowNames.Append(name ?? $"c{RowNames.Length}").ToArray();
+            RowNames = RowNames.Append(name ?? $"c{Height - 1}").ToArray();
         }
 
         public void RemoveRow(int rowI)
@@ -185,7 +185,8 @@ namespace LPR381.LP
             for (; j < Width; j++)
                 for (int i = 0; i < Height; i++)
                     Values[i, j] = oldValues[i, j - 1];
-            ColumnNames = ColumnNames.Append(name ?? $"s{Height}").ToArray();
+            var columnNamesLast = ColumnNames.Length > 0 ? ColumnNames.Last() : "rhs";
+            ColumnNames = ColumnNames.Take(ColumnNames.Length - 1).Append(name ?? $"s{Height}").Append(columnNamesLast).ToArray();
             ColumnRestrictions = ColumnRestrictions.Append(restriction).ToArray();
         }
 
