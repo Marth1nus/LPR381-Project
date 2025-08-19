@@ -100,25 +100,9 @@ namespace LPR381.LP
             return indexOf1;
         }
 
-        public double GetVariableValue(int j) /*          */ => GetBasicVariableValue(j) ?? 0.0;
-        public double? GetBasicVariableValue(int j) /*    */ { var optI = GetBasicVariableI(j); return !optI.HasValue ? (double?)null : Values[optI.Value, Width - 1]; }
-        public double? GetNonBasicVariableValue(int j) /* */ => GetBasicVariableValue(j).HasValue ? (double?)null : 0.0;
-
-        public bool IsVariable(int j) /*         */ => 0 <= j && j < Width - 1;
-        public bool IsBasicVariable(int j) /*    */ => GetBasicVariableValue(j).HasValue;
-        public bool IsNonBasicVariable(int j) /* */ => GetNonBasicVariableValue(j).HasValue;
-
-        public IEnumerable<int> GetVariableIndices() /*         */ => Enumerable.Range(0, Width - 1);
-        public IEnumerable<int> GetBasicVariableIndices() /*    */ => GetVariableIndices().Where(IsBasicVariable);
-        public IEnumerable<int> GetNonBasicVariableIndices() /* */ => GetVariableIndices().Where(IsNonBasicVariable);
-
-        public IEnumerable<double> GetVariableValues() /*         */ => GetVariableIndices().Select(GetVariableValue);
-        public IEnumerable<double> GetBasicVariableValues() /*    */ => GetVariableIndices().Select(GetBasicVariableValue).Where(v => v.HasValue).Select(v => v.Value);
-        public IEnumerable<double> GetNonBasicVariableValues() /* */ => GetVariableIndices().Select(GetNonBasicVariableValue).Where(v => v.HasValue).Select(v => v.Value);
-
-        public Dictionary<string, double> GetVariableValuesNamed() /*         */ => GetVariableValues().Select((v, j) => (key: ColumnNames[j], value: v)).ToDictionary(p => p.key, p => p.value);
-        public Dictionary<string, double> GetBasicVariableValuesNamed() /*    */ => GetBasicVariableValues().Select((v, j) => (key: ColumnNames[j], value: v)).ToDictionary(p => p.key, p => p.value);
-        public Dictionary<string, double> GetNonBasicVariableValuesNamed() /* */ => GetNonBasicVariableValues().Select((v, j) => (key: ColumnNames[j], value: v)).ToDictionary(p => p.key, p => p.value);
+        public IEnumerable<int> GetVariableIndices() => Enumerable.Range(0, Width - 1);
+        public IEnumerable<int> GetBasicVariableIndices() => GetVariableIndices().Where(j => GetBasicVariableI(j).HasValue);
+        public IEnumerable<int> GetNonBasicVariableIndices() => GetVariableIndices().Where(j => !GetBasicVariableI(j).HasValue);
 
         public void ValidateLengths()
         {
