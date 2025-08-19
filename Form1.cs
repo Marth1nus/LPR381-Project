@@ -19,7 +19,7 @@ namespace LPR381
             { "Branch and Bound", BranchAndBound.Solve },
             { "Branch and Bound Knapsack", BranchAndBoundKnapsack.Solve },
             { "Cutting Plane", CuttingPlane.Solve },
-            { "Dual Simplex", PrimalSimplex.Solve },
+            { "Dual Simplex", DualSimplex.Solve },
             { "Primal Simplex", PrimalSimplex.Solve },
         };
         private Tableau tableau;
@@ -45,6 +45,11 @@ namespace LPR381
         {
             try
             {
+                if (tableau == null)
+                {
+                    richTextBox1.Text += "No tableau loaded.\n\n";
+                    return;
+                }
                 var newTableau = tableau.Copy();
                 var steps = Solver(newTableau);
                 richTextBox1.Text += $"# Solve Using {SolverName}\n\n{string.Join("\n\n", steps)}\n\n";
@@ -60,6 +65,11 @@ namespace LPR381
         {
             try
             {
+                if (tableau == null)
+                {
+                    richTextBox1.Text += "No tableau loaded.\n\n";
+                    return;
+                }
                 var analysis = SensitivityAnalysis.Analise(tableau.Copy());
                 richTextBox1.Text += $"# Sensitivity Analysis\n\n{analysis}\n\n";
             }
