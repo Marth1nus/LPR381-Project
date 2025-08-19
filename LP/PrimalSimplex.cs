@@ -8,8 +8,8 @@ namespace LPR381.LP
         // Solve method implements Primal Simplex algorithm
         public static List<string> Solve(Tableau tableau)
         {
-            var steps = new List<string>(); 
-            while (true)
+            var steps = new List<string> { "Start Primal Simplex" };
+            for (int iteration = 0; iteration < 128; iteration++)
             {
                 //  Check for optimality by looking at the objective row
                 int pivotColumn = -1;
@@ -25,7 +25,7 @@ namespace LPR381.LP
                 {
                     // If no negative entries in objective row, optimal solution is found
                     steps.Add(ConstructSolution(tableau));
-                    return steps;
+                    break;
                 }
 
                 // Determine the pivot row using the minimum ratio test
@@ -51,12 +51,14 @@ namespace LPR381.LP
                 {
                     // If no valid pivot row is found, the solution is unbounded
                     steps.Add("Unbounded solution");
-                    return steps;
+                    break;
                 }
 
                 // Perform the pivot operation
                 steps.Add(tableau.Pivot(pivotRow, pivotColumn));
             }
+            steps.Add("End Primal Simplex");
+            return steps;
         }
 
         // Constructs and returns a string representation of the optimal solution
@@ -65,7 +67,7 @@ namespace LPR381.LP
             var result = new StringBuilder();
             result.AppendLine("Optimal Solution:");
             double optimalValue = tableau[0, tableau.Width - 1]; // Extract optimal value from RHS of objective row
-            result.AppendLine($"Optimal Value: {optimalValue:F3}");
+            result.AppendLine($"Optimal Value: {optimalValue:0.###}");
 
             // Extract values of decision variables from the final tableau
             for (int j = 0; j < tableau.Width - 1; j++)
@@ -80,7 +82,7 @@ namespace LPR381.LP
                         break;
                     }
                 }
-                result.AppendLine($"{varName} = {varValue:F3}");
+                result.AppendLine($"{varName} = {varValue:0.###}");
             }
             return result.ToString();
         }

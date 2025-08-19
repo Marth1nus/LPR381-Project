@@ -8,25 +8,21 @@ namespace LPR381.LP
     {
         public static List<String> Solve(Tableau tableau)
         {
-            var steps = new List<String>();
+            var steps = new List<String>() { "Start Dual Simplex" };
             DualFrom(tableau, steps);
-            bool first = true;
-            while (true)
+            for (int iteration = 0; iteration < 128; iteration++)
             {
                 // get pivot row IndexMin(rhs)
-                int pivotI = 1;
-                for (int i = 1 + pivotI; i < tableau.Height; i++)
+                int pivotI = 1; // start after objective row and find min value
+                for (int i = 2; i < tableau.Height; i++)
                     if (tableau[i, tableau.Width - 1] < tableau[pivotI, tableau.Width - 1])
                         pivotI = i;
 
                 // break if all rhs are positive
-                if (tableau[pivotI, tableau.Width - 1] >= 0)
-                    break;
-
-                if (first)
+                if (tableau[pivotI, tableau.Width - 1] >= 0.0)
                 {
-                    steps.Add("Start Dual Simplex");
-                    first = false;
+                    steps.Add("All rhs values are positive");
+                    break;
                 }
 
                 // get pivot column
@@ -41,22 +37,20 @@ namespace LPR381.LP
                     if (absRatio < minAbsRatio)
                     {
                         minAbsRatio = absRatio;
-                        pivotI = j;
+                        pivotJ = j;
                     }
                 }
 
                 if (pivotJ == -1)
                 {
-                    steps.Add($"Infeasible. Ratio Test has no valid minimum.\nrow:{tableau.RowNames[pivotI]}\n\n{tableau}");
+                    steps.Add($"Infeasible. Ratio Test has no valid minimum.\nrow:{tableau.RowNames[pivotI]}");
                     break;
                 }
 
                 // Pivot
                 steps.Add(tableau.Pivot(pivotI, pivotJ));
             }
-
-            if (!first)
-                steps.Add("End Dual Simplex");
+            steps.Add("End Dual Simplex");
             return steps;
         }
 
