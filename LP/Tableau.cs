@@ -205,18 +205,35 @@ namespace LPR381.LP
             }
         }
 
+        public int AddBinaryLessThanOneConstraints()
+        {
+            int heightBeforeAdding = Height;
+            for (int j = 0; j < Width - 1; j++)
+            {
+                if (ColumnRestrictions[j] != "bin")
+                    continue;
+                AddColumn(new double[Height], $"s{Height}", "+");
+                var newRow = new double[Width];
+                newRow[j /*   */] = 1; // decision variable
+                newRow[Width - 2] = 1; // slack variable
+                newRow[Width - 1] = 1; // RHS
+                AddRow(newRow, $"c{Height}");
+            }
+            return Height - heightBeforeAdding;
+        }
+
         public override string ToString()
         {
             const int colWidth = 6; // "00.000".Length
             StringBuilder sb = new StringBuilder();
             /* | T1     |     x1 |     s1 |    rhs | */
-            sb.Append($"| T{TableIteration,1 - colWidth} ");
+            sb.Append($"| T{TableIteration, 1 - colWidth} ");
             for (int j = 0; j < Width; j++)
-                sb.Append($"| {ColumnNames[j],colWidth} ");
+                sb.Append($"| {ColumnNames[j] + "   ", colWidth} ");
             sb.AppendLine($"|");
-            /* | -----: | -----: | -----: | -----: | */
+            /* | ------ | ------ | ------ | ------ | */
             for (int j = 0; j < Width + 1; j++)
-                sb.Append($"| {"-----:",colWidth} ");
+                sb.Append($"| {"------",colWidth} ");
             sb.AppendLine($"|");
             /* |  max Z | 00.000 | 00.000 | 00.000 | */
             /* |     C1 | 00.000 | 00.000 | 00.000 | */
@@ -224,13 +241,22 @@ namespace LPR381.LP
             {
                 sb.Append($"| {RowNames[i],colWidth} ");
                 for (int j = 0; j < Width; j++)
-                    sb.Append($"| {Values[i, j].ToString("F3", CultureInfo.InvariantCulture),colWidth} ");
+                {
+                    var valueString = Values[i, j].ToString("0.###");
+                    var valueStringIndexOfDot = valueString.IndexOf(".");
+                    if (valueStringIndexOfDot == -1) 
+                        valueStringIndexOfDot = valueString.Length;
+                    var valueStringTargetLength= valueStringIndexOfDot + 3;
+                    for (int k = valueString.Length; k < valueStringTargetLength; k++)
+                        valueString += " ";
+                    sb.Append($"| {valueString, colWidth} ");
+                }
                 sb.AppendLine($"|");
             }
             /* |   Sign |    int |      + |        | */
             sb.Append($"| {"",colWidth} ");
             for (int j = 0; j < Width; j++)
-                sb.Append($"| {(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : ""),colWidth} ");
+                sb.Append($"| {(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : "") + "   ", colWidth} ");
             sb.AppendLine($"|");
             return sb.ToString();
         }
@@ -346,6 +372,7 @@ namespace LPR381.LP
                 Values /*             */ = values,
                 TableIteration /*     */ = 0
             };
+            res.AddBinaryLessThanOneConstraints();
             res.InitialTable = res.Copy();
             return res;
         }
