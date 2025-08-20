@@ -31,9 +31,9 @@ namespace LPR381.LP
                 for (int j = 0; j < tableau.Width - 1; j++)
                 {
                     double numerator = tableau[0, j],
-                           demoninator = tableau[pivotI, j],
-                           absRatio = Math.Abs(numerator / demoninator);
+                           demoninator = tableau[pivotI, j];
                     if (demoninator >= 0) continue;
+                    double absRatio = Math.Abs(numerator / demoninator);
                     if (absRatio < minAbsRatio)
                     {
                         minAbsRatio = absRatio;
@@ -43,7 +43,7 @@ namespace LPR381.LP
 
                 if (pivotJ == -1)
                 {
-                    steps.Add($"Infeasible. Ratio Test has no valid minimum.\nrow:{tableau.RowNames[pivotI]}");
+                    steps.Add($"Infeasible. Ratio Test has no valid minimum.\nrow:**{tableau.RowNames[pivotI]}**");
                     break;
                 }
 
