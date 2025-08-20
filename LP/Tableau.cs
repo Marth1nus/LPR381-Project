@@ -45,6 +45,29 @@ namespace LPR381.LP
             InitialTable /*       */ = InitialTable
         };
 
+        public int? GetFirstConstraintViolationJ(int jStart = 0)
+        {
+            for (int j = jStart; j < Width - 1; j++)
+            {
+                var optionalI = GetBasicVariableI(j);
+                var value = optionalI.HasValue ? Values[optionalI.Value, Width - 1]
+                                               : /* non basic variable: */ 0;
+                switch (ColumnRestrictions[j])
+                {
+                    case   "+": if (value >= 0.0) break; else return j;
+                    case   "-": if (value <= 0.0) break; else return j;
+                    case    "":
+                    case "urs": break;
+                    case "int": if (value == Math.Floor(value)) break; else return j;
+                    case "bin": if (value == 0.0 || value == 1) break; else return j;
+                    default   : throw new Exception($"Invalid restriction {ColumnRestrictions[j]} at column {j}");
+                }
+            }
+            return null;
+        }
+        public bool IsConstraintsSatisfied => GetFirstConstraintViolationJ() == null;
+        public bool IsConstraintsDissatisfied => !IsConstraintsSatisfied;
+
         public (int i, bool feasible)? GetDualInoptimal()
         {
             for (int i = 1; i < Height; i++)
