@@ -44,6 +44,18 @@ namespace LPR381.LP
             InitialTable /*       */ = InitialTable
         };
 
+        public Tableau Assign(Tableau other)
+        {
+            if (other == null) throw new ArgumentNullException(nameof(other));
+            RowNames /*           */ = other.RowNames.ToArray();
+            ColumnNames /*        */ = other.ColumnNames.ToArray();
+            ColumnRestrictions /* */ = other.ColumnRestrictions.ToArray();
+            Values /*             */ = Copy(other.Values);
+            TableIteration /*     */ = other.TableIteration;
+            InitialTable /*       */ = other.InitialTable;
+            return this;
+        }
+
         public int? GetFirstConstraintViolationJ(int jStart = 0)
         {
             for (int j = jStart; j < Width - 1; j++)
@@ -154,7 +166,7 @@ namespace LPR381.LP
                 for (int j = 0; j < Width; j++)
                 {
                     Values[i, j] -= factor * Values[rowI, j];
-                }
+            }
             }
             return $"Pivot on **{RowNames[rowI]}**, **{ColumnNames[colI]}**\n\n{this}";
         }
@@ -286,7 +298,7 @@ namespace LPR381.LP
         {
             // TODO: canonical form out param
             var lines = File.ReadAllLines(filename, Encoding.UTF8)
-                .Select(line => Regex.Split(line, @"\s+"))
+                .Select(line => Regex.Split(line.Trim(), @"\s+"))
                 .ToArray();
             if (lines.Length < 2)
                 throw new Exception("Too Few Rows");
@@ -403,7 +415,7 @@ namespace LPR381.LP
             var canonicalForm = "";
             var (objectiveLine, constraintLines, restrictionsLine) = FromFileValidateFile(filename);
             canonicalForm += $"# Canonical Form";
-            canonicalForm += $"\n\n## Objective\n\n{objectiveLine[0]} z = {string.Join(" + ", objectiveLine.Skip(1).Select((col, j) => $"{-double.Parse(col)}x{1 + j}"))}";
+            canonicalForm += $"\n\n## Objective\n\n{objectiveLine[0]} z = {string.Join(" + ", objectiveLine.Skip(1).Select((col, j) => $"{double.Parse(col)}x{1 + j}"))}";
             canonicalForm += $"\n\n## Constraints\n\n" + string.Join("\n", constraintLines.Select((line, i) =>
                 string.Join(" + ", line.Take(line.Length - 1).Select((col, j) => $"{double.Parse(col)}x{1 + j}")) +
                 (line.Last().StartsWith("=") || line.Last().StartsWith("<=") ? $" + s{1 + i}" : "") +
