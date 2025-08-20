@@ -65,9 +65,9 @@ namespace LPR381.LP
         private static string ConstructSolution(Tableau tableau)
         {
             var result = new StringBuilder();
-            result.AppendLine("Optimal Solution:");
+            result.AppendLine("Optimal Solution:  ");
             double optimalValue = tableau[0, tableau.Width - 1]; // Extract optimal value from RHS of objective row
-            result.AppendLine($"Optimal Value: {optimalValue:0.###}");
+            result.AppendLine($"Optimal Value: {optimalValue:0.###}  ");
 
             // Extract values of decision variables from the final tableau
             for (int j = 0; j < tableau.Width - 1; j++)
@@ -82,7 +82,7 @@ namespace LPR381.LP
                         break;
                     }
                 }
-                result.AppendLine($"{varName} = {varValue:0.###}");
+                result.AppendLine($"{varName} = {varValue:0.###}  ");
             }
             return result.ToString();
         }
