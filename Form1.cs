@@ -45,24 +45,31 @@ namespace LPR381
         {
             try
             {
+                label4.Text = "";
+                label4.ForeColor = System.Drawing.Color.Black;
                 if (tableau == null)
                 {
-                    richTextBox1.Text += "No tableau loaded.\n\n";
+                    richTextBox1.Text += "> No tableau loaded.\n\n";
                     return;
                 }
                 var newTableau = tableau.Copy();
                 var steps = Solver(newTableau);
-                richTextBox1.Text += $"# Solve Using {SolverName}\n\n{string.Join("\n\n", steps)}\n\n";
+                var stepString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
+                richTextBox1.Text += $"# Solve Using {SolverName}\n\n{stepString}\n\n";
                 tableau = newTableau;
             }
             catch (Exception err)
             {
                 Console.WriteLine(err.ToString());
+                label4.Text = "Error";
+                label4.ForeColor = System.Drawing.Color.Red;
             }
         }
 
         private void sensitivityAnalysisToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            label5.Text = "";
+            label5.ForeColor = System.Drawing.Color.Black;
             try
             {
                 if (tableau == null)
@@ -75,7 +82,9 @@ namespace LPR381
             }
             catch (Exception err) 
             { 
-                Console.WriteLine(err.ToString()); 
+                Console.WriteLine(err.ToString());
+                label5.Text = "Error";
+                label5.ForeColor = System.Drawing.Color.Red;
             }
         }
 
