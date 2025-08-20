@@ -17,7 +17,6 @@ namespace LPR381.LP
         public double[,] Values { get; set; } // contains Width, Height, and the values in the tableau.
         public int TableIteration { get; set; } // Just keeps track of how many pivots have been done.
         public Tableau InitialTable { get; set; } // Tracks The intial table
-        public bool MarkedInfeasible { get; set; } = false; // Used to mark infeasible solutions
         public int Height => Values.GetLength(0);
         public int Width => Values.GetLength(1);
         public double ObjectiveValue => Values[0, Width - 1];
@@ -247,16 +246,17 @@ namespace LPR381.LP
 
         public override string ToString()
         {
-            const int colWidth = 6; // "00.000".Length
+            const int colWidth = 8, // "-000.000".Length
+                      decimalLength = 4;
             StringBuilder sb = new StringBuilder();
             /* | T1     |     x1 |     s1 |    rhs | */
             sb.Append($"| T{TableIteration, 1 - colWidth} ");
             for (int j = 0; j < Width; j++)
-                sb.Append($"| {ColumnNames[j] + "   ", colWidth} ");
+                sb.Append($"| {ColumnNames[j].PadLeft(colWidth-decimalLength), -colWidth} ");
             sb.AppendLine($"|");
             /* | ------ | ------ | ------ | ------ | */
             for (int j = 0; j < Width + 1; j++)
-                sb.Append($"| {"------",colWidth} ");
+                sb.Append($"| {"-:".PadLeft(colWidth, '-')} ");
             sb.AppendLine($"|");
             /* |  max Z | 00.000 | 00.000 | 00.000 | */
             /* |     C1 | 00.000 | 00.000 | 00.000 | */
@@ -269,17 +269,15 @@ namespace LPR381.LP
                     var valueStringIndexOfDot = valueString.IndexOf(".");
                     if (valueStringIndexOfDot == -1) 
                         valueStringIndexOfDot = valueString.Length;
-                    var valueStringTargetLength= valueStringIndexOfDot + 3;
-                    for (int k = valueString.Length; k < valueStringTargetLength; k++)
-                        valueString += " ";
-                    sb.Append($"| {valueString, colWidth} ");
+                    var valueStringTargetLength= valueStringIndexOfDot + decimalLength;
+                    sb.Append($"| {valueString.PadRight(valueStringTargetLength), colWidth} ");
                 }
                 sb.AppendLine($"|");
             }
             /* |   Sign |    int |      + |        | */
             sb.Append($"| {"",colWidth} ");
             for (int j = 0; j < Width; j++)
-                sb.Append($"| {(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : "") + "   ", colWidth} ");
+                sb.Append($"| {(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : "").PadLeft(colWidth - decimalLength), -colWidth} ");
             sb.AppendLine($"|");
             return sb.ToString();
         }
