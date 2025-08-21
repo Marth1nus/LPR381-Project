@@ -160,13 +160,20 @@ namespace LPR381.LP
             }
             for (int i = 0; i < Height; i++)
             {
-                if (i == rowI)
+                if (i == rowI) 
                     continue;
                 double factor = Values[i, colI];
                 for (int j = 0; j < Width; j++)
                 {
                     Values[i, j] -= factor * Values[rowI, j];
+                }
             }
+            for (int i = 0; i < Height; i++)
+            {
+                for (int j = 0; j < Width; j++)
+                {
+                    Values[i, j] = Math.Round(Values[i, j], 12);
+                }
             }
             return $"Pivot on **{RowNames[rowI]}**, **{ColumnNames[colI]}**\n\n{this}";
         }
