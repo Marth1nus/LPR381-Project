@@ -100,76 +100,37 @@ namespace LPR381.LP
             var fraction = tableau[fractionI, tableau.Width - 1];
             steps.Add($"[{problemName}] Branch on **{tableau.ColumnNames[fractionJ]}**={fraction}");
 
-            //// Branch on floor
-            //tableau = tableauParent.Copy();
-            //problemName = problemNameParent + ".1";
-            //if (problemName.StartsWith("."))
-            //    problemName = problemName.Substring(1);
-            //tableau.AddColumn(new double[tableau.Height], $"s{tableau.Height}", "+");
-            //tableau.AddRow(new double[tableau.Width], $"c{tableau.Height}");
-            //tableau[tableau.Height - 1, fractionJ /*  */ ] = 1.0;
-            //tableau[tableau.Height - 1, tableau.Width - 2] = 1.0;
-            //tableau[tableau.Height - 1, tableau.Width - 1] = Math.Floor(fraction);
-            //steps.Add($"[{problemName}] Branch **{tableau.ColumnNames[fractionJ]}**<={Math.Floor(fraction)}\n\n{tableau}");
-            //for (int j = 0; j < tableau.Width; j++)
-            //    tableau[tableau.Height - 1, j] = tableau[tableau.Height - 1, j] - tableau[fractionI, j];
-            //steps.Add($"[{problemName}] Restore basic variable (new=new-old)\n\n{tableau}");
-            //RecursiveSolve(tableau.Copy(), problemName, ref candidates, ref steps, depthTracker + 1);
-
-            //// Branch on ceil
-            //tableau = tableauParent.Copy();
-            //problemName = problemNameParent + ".2";
-            //if (problemName.StartsWith("."))
-            //    problemName = problemName.Substring(1);
-            //tableau.AddColumn(new double[tableau.Height], $"e{tableau.Height}", "+");
-            //tableau.AddRow(new double[tableau.Width], $"c{tableau.Height}");
-            //tableau[tableau.Height - 1, fractionJ /*  */ ] = 1.0;
-            //tableau[tableau.Height - 1, tableau.Width - 2] = -1.0;
-            //tableau[tableau.Height - 1, tableau.Width - 1] = Math.Ceiling(fraction);
-            //steps.Add($"[{problemName}] Branch **{tableau.ColumnNames[fractionJ]}**>={Math.Ceiling(fraction)}\n\n{tableau}");
-            //for (int j = 0; j < tableau.Width; j++)
-            //    tableau[tableau.Height - 1, j] = tableau[fractionI, j] - tableau[tableau.Height - 1, j];
-            //steps.Add($"[{problemName}] Restore basic variable (new=old-new)\n\n{tableau}");
-            //RecursiveSolve(tableau.Copy(), problemName, ref candidates, ref steps, depthTracker + 1);
-
             // Branch on floor
-            Tableau tableauFloor = tableauParent.Copy();
-            string problemNameFloor = problemNameParent + ".1";
-            if (problemNameFloor.StartsWith("."))
-                problemNameFloor = problemNameFloor.Substring(1);
-
-            steps.Add($"[{problemNameFloor}] Branch **{tableauFloor.ColumnNames[fractionJ]}**<={Math.Floor(fraction)}");
-
-            // New constraint: x_j + s_k = floor(fraction)
-            // This is fine as it creates a primal-feasible tableau.
-            tableauFloor.AddColumn(new double[tableauFloor.Height], $"s{tableauFloor.Height}", "+");
-            tableauFloor.AddRow(new double[tableauFloor.Width], $"c{tableauFloor.Height}");
-            tableauFloor[tableauFloor.Height - 1, fractionJ] = 1.0;
-            tableauFloor[tableauFloor.Height - 1, tableauFloor.Width - 2] = 1.0; // new slack variable
-            tableauFloor[tableauFloor.Height - 1, tableauFloor.Width - 1] = Math.Floor(fraction);
-
-            steps.Add($"[{problemNameFloor}] New constraint added:\n\n{tableauFloor}");
-            RecursiveSolve(tableauFloor, problemNameFloor, ref candidates, ref steps, depthTracker + 1);
+            tableau = tableauParent.Copy();
+            problemName = problemNameParent + ".1";
+            if (problemName.StartsWith("."))
+                problemName = problemName.Substring(1);
+            tableau.AddColumn(new double[tableau.Height], $"s{tableau.Height}", "+");
+            tableau.AddRow(new double[tableau.Width], $"c{tableau.Height}");
+            tableau[tableau.Height - 1, fractionJ /*  */ ] = 1.0;
+            tableau[tableau.Height - 1, tableau.Width - 2] = 1.0;
+            tableau[tableau.Height - 1, tableau.Width - 1] = Math.Floor(fraction);
+            steps.Add($"[{problemName}] Branch **{tableau.ColumnNames[fractionJ]}**<={Math.Floor(fraction)}\n\n{tableau}");
+            for (int j = 0; j < tableau.Width; j++)
+                tableau[tableau.Height - 1, j] = tableau[tableau.Height - 1, j] - tableau[fractionI, j];
+            steps.Add($"[{problemName}] Restore basic variable (new=new-old)\n\n{tableau}");
+            RecursiveSolve(tableau.Copy(), problemName, ref candidates, ref steps, depthTracker + 1);
 
             // Branch on ceil
-            Tableau tableauCeil = tableauParent.Copy();
-            string problemNameCeil = problemNameParent + ".2";
-            if (problemNameCeil.StartsWith("."))
-                problemNameCeil = problemNameCeil.Substring(1);
-
-            steps.Add($"[{problemNameCeil}] Branch **{tableauCeil.ColumnNames[fractionJ]}**>={Math.Ceiling(fraction)}");
-
-            // New constraint: x_j - e_k = ceil(fraction)
-            // To make the tableau primal feasible, we need a negative RHS.
-            // The dual simplex method can then take over.
-            tableauCeil.AddColumn(new double[tableauCeil.Height], $"e{tableauCeil.Height}", "+");
-            tableauCeil.AddRow(new double[tableauCeil.Width], $"c{tableauCeil.Height}");
-            tableauCeil[tableauCeil.Height - 1, fractionJ] = -1.0;
-            tableauCeil[tableauCeil.Height - 1, tableauCeil.Width - 2] = 1.0; // new slack variable
-            tableauCeil[tableauCeil.Height - 1, tableauCeil.Width - 1] = -Math.Ceiling(fraction);
-
-            steps.Add($"[{problemNameCeil}] New constraint added:\n\n{tableauCeil}");
-            RecursiveSolve(tableauCeil, problemNameCeil, ref candidates, ref steps, depthTracker + 1);
+            tableau = tableauParent.Copy();
+            problemName = problemNameParent + ".2";
+            if (problemName.StartsWith("."))
+                problemName = problemName.Substring(1);
+            tableau.AddColumn(new double[tableau.Height], $"e{tableau.Height}", "+");
+            tableau.AddRow(new double[tableau.Width], $"c{tableau.Height}");
+            tableau[tableau.Height - 1, fractionJ /*  */ ] = 1.0;
+            tableau[tableau.Height - 1, tableau.Width - 2] = -1.0;
+            tableau[tableau.Height - 1, tableau.Width - 1] = Math.Ceiling(fraction);
+            steps.Add($"[{problemName}] Branch **{tableau.ColumnNames[fractionJ]}**>={Math.Ceiling(fraction)}\n\n{tableau}");
+            for (int j = 0; j < tableau.Width; j++)
+                tableau[tableau.Height - 1, j] = tableau[fractionI, j] - tableau[tableau.Height - 1, j];
+            steps.Add($"[{problemName}] Restore basic variable (new=old-new)\n\n{tableau}");
+            RecursiveSolve(tableau.Copy(), problemName, ref candidates, ref steps, depthTracker + 1);
         }
     }
 }
