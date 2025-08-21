@@ -16,11 +16,11 @@ namespace LPR381
     {
         private static readonly Dictionary<string, Solver> AlgorithmDict = new Dictionary<string, Solver>
         {
-            { "Branch and Bound", BranchAndBound.Solve },
-            { "Branch and Bound Knapsack", BranchAndBoundKnapsack.Solve },
-            { "Cutting Plane", CuttingPlane.Solve },
-            { "Dual Simplex", DualSimplex.Solve },
-            { "Primal Simplex", PrimalSimplex.Solve },
+            { "Branch and Bound", /*          */ BranchAndBound /*         */ .Solve },
+            { "Branch and Bound Knapsack", /* */ BranchAndBoundKnapsack /* */ .Solve },
+            { "Cutting Plane", /*             */ CuttingPlane /*           */ .Solve },
+            { "Dual Simplex", /*              */ DualSimplex /*            */ .Solve },
+            { "Primal Simplex", /*            */ PrimalSimplex /*          */ .Solve },
         };
         private Tableau tableau;
 
