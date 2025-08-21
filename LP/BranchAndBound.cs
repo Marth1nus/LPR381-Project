@@ -21,19 +21,35 @@ namespace LPR381.LP
                 .Prepend(/*       */ $"| {/*                            */ "  Z"} | {"Problem Name", /*        */ -problemNameMaxLength /**/ } |")
                 .Prepend("Candidates:\n")
             ));
-            
-            var bestCandidate = candidates.FirstOrDefault();
-            foreach (var candidate in candidates.Skip(1))
-                if (candidate.tableau.ObjectiveValue > bestCandidate.tableau.ObjectiveValue)
-                    bestCandidate = candidate;
-            if /*  */ (bestCandidate.tableau != null && bestCandidate.problemName != null)
+
+            //var bestCandidate = candidates.FirstOrDefault();
+            //foreach (var candidate in candidates.Skip(1))
+            //    if (candidate.tableau.ObjectiveValue > bestCandidate.tableau.ObjectiveValue)
+            //        bestCandidate = candidate;
+            //if /*  */ (bestCandidate.tableau != null && bestCandidate.problemName != null)
+            //{
+            //    steps.Add($"Best solution found: {bestCandidate.problemName} with Z={bestCandidate.tableau.ObjectiveValue}\n\n{bestCandidate.tableau}");
+            //    tableau.Assign(bestCandidate.tableau);
+            //}
+            //else if (!(bestCandidate.tableau == null && bestCandidate.problemName == null))
+            //{
+            //    throw new Exception("Incomplete Pairing");
+            //}
+            //else
+            //{
+            //    steps.Add("**Infeasible**: No candidates that satisfy all integer constraints found.");
+            //}
+
+            //steps.Add("End Branch&Bound");
+            //return steps;
+
+            //removed redundent logic.
+            var bestCandidate = candidates.OrderByDescending(c => c.tableau.ObjectiveValue).FirstOrDefault();
+
+            if (bestCandidate != default) // Checks if a candidate was found (not the default tuple value)
             {
                 steps.Add($"Best solution found: {bestCandidate.problemName} with Z={bestCandidate.tableau.ObjectiveValue}\n\n{bestCandidate.tableau}");
                 tableau.Assign(bestCandidate.tableau);
-            }
-            else if (!(bestCandidate.tableau == null && bestCandidate.problemName == null))
-            {
-                throw new Exception("Incomplete Pairing");
             }
             else
             {
