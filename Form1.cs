@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -23,6 +24,17 @@ namespace LPR381
             { "Primal Simplex", /*            */ PrimalSimplex /*          */ .Solve },
         };
         private Tableau tableau;
+
+        private void errorMessageNoTableau()
+        {
+            // Set the color of the selected text to red
+            richTextBox1.SelectionColor = Color.Red;
+
+            richTextBox1.AppendText("> No tableau loaded.\n\n");
+
+            // Reset the color for subsequent text
+            richTextBox1.SelectionColor = richTextBox1.ForeColor;
+        }
 
         private Solver Solver => comboBox1.SelectedValue as Solver;
         private string SolverName => AlgorithmDict.FirstOrDefault(kv => kv.Value == Solver).Key;
@@ -49,7 +61,7 @@ namespace LPR381
                 label4.ForeColor = System.Drawing.Color.Black;
                 if (tableau == null)
                 {
-                    richTextBox1.Text += "> No tableau loaded.\n\n";
+                    errorMessageNoTableau();
                     return;
                 }
                 var newTableau = tableau.Copy();
@@ -74,7 +86,7 @@ namespace LPR381
             {
                 if (tableau == null)
                 {
-                    richTextBox1.Text += "No tableau loaded.\n\n";
+                    errorMessageNoTableau();
                     return;
                 }
                 var analysis = SensitivityAnalysis.Analise(tableau.Copy());
@@ -125,6 +137,40 @@ namespace LPR381
         {
             richTextBox1.SelectionStart = richTextBox1.Text.Length;
             richTextBox1.ScrollToCaret();
+        }
+
+        private void sensitivityAnalysToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //code to go to new tab
+            label5.Text = "";
+            label5.ForeColor = System.Drawing.Color.Black;
+            try
+            {
+                if (tableau == null)
+                {
+                    // Set the color of the selected text to red
+                    richTextBox1.SelectionColor = Color.Red;
+
+                    richTextBox1.Text += "> No tableau loaded.\n\n";
+
+                    // Reset the color for subsequent text
+                    richTextBox1.SelectionColor = richTextBox1.ForeColor;
+                    return;
+                }
+                var analysis = SensitivityAnalysis.Analise(tableau.Copy());
+                richTextBox1.Text += $"# Sensitivity Analysis\n\n{analysis}\n\n";
+            }
+            catch (Exception err)
+            {
+                Console.WriteLine(err.ToString());
+                label5.Text = "Error";
+                label5.ForeColor = System.Drawing.Color.Red;
+            }
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            richTextBox1.Text = "";
         }
     }
 }
