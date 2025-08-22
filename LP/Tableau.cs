@@ -179,8 +179,9 @@ namespace LPR381.LP
             return $"Pivot on **{RowNames[rowI]}**, **{ColumnNames[colI]}**\n\n{this}";
         }
 
-        public void AddRow(double[] newRow, string name = null)
+        public void AddRow(double[] newRow = null, string name = null)
         {
+            newRow = newRow ?? new double[Width];
             if (newRow.Length != Width)
                 throw new ArgumentException($"New row must have {Width} values");
             var oldValues = Values;
@@ -195,8 +196,10 @@ namespace LPR381.LP
             RowNames = RowNames.Append(name ?? $"c{Height - 1}").ToArray();
         }
 
-        public void RemoveRow(int rowI)
+        public void RemoveRow(int rowI = -1)
         {
+            if (rowI < 0)
+                rowI += Height; // -1 means last row
             if (rowI < 0 || Height <= rowI)
                 throw new ArgumentException($"Out of range rowI:{rowI} parameter");
             var oldValues = Values;
@@ -210,8 +213,9 @@ namespace LPR381.LP
                     Values[i, j] = oldValues[i + 1, j];
         }
 
-        public void AddColumn(double[] newColumn, string name = null, string restriction = "urs")
+        public void AddColumn(double[] newColumn = null, string name = null, string restriction = "urs")
         {
+            newColumn = newColumn ?? new double[Width];
             if (newColumn.Length != Height)
                 throw new ArgumentException($"New row must have {Height} values");
             var oldValues = Values;
@@ -231,8 +235,10 @@ namespace LPR381.LP
             ColumnRestrictions = ColumnRestrictions.Append(restriction).ToArray();
         }
 
-        public void RemoveColumn(int colI)
+        public void RemoveColumn(int colI = -2)
         {
+            if (colI < 0)
+                colI += Width; // -1 means last column
             if (colI < 0 || Width <= colI)
                 throw new ArgumentException($"Out of range colI:{colI} parameter");
             var oldValues = Values;
