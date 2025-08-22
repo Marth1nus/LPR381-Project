@@ -113,14 +113,14 @@ namespace LPR381.LP
         public bool IsPrimalFeasible => GetPrimalInoptimal().GetValueOrDefault((0, true, false)).feasible;
         public bool IsPrimalInfeasible => !IsPrimalFeasible;
 
-        public int? GetBasicVariableI(int j)
+        public int? GetBasicVariableI(int j, double expectedSingularNonZero = 1.0)
         {
             if (!(0 <= j && j < Width - 1))
                 throw new ArgumentOutOfRangeException($"{nameof(j)} must be in range [{0}..{Width - 2}]");
             int? indexOf1 = null;
             for (int i = 0; i < Height; i++)
             {
-                if (Values[i, j] == 1.0)
+                if (Values[i, j] == /* 1.0 */ expectedSingularNonZero)
                 {
                     if (indexOf1 != null)
                         return null;
@@ -136,6 +136,7 @@ namespace LPR381.LP
         public IEnumerable<int> GetVariableIndices() => Enumerable.Range(0, Width - 1);
         public IEnumerable<int> GetBasicVariableIndices() => GetVariableIndices().Where(j => GetBasicVariableI(j).HasValue);
         public IEnumerable<int> GetNonBasicVariableIndices() => GetVariableIndices().Where(j => !GetBasicVariableI(j).HasValue);
+        public IEnumerable<int> GetBasicLikeVariableIndices() => GetVariableIndices().Where(j => GetBasicVariableI(j, -1.0).HasValue);
 
         public void ValidateLengths()
         {
