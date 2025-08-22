@@ -44,7 +44,7 @@
             this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.button3 = new System.Windows.Forms.Button();
             this.btnClear = new System.Windows.Forms.Button();
-            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
+            this.button4 = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -55,7 +55,7 @@
             this.clearOutputToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-            this.button4 = new System.Windows.Forms.Button();
+            this.webBrowser1 = new System.Windows.Forms.WebBrowser();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
             this.tableLayoutPanel4.SuspendLayout();
@@ -69,7 +69,7 @@
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel2, 0, 0);
-            this.tableLayoutPanel1.Controls.Add(this.richTextBox1, 1, 0);
+            this.tableLayoutPanel1.Controls.Add(this.webBrowser1, 1, 0);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 24);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -284,7 +284,7 @@
             // 
             this.btnClear.Dock = System.Windows.Forms.DockStyle.Fill;
             this.btnClear.Location = new System.Drawing.Point(71, 93);
-            this.btnClear.Margin = new System.Windows.Forms.Padding(0, 0, 0, 0);
+            this.btnClear.Margin = new System.Windows.Forms.Padding(0);
             this.btnClear.Name = "btnClear";
             this.btnClear.Size = new System.Drawing.Size(194, 23);
             this.btnClear.TabIndex = 8;
@@ -292,21 +292,14 @@
             this.btnClear.UseVisualStyleBackColor = true;
             this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
             // 
-            // richTextBox1
+            // button4
             // 
-            this.richTextBox1.AcceptsTab = true;
-            this.richTextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.richTextBox1.Font = new System.Drawing.Font("Consolas", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.richTextBox1.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            this.richTextBox1.Location = new System.Drawing.Point(269, 3);
-            this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.ReadOnly = true;
-            this.richTextBox1.Size = new System.Drawing.Size(528, 420);
-            this.richTextBox1.TabIndex = 0;
-            this.richTextBox1.TabStop = false;
-            this.richTextBox1.Text = "";
-            this.richTextBox1.WordWrap = false;
-            this.richTextBox1.TextChanged += new System.EventHandler(this.richTextBox1_TextChanged);
+            this.button4.Location = new System.Drawing.Point(74, 120);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(8, 8);
+            this.button4.TabIndex = 9;
+            this.button4.Text = "button4";
+            this.button4.UseVisualStyleBackColor = true;
             // 
             // menuStrip1
             // 
@@ -332,7 +325,7 @@
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
             this.openToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(146, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
@@ -340,7 +333,7 @@
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             this.saveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(146, 22);
             this.saveToolStripMenuItem.Text = "Save";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
             // 
@@ -357,21 +350,21 @@
             // solveToolStripMenuItem
             // 
             this.solveToolStripMenuItem.Name = "solveToolStripMenuItem";
-            this.solveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.solveToolStripMenuItem.Size = new System.Drawing.Size(173, 22);
             this.solveToolStripMenuItem.Text = "Solve";
             this.solveToolStripMenuItem.Click += new System.EventHandler(this.solveToolStripMenuItem_Click);
             // 
             // sensitivityAnalysisToolStripMenuItem
             // 
             this.sensitivityAnalysisToolStripMenuItem.Name = "sensitivityAnalysisToolStripMenuItem";
-            this.sensitivityAnalysisToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.sensitivityAnalysisToolStripMenuItem.Size = new System.Drawing.Size(173, 22);
             this.sensitivityAnalysisToolStripMenuItem.Text = "Sensitivity Analysis";
             this.sensitivityAnalysisToolStripMenuItem.Click += new System.EventHandler(this.sensitivityAnalysisToolStripMenuItem_Click);
             // 
             // clearOutputToolStripMenuItem
             // 
             this.clearOutputToolStripMenuItem.Name = "clearOutputToolStripMenuItem";
-            this.clearOutputToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.clearOutputToolStripMenuItem.Size = new System.Drawing.Size(173, 22);
             this.clearOutputToolStripMenuItem.Text = "Clear Output";
             this.clearOutputToolStripMenuItem.Click += new System.EventHandler(this.clearOutputToolStripMenuItem_Click);
             // 
@@ -395,14 +388,14 @@
             this.saveFileDialog1.Title = "Save Solved LP";
             this.saveFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.saveFileDialog1_FileOk);
             // 
-            // button4
+            // webBrowser1
             // 
-            this.button4.Location = new System.Drawing.Point(74, 120);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(8, 8);
-            this.button4.TabIndex = 9;
-            this.button4.Text = "button4";
-            this.button4.UseVisualStyleBackColor = true;
+            this.webBrowser1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.webBrowser1.Location = new System.Drawing.Point(269, 3);
+            this.webBrowser1.MinimumSize = new System.Drawing.Size(20, 20);
+            this.webBrowser1.Name = "webBrowser1";
+            this.webBrowser1.Size = new System.Drawing.Size(528, 420);
+            this.webBrowser1.TabIndex = 1;
             // 
             // Form1
             // 
@@ -448,7 +441,6 @@
         private System.Windows.Forms.TextBox textBox2;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.ComboBox comboBox1;
-        private System.Windows.Forms.RichTextBox richTextBox1;
         private System.Windows.Forms.ToolStripMenuItem actionToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem solveToolStripMenuItem;
         private System.Windows.Forms.Button button3;
@@ -458,6 +450,7 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Button btnClear;
         private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.WebBrowser webBrowser1;
     }
 }
 

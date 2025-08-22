@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
-
+using Markdig;
 
 
 namespace LPR381
@@ -25,15 +25,15 @@ namespace LPR381
         };
         private Tableau tableau;
 
+        private string htmlPage = "<html><body><h1>Solver</h1></body></html>";
+
         private void errorMessageNoTableau()
         {
-            // Set the color of the selected text to red
-            richTextBox1.SelectionColor = Color.Red;
+            // A string of HTML to display
+            string htmlContent = "<html><body><h1>Solver</h1><h3 style='color:red;'>No Tableau</h3></body></html>";
 
-            richTextBox1.AppendText("> No tableau loaded.\n\n");
-
-            // Reset the color for subsequent text
-            richTextBox1.SelectionColor = richTextBox1.ForeColor;
+            // Set the content of the WebBrowser control
+            webBrowser1.DocumentText = htmlContent;
         }
 
         private Solver Solver => comboBox1.SelectedValue as Solver;
@@ -67,7 +67,9 @@ namespace LPR381
                 var newTableau = tableau.Copy();
                 var steps = Solver(newTableau);
                 var stepString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
-                richTextBox1.Text += $"# Solve Using {SolverName}\n\n{stepString}\n\n";
+                string htmlSteps = Markdig.Markdown.ToHtml(stepString);
+                string htmlContent = Markdig.Markdown.ToHtml($"# Solve Using {SolverName}\n\n{htmlSteps}\n\n");
+                webBrowser1.DocumentText = htmlContent;
                 tableau = newTableau;
             }
             catch (Exception err)
@@ -90,7 +92,7 @@ namespace LPR381
                     return;
                 }
                 var analysis = SensitivityAnalysis.Analise(tableau.Copy());
-                richTextBox1.Text += $"# Sensitivity Analysis\n\n{analysis}\n\n";
+               // richTextBox1.Text += $"# Sensitivity Analysis\n\n{analysis}\n\n";
             }
             catch (Exception err) 
             { 
@@ -106,7 +108,7 @@ namespace LPR381
             {
                 tableau = Tableau.FromFile(openFileDialog1.FileName);
                 textBox1.Text = openFileDialog1.FileName.Split('\\').Last();
-                richTextBox1.Text = $"{Tableau.FromFileCanonicalForm(openFileDialog1.FileName)}\n\n# Tableau\n\n{tableau}\n\n";
+               // richTextBox1.Text = $"{Tableau.FromFileCanonicalForm(openFileDialog1.FileName)}\n\n# Tableau\n\n{tableau}\n\n";
             }
             catch (Exception ex)
             {
@@ -118,7 +120,7 @@ namespace LPR381
         {
             try
             {
-                File.WriteAllText(saveFileDialog1.FileName, richTextBox1.Text);
+                //File.WriteAllText(saveFileDialog1.FileName, richTextBox1.Text);
                 textBox2.Text = saveFileDialog1.FileName.Split('\\').Last();
             }
             catch (Exception ex)
@@ -130,13 +132,13 @@ namespace LPR381
 
         private void clearOutputToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            richTextBox1.Text = "";
+           // richTextBox1.Text = "";
         }
 
         private void richTextBox1_TextChanged(object sender, EventArgs e)
         {
-            richTextBox1.SelectionStart = richTextBox1.Text.Length;
-            richTextBox1.ScrollToCaret();
+            //richTextBox1.SelectionStart = richTextBox1.Text.Length;
+            //richTextBox1.ScrollToCaret();
         }
 
         private void sensitivityAnalysToolStripMenuItem_Click(object sender, EventArgs e)
@@ -149,16 +151,16 @@ namespace LPR381
                 if (tableau == null)
                 {
                     // Set the color of the selected text to red
-                    richTextBox1.SelectionColor = Color.Red;
+                   // richTextBox1.SelectionColor = Color.Red;
 
-                    richTextBox1.Text += "> No tableau loaded.\n\n";
+                   // richTextBox1.Text += "> No tableau loaded.\n\n";
 
                     // Reset the color for subsequent text
-                    richTextBox1.SelectionColor = richTextBox1.ForeColor;
+                   // richTextBox1.SelectionColor = richTextBox1.ForeColor;
                     return;
                 }
                 var analysis = SensitivityAnalysis.Analise(tableau.Copy());
-                richTextBox1.Text += $"# Sensitivity Analysis\n\n{analysis}\n\n";
+               // richTextBox1.Text += $"# Sensitivity Analysis\n\n{analysis}\n\n";
             }
             catch (Exception err)
             {
@@ -170,7 +172,8 @@ namespace LPR381
 
         private void btnClear_Click(object sender, EventArgs e)
         {
-            richTextBox1.Text = "";
+            //richTextBox1.Text = "";
+            webBrowser1.DocumentText = htmlPage;
         }
     }
 }
