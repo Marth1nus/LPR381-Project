@@ -294,6 +294,9 @@ public override string ToString()
         th:first-child, td:first-child {
             text-align: left; /* Aligns the first column to the left */
         }
+        th {
+            background-color: #f2f2f2; /* This sets a light gray background */
+        }
     </style>
 </head>
 <body>
