@@ -285,10 +285,10 @@ public override string ToString()
         }
         table {
             border-collapse: collapse; /* Merges the borders of adjacent cells */
-            width: 100%; /* Optional: Makes the table span the full width of the container */
+            width: 80%; /* Optional: Makes the table span the full width of the container */
         }
         th, td {
-            padding: 8px; /* Adds spacing inside cells */
+            padding: 2px; /* Adds spacing inside cells */
             text-align: right; /* Aligns cell content to the right */
         }
         th:first-child, td:first-child {
