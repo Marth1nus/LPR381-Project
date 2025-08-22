@@ -482,8 +482,7 @@ public override string ToString()
                 (line.Last().StartsWith("=") || line.Last().StartsWith(">=") ? $" + -e{1 + i}" : "") +
                 $" = {double.Parse(line.Last().Substring(line.Last().StartsWith("=") ? 1 /* = */ : 2 /* <= or >= */))}"));
             canonicalForm += $"\n\n## Restrictions\n\n{string.Join(", ", restrictionsLine.Select((v, j) => $"x{1 + j}:{v}"))}";
-            //return canonicalForm;
-            return Markdig.Markdown.ToHtml(canonicalForm);
+            return canonicalForm;
         }
 
         private static double[,] Copy(double[,] from, double[,] to = null,

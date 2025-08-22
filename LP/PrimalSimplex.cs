@@ -1,3 +1,4 @@
+using Markdig;
 using System.Collections.Generic;
 using System.Text;
 
@@ -65,10 +66,10 @@ namespace LPR381.LP
         private static string ConstructSolution(Tableau tableau)
         {
             var result = new StringBuilder();
-            result.AppendLine("Optimal Solution:  ");
+            result.AppendLine(Markdown.ToHtml("<h3 style='text-align: center;'>Optimal Solution </h3>"));
             double optimalValue = tableau[0, tableau.Width - 1]; // Extract optimal value from RHS of objective row
-            result.AppendLine($"Optimal Value: {optimalValue:0.###}  ");
-
+            result.AppendLine(Markdown.ToHtml($"<p style='text-align: center;'>Optimal Value: <span style='color: green; font-weight: bold;'>{optimalValue:0.###}</span></p>"));
+            result.AppendLine(Markdown.ToHtml("<ul style='text-align: center;'>"));
             // Extract values of decision variables from the final tableau
             for (int j = 0; j < tableau.Width - 1; j++)
             {
@@ -82,8 +83,9 @@ namespace LPR381.LP
                         break;
                     }
                 }
-                result.AppendLine($"{varName} = {varValue:0.###}  ");
+                result.AppendLine(Markdown.ToHtml($"<li> {varName} = {varValue:0.###}  </li>"));
             }
+            result.AppendLine(Markdown.ToHtml("</ul>"));
             return result.ToString();
         }
     }
