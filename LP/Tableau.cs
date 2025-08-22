@@ -134,9 +134,10 @@ namespace LPR381.LP
         }
 
         public IEnumerable<int> GetVariableIndices() => Enumerable.Range(0, Width - 1);
-        public IEnumerable<int> GetBasicVariableIndices() => GetVariableIndices().Where(j => GetBasicVariableI(j).HasValue);
-        public IEnumerable<int> GetNonBasicVariableIndices() => GetVariableIndices().Where(j => !GetBasicVariableI(j).HasValue);
+        public IEnumerable<int> GetBasicVariableIndices() => GetVariableIndices().Where(j => GetBasicVariableI(j, 1.0).HasValue);
+        public IEnumerable<int> GetNonBasicVariableIndices() => GetVariableIndices().Where(j => !GetBasicVariableI(j, 1.0).HasValue);
         public IEnumerable<int> GetBasicLikeVariableIndices() => GetVariableIndices().Where(j => GetBasicVariableI(j, -1.0).HasValue);
+        public IEnumerable<int> GetNonBasicLikeVariableIndices() => GetVariableIndices().Where(j => !GetBasicVariableI(j, -1.0).HasValue);
 
         public void ValidateLengths()
         {
