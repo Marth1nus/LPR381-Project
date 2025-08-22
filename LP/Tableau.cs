@@ -15,8 +15,8 @@ namespace LPR381.LP
         public string[] ColumnNames { get; set; } // example [x1, x2, s1, s2, rhs]
         public string[] ColumnRestrictions { get; set; } // one of [+, -, urs, int, bin]
         public double[,] Values { get; set; } // contains Width, Height, and the values in the tableau.
-        public int TableIteration { get; set; } // Just keeps track of how many pivots have been done.
-        public Tableau InitialTable { get; set; } // Tracks The intial table
+        public int TableauIteration { get; set; } // Just keeps track of how many pivots have been done.
+        public Tableau InitialTableau { get; set; } // Tracks The intial table
         public int Height => Values.GetLength(0);
         public int Width => Values.GetLength(1);
         public double ObjectiveValue => Values[0, Width - 1];
@@ -31,7 +31,7 @@ namespace LPR381.LP
             ColumnNames /*        */ = Enumerable.Range(1, width - 1).Select(j => $"x{j}").Append("rhs").ToArray();
             ColumnRestrictions /* */ = Enumerable.Repeat("+", width).ToArray();
             Values /*             */ = new double[height, width];
-            TableIteration /*     */ = 0;
+            TableauIteration /*   */ = 0;
         }
 
         public Tableau Copy() => new Tableau
@@ -40,8 +40,8 @@ namespace LPR381.LP
             ColumnNames /*        */ = ColumnNames.ToArray(),
             ColumnRestrictions /* */ = ColumnRestrictions.ToArray(),
             Values /*             */ = Copy(Values),
-            TableIteration /*     */ = TableIteration,
-            InitialTable /*       */ = InitialTable
+            TableauIteration /*   */ = TableauIteration,
+            InitialTableau /*     */ = InitialTableau
         };
 
         public Tableau Assign(Tableau other)
@@ -51,8 +51,8 @@ namespace LPR381.LP
             ColumnNames /*        */ = other.ColumnNames.ToArray();
             ColumnRestrictions /* */ = other.ColumnRestrictions.ToArray();
             Values /*             */ = Copy(other.Values);
-            TableIteration /*     */ = other.TableIteration;
-            InitialTable /*       */ = other.InitialTable;
+            TableauIteration /*   */ = other.TableauIteration;
+            InitialTableau /*     */ = other.InitialTableau;
             return this;
         }
 
@@ -152,8 +152,8 @@ namespace LPR381.LP
 
         public string Pivot(int rowI, int colI)
         {
-            InitialTable = InitialTable ?? Copy();
-            TableIteration++;
+            InitialTableau = InitialTableau ?? Copy();
+            TableauIteration++;
             double pivot = Values[rowI, colI];
             for (int j = 0; j < Width; j++)
             {
@@ -270,7 +270,7 @@ namespace LPR381.LP
                       decimalLength = 4;
             StringBuilder sb = new StringBuilder();
             /* | T1     |     x1 |     s1 |    rhs | */
-            sb.Append($"| T{TableIteration, 1 - colWidth} ");
+            sb.Append($"| T{TableauIteration, 1 - colWidth} ");
             for (int j = 0; j < Width; j++)
                 sb.Append($"| {ColumnNames[j].PadLeft(colWidth-decimalLength), -colWidth} ");
             sb.AppendLine($"|");
@@ -411,10 +411,10 @@ namespace LPR381.LP
                 ColumnNames /*        */ = columnNames,
                 ColumnRestrictions /* */ = columnRestrictions,
                 Values /*             */ = values,
-                TableIteration /*     */ = 0
+                TableauIteration /*     */ = 0
             };
             res.AddBinaryLessThanOneConstraints();
-            res.InitialTable = res.Copy();
+            res.InitialTableau = res.Copy();
             return res;
         }
 
