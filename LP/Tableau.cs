@@ -162,7 +162,7 @@ namespace LPR381.LP
             }
             for (int i = 0; i < Height; i++)
             {
-                if (i == rowI) 
+                if (i == rowI)
                     continue;
                 double factor = Values[i, colI];
                 for (int j = 0; j < Width; j++)
@@ -177,10 +177,16 @@ namespace LPR381.LP
                     Values[i, j] = Math.Round(Values[i, j], 12);
                 }
             }
-            return $"Pivot on **{RowNames[rowI]}**, **{ColumnNames[colI]}**\n\n{this}";
+            return Markdig.Markdown.ToHtml($@"
+<div style='border: 1px solid black; padding: 2px; margin-bottom: 2px; width: 145px;text-align: center;'>
+Pivot on {RowNames[rowI]}, {ColumnNames[colI]}
+
+</div>
+{this}
+");
         }
 
-        public void AddRow(double[] newRow, string name = null)
+            public void AddRow(double[] newRow, string name = null)
         {
             if (newRow.Length != Width)
                 throw new ArgumentException($"New row must have {Width} values");
@@ -264,44 +270,6 @@ namespace LPR381.LP
             }
             return Height - heightBeforeAdding;
         }
-
-        //public override string ToString()
-        //{
-        //    const int colWidth = 8, // "-000.000".Length
-        //              decimalLength = 4;
-        //    StringBuilder sb = new StringBuilder();
-        //    /* | T1     |     x1 |     s1 |    rhs | */
-        //    sb.Append($"| T{TableIteration,1 - colWidth} ");
-        //    for (int j = 0; j < Width; j++)
-        //        sb.Append($"| {ColumnNames[j].PadLeft(colWidth - decimalLength),-colWidth} ");
-        //    sb.AppendLine($"|");
-        //    /* | ------ | ------ | ------ | ------ | */
-        //    for (int j = 0; j < Width + 1; j++)
-        //        sb.Append($"| {"-:".PadLeft(colWidth, '-')} ");
-        //    sb.AppendLine($"|");
-        //    /* |  max Z | 00.000 | 00.000 | 00.000 | */
-        //    /* |     C1 | 00.000 | 00.000 | 00.000 | */
-        //    for (int i = 0; i < Height; i++)
-        //    {
-        //        sb.Append($"| {RowNames[i],colWidth} ");
-        //        for (int j = 0; j < Width; j++)
-        //        {
-        //            var valueString = Values[i, j].ToString("0.###");
-        //            var valueStringIndexOfDot = valueString.IndexOf(".");
-        //            if (valueStringIndexOfDot == -1)
-        //                valueStringIndexOfDot = valueString.Length;
-        //            var valueStringTargetLength = valueStringIndexOfDot + decimalLength;
-        //            sb.Append($"| {valueString.PadRight(valueStringTargetLength),colWidth} ");
-        //        }
-        //        sb.AppendLine($"|");
-        //    }
-        //    /* |   Sign |    int |      + |        | */
-        //    sb.Append($"| {"",colWidth} ");
-        //    for (int j = 0; j < Width; j++)
-        //        sb.Append($"| {(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : "").PadLeft(colWidth - decimalLength),-colWidth} ");
-        //    sb.AppendLine($"|");
-        //    return sb.ToString();
-        //}
 
 public override string ToString()
     {
