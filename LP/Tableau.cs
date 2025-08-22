@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Markdig;
+using Markdig.Extensions.Tables;
 
 namespace LPR381.LP
 {
@@ -263,45 +265,125 @@ namespace LPR381.LP
             return Height - heightBeforeAdding;
         }
 
-        public override string ToString()
+        //public override string ToString()
+        //{
+        //    const int colWidth = 8, // "-000.000".Length
+        //              decimalLength = 4;
+        //    StringBuilder sb = new StringBuilder();
+        //    /* | T1     |     x1 |     s1 |    rhs | */
+        //    sb.Append($"| T{TableIteration,1 - colWidth} ");
+        //    for (int j = 0; j < Width; j++)
+        //        sb.Append($"| {ColumnNames[j].PadLeft(colWidth - decimalLength),-colWidth} ");
+        //    sb.AppendLine($"|");
+        //    /* | ------ | ------ | ------ | ------ | */
+        //    for (int j = 0; j < Width + 1; j++)
+        //        sb.Append($"| {"-:".PadLeft(colWidth, '-')} ");
+        //    sb.AppendLine($"|");
+        //    /* |  max Z | 00.000 | 00.000 | 00.000 | */
+        //    /* |     C1 | 00.000 | 00.000 | 00.000 | */
+        //    for (int i = 0; i < Height; i++)
+        //    {
+        //        sb.Append($"| {RowNames[i],colWidth} ");
+        //        for (int j = 0; j < Width; j++)
+        //        {
+        //            var valueString = Values[i, j].ToString("0.###");
+        //            var valueStringIndexOfDot = valueString.IndexOf(".");
+        //            if (valueStringIndexOfDot == -1)
+        //                valueStringIndexOfDot = valueString.Length;
+        //            var valueStringTargetLength = valueStringIndexOfDot + decimalLength;
+        //            sb.Append($"| {valueString.PadRight(valueStringTargetLength),colWidth} ");
+        //        }
+        //        sb.AppendLine($"|");
+        //    }
+        //    /* |   Sign |    int |      + |        | */
+        //    sb.Append($"| {"",colWidth} ");
+        //    for (int j = 0; j < Width; j++)
+        //        sb.Append($"| {(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : "").PadLeft(colWidth - decimalLength),-colWidth} ");
+        //    sb.AppendLine($"|");
+        //    return sb.ToString();
+        //}
+
+public override string ToString()
+    {
+        StringBuilder sb = new StringBuilder();
+
+        // Start the HTML document structure and add styling
+        sb.AppendLine(@"
+<html>
+<head>
+    <style>
+        table, th, td {
+            border: 1px solid black; /* Sets a 1px solid black border on the table, headers, and cells */
+        }
+        table {
+            border-collapse: collapse; /* Merges the borders of adjacent cells */
+            width: 100%; /* Optional: Makes the table span the full width of the container */
+        }
+        th, td {
+            padding: 8px; /* Adds spacing inside cells */
+            text-align: right; /* Aligns cell content to the right */
+        }
+        th:first-child, td:first-child {
+            text-align: left; /* Aligns the first column to the left */
+        }
+    </style>
+</head>
+<body>
+");
+
+        // Start the table structure
+        sb.AppendLine("<table>");
+        sb.AppendLine("<thead>");
+        sb.AppendLine("<tr>");
+
+        // Add the top-left corner cell (or leave it blank)
+        sb.AppendLine("<th></th>");
+
+        // Create the header row
+        for (int j = 0; j < Width; j++)
         {
-            const int colWidth = 8, // "-000.000".Length
-                      decimalLength = 4;
-            StringBuilder sb = new StringBuilder();
-            /* | T1     |     x1 |     s1 |    rhs | */
-            sb.Append($"| T{TableIteration, 1 - colWidth} ");
+            sb.AppendLine($"<th>{ColumnNames[j]}</th>");
+        }
+        sb.AppendLine("</tr>");
+        sb.AppendLine("</thead>");
+        sb.AppendLine("<tbody>");
+
+        // Create the body rows
+        for (int i = 0; i < Height; i++)
+        {
+            sb.AppendLine("<tr>");
+            sb.AppendLine($"<th>{RowNames[i]}</th>"); // This is the first column with row names
+
             for (int j = 0; j < Width; j++)
-                sb.Append($"| {ColumnNames[j].PadLeft(colWidth-decimalLength), -colWidth} ");
-            sb.AppendLine($"|");
-            /* | ------ | ------ | ------ | ------ | */
-            for (int j = 0; j < Width + 1; j++)
-                sb.Append($"| {"-:".PadLeft(colWidth, '-')} ");
-            sb.AppendLine($"|");
-            /* |  max Z | 00.000 | 00.000 | 00.000 | */
-            /* |     C1 | 00.000 | 00.000 | 00.000 | */
-            for (int i = 0; i < Height; i++)
             {
-                sb.Append($"| {RowNames[i],colWidth} ");
-                for (int j = 0; j < Width; j++)
-                {
-                    var valueString = Values[i, j].ToString("0.###");
-                    var valueStringIndexOfDot = valueString.IndexOf(".");
-                    if (valueStringIndexOfDot == -1) 
-                        valueStringIndexOfDot = valueString.Length;
-                    var valueStringTargetLength= valueStringIndexOfDot + decimalLength;
-                    sb.Append($"| {valueString.PadRight(valueStringTargetLength), colWidth} ");
-                }
-                sb.AppendLine($"|");
+                var valueString = Values[i, j].ToString("0.###");
+                sb.AppendLine($"<td>{valueString}</td>");
             }
-            /* |   Sign |    int |      + |        | */
-            sb.Append($"| {"",colWidth} ");
-            for (int j = 0; j < Width; j++)
-                sb.Append($"| {(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : "").PadLeft(colWidth - decimalLength), -colWidth} ");
-            sb.AppendLine($"|");
-            return sb.ToString();
+            sb.AppendLine("</tr>");
         }
 
-        private static (string[] objectiveLine, string[][] constraintLines, string[] restrictionsLine) FromFileValidateFile(string filename)
+        // Add the footer row for restrictions
+        sb.AppendLine("<tr>");
+        sb.AppendLine("<th>Sign</th>");
+        for (int j = 0; j < Width; j++)
+        {
+            sb.AppendLine($"<td>{(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : "")}</td>");
+        }
+        sb.AppendLine("</tr>");
+
+        // Close the table and the HTML document
+        sb.AppendLine("</tbody>");
+        sb.AppendLine("</table>");
+        sb.AppendLine(@"
+</body>
+</html>
+");
+
+        // Return the complete HTML string
+        return sb.ToString();
+    }
+
+    private static (string[] objectiveLine, string[][] constraintLines, string[] restrictionsLine) FromFileValidateFile(string filename)
         {
             // TODO: canonical form out param
             var lines = File.ReadAllLines(filename, Encoding.UTF8)
@@ -429,7 +511,8 @@ namespace LPR381.LP
                 (line.Last().StartsWith("=") || line.Last().StartsWith(">=") ? $" + -e{1 + i}" : "") +
                 $" = {double.Parse(line.Last().Substring(line.Last().StartsWith("=") ? 1 /* = */ : 2 /* <= or >= */))}"));
             canonicalForm += $"\n\n## Restrictions\n\n{string.Join(", ", restrictionsLine.Select((v, j) => $"x{1 + j}:{v}"))}";
-            return canonicalForm;
+            //return canonicalForm;
+            return Markdig.Markdown.ToHtml(canonicalForm);
         }
 
         private static double[,] Copy(double[,] from, double[,] to = null,

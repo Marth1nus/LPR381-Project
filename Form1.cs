@@ -52,7 +52,49 @@ namespace LPR381
         private void openToolStripMenuItem_Click(object sender, EventArgs e) => openFileDialog1.ShowDialog(this);
         
         private void saveToolStripMenuItem_Click(object sender, EventArgs e) => saveFileDialog1.ShowDialog(this);
-        
+
+        private void TestMarkdownTable()
+        {
+            // A manually created verbatim string with correct Markdown table syntax
+            string table = @"
+<html>
+<head>
+    <style>
+        table, th, td {
+            border: 1px solid black; /* Sets a 1px solid black border on the table, headers, and cells */
+        }
+        table {
+            border-collapse: collapse; /* Merges the borders of adjacent cells */
+            width: 100%; /* Optional: Makes the table span the full width of the container */
+        }
+    </style>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>Header 1</th>
+                <th>Header 2</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Row 1-1</td>
+                <td>Row 1-2</td>
+            </tr>
+            <tr>
+                <td>Row 2-1</td>
+                <td>Row 2-2</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>";
+            // Convert to HTML and display
+            string html = Markdig.Markdown.ToHtml(table);
+            webBrowser1.DocumentText = html;
+        }
+
         private void solveToolStripMenuItem_Click(object sender, EventArgs e)
         {
             try
@@ -70,6 +112,8 @@ namespace LPR381
                 string htmlSteps = Markdig.Markdown.ToHtml(stepString);
                 string htmlContent = Markdig.Markdown.ToHtml($"# Solve Using {SolverName}\n\n{htmlSteps}\n\n");
                 webBrowser1.DocumentText = htmlContent;
+
+
                 tableau = newTableau;
             }
             catch (Exception err)
@@ -132,7 +176,7 @@ namespace LPR381
 
         private void clearOutputToolStripMenuItem_Click(object sender, EventArgs e)
         {
-           // richTextBox1.Text = "";
+            webBrowser1.DocumentText = htmlPage;
         }
 
         private void richTextBox1_TextChanged(object sender, EventArgs e)
@@ -143,31 +187,7 @@ namespace LPR381
 
         private void sensitivityAnalysToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //code to go to new tab
-            label5.Text = "";
-            label5.ForeColor = System.Drawing.Color.Black;
-            try
-            {
-                if (tableau == null)
-                {
-                    // Set the color of the selected text to red
-                   // richTextBox1.SelectionColor = Color.Red;
 
-                   // richTextBox1.Text += "> No tableau loaded.\n\n";
-
-                    // Reset the color for subsequent text
-                   // richTextBox1.SelectionColor = richTextBox1.ForeColor;
-                    return;
-                }
-                var analysis = SensitivityAnalysis.Analise(tableau.Copy());
-               // richTextBox1.Text += $"# Sensitivity Analysis\n\n{analysis}\n\n";
-            }
-            catch (Exception err)
-            {
-                Console.WriteLine(err.ToString());
-                label5.Text = "Error";
-                label5.ForeColor = System.Drawing.Color.Red;
-            }
         }
 
         private void btnClear_Click(object sender, EventArgs e)
