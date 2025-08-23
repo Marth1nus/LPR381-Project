@@ -30,7 +30,7 @@ namespace LPR381.LP
             steps.Add($"[{knapsackTableau.ProblemName}] Initial Table  \n{knapsackTableau}");
             
             var candidatesList = new List<Tableau>();
-            RecursiveSolve(knapsackTableau, candidatesList, steps, -1, 0);
+            RecursiveSolve(knapsackTableau, candidatesList, steps, 0);
 
             var candidates = candidatesList.ToArray();
             if (candidates.Length <= 0)
@@ -40,25 +40,25 @@ namespace LPR381.LP
             else
             {
                 var problemNameMaxLength = candidates.Select(c => c.ProblemName.Length).Max();
-                steps.Add("Solutions:  \n" + String.Join("\n", candidates.Select((c, i) => c.ToStringDefaultExclude(
-                    includeValuesExtraColumns /* */: true,
-                    includeValues /*                  */: true,
-                    firstColWidth /*                  */: problemNameMaxLength
-                )).Prepend(candidates[0].ToStringDefaultExclude(
-                    includeValuesExtraColumns /* */: true,
-                    includeHeaders /*                 */: true,
-                    includeAlignment /*               */: true,
-                    firstColWidth /*                  */: problemNameMaxLength
-                ))));
                 var best = candidates
                     .Select(candidate => { var profit = candidate.GetProfit(); return (profit, candidate); })
                     .Aggregate((max, x) => x.profit > max.profit ? x : max).candidate;
+                steps.Add("Solutions:  \n" + String.Join("\n", candidates.Select((c, i) => c.ToStringDefaultExclude(
+                    includeValuesExtraColumns /* */: true,
+                    includeValues /*             */: true,
+                    firstColWidth /*             */: problemNameMaxLength
+                )).Prepend(best.ToStringDefaultExclude(
+                    includeValuesExtraColumns /* */: true,
+                    includeHeaders /*            */: true,
+                    includeAlignment /*          */: true,
+                    firstColWidth /*             */: problemNameMaxLength
+                ))));
                 steps.Add($"Best Solution Found  \n" + best.ToStringDefaultExclude(
                     includeValuesExtraColumns /* */: true,
-                    includeHeaders /*                 */: true,
-                    includeAlignment /*               */: true,
-                    includeValues /*                  */: true,
-                    firstColWidth /*                  */: problemNameMaxLength
+                    includeHeaders /*            */: true,
+                    includeAlignment /*          */: true,
+                    includeValues /*             */: true,
+                    firstColWidth /*             */: problemNameMaxLength
                 ));
             }
             steps.Add("End Branch&Bound");
@@ -69,7 +69,6 @@ namespace LPR381.LP
             Tableau tableau,
             List<Tableau> condidates,
             List<string> steps,
-            int previousBranchI,
             int depth)
         {
             var problemName = tableau.ProblemName;
@@ -78,17 +77,13 @@ namespace LPR381.LP
                 steps.Add($"[{problemName}] Max branching depth reached! Branch Abandoned");
                 return;
             }
+            var previousBranchI = tableau.LatestBranchI;
             if (previousBranchI >= 0)
             {
-                var branch = tableau.Choices[previousBranchI].Branch == Branch.Floor ? "<= 0" : ">= 1";
-                var variableName = tableau[previousBranchI].variable.Name;
-                var tableauString = tableau.ToStringDefaultExclude(
-                    includeHeaders /*            */ :true,
-                    includeAlignment /*          */ :true,
-                    includeValues /*             */ :true,
-                    includeValuesExtraColumns /* */ :true,
-                    includeValuesBranching /*    */ :true);
-                steps.Add($"[{problemName}] Branch **{variableName}** {branch}  \n{tableauString}");
+                var variableName /* */ = tableau /*  */ [previousBranchI].variable.Name;
+                var sign /*         */ = tableau.Choices[previousBranchI].Branch == Branch.Floor ? "<=" : ">=";
+                var value /*        */ = tableau.Choices[previousBranchI].Value;
+                steps.Add($"[{problemName}] Branch **{variableName}** {sign} {value}  ");
             }
 
             int branchI = -1;
@@ -102,7 +97,7 @@ namespace LPR381.LP
                     remainingBudget -= choice.Value * variable.Cost;
                     if (remainingBudget < 0)
                     {
-                        steps.Add($"[{problemName}] Solution Infeasible  \n{tableau}");
+                        steps.Add($"Solution Infeasible  \n{tableau}");
                         return;
                     }
                 }
@@ -129,13 +124,21 @@ namespace LPR381.LP
             }
             if (branchI < 0)
             {
-                steps.Add($"[{problemName}] Solution Feasible  \n{tableau}");
+                steps.Add($"Solution Feasible  \n{tableau}");
                 condidates.Add(tableau);
                 return;
             }
 
-            if (problemName == "2.2")
-                ;
+            {
+                var variableName = tableau[branchI].variable.Name;
+                var tableauString = tableau.ToStringDefaultExclude(
+                        includeHeaders /*            */ : true,
+                        includeAlignment /*          */ : true,
+                        includeValues /*             */ : true,
+                        includeValuesExtraColumns /* */ : true,
+                        includeValuesBranching /*    */ : true);
+                steps.Add($"Branch on **{variableName}** \n{tableauString}");
+            }
 
             for (Branch branch = Branch.Floor; branch <= Branch.Ceiling; branch++)
             {
@@ -155,7 +158,7 @@ namespace LPR381.LP
                     .OrderBy(c => c.Branch == Branch.None)
                     .ToArray(),
                 };
-                RecursiveSolve(nextTableau, condidates, steps, branchI, depth + 1);
+                RecursiveSolve(nextTableau, condidates, steps, depth + 1);
             }
         }
 
@@ -198,6 +201,7 @@ namespace LPR381.LP
             }
             public IEnumerable<(Choice choice, Variable variable)> ChoicesWithVariables => Enumerable.Repeat(this, Choices.Length).Select((self, i) => self[i]);
             public string ProblemName => String.Join(".", Choices.Where(c => c.Branch != Branch.None).Select(c => (int)c.Branch));
+            public int LatestBranchI => Choices.Select((c, i) => (c, i)).Where(x => x.c.Branch != Branch.None).Select(x => x.i).Prepend(-1).Last();
             public double GetProfit /* */() => ChoicesWithVariables.Select(x => x.choice.Value * x.variable.Profit /* */).Sum();
             public double GetCost /*   */() => ChoicesWithVariables.Select(x => x.choice.Value * x.variable.Cost /*   */).Sum();
             public override string ToString() => ToStringDefaultInclude();
@@ -272,10 +276,10 @@ namespace LPR381.LP
                     foreach (var choice in choices)
                     {
                         var s = choice.choice.Value.ToString("0.###");
-                        if (includeValuesBranching)
-                            s += choice.choice.Branch == Branch.Floor /*   */ ? "v"
-                               : choice.choice.Branch == Branch.Ceiling /* */ ? "^" : "~";
-                        sb.Append($"| {s.PadLeft(colWidth)} ");
+                        var e = !includeValuesBranching /*              */ ? " "
+                            : choice.choice.Branch == Branch.Floor /*   */ ? "v"
+                            : choice.choice.Branch == Branch.Ceiling /* */ ? "^" : " ";
+                        sb.Append($"| {s.PadLeft(colWidth)}{e}");
                     }
                     foreach (var value in totalColumnsValues)
                         sb.Append($"| {value.ToString("0.###").PadLeft(colWidth)} ");
