@@ -61,7 +61,7 @@ namespace LPR381.LP
                     firstColWidth /*             */: problemNameMaxLength
                 ));
             }
-            steps.Add("End Branch&Bound");
+            steps.Add("End Branch&Bound-Knapsack");
             return steps;
         }
 
