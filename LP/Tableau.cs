@@ -275,7 +275,6 @@ Pivot on {RowNames[rowI]}, {ColumnNames[colI]}
         {
             StringBuilder sb = new StringBuilder();
 
-            // Start the HTML document structure and add the new styling
             sb.AppendLine(@"
 <html>
 <head>
