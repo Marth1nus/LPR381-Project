@@ -271,90 +271,117 @@ Pivot on {RowNames[rowI]}, {ColumnNames[colI]}
             return Height - heightBeforeAdding;
         }
 
-public override string ToString()
-    {
-        StringBuilder sb = new StringBuilder();
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
 
-        // Start the HTML document structure and add styling
-        sb.AppendLine(@"
+            // Start the HTML document structure and add the new styling
+            sb.AppendLine(@"
 <html>
 <head>
+    <link rel=""preconnect"" href=""https://fonts.googleapis.com"">
+    <link rel=""preconnect"" href=""https://fonts.gstatic.com"" crossorigin>
+    <link href=""https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap"" rel=""stylesheet"">
     <style>
-        table, th, td {
-            border: 1px solid black; /* Sets a 1px solid black border on the table, headers, and cells */
+        body {
+            background-color: #1e2125;
+            font-family: 'Lato', sans-serif;
+            color: #f0f0f0;
+            margin: 40px;
         }
         table {
-            border-collapse: collapse; /* Merges the borders of adjacent cells */
-            width: 80%; /* Optional: Makes the table span the full width of the container */
+            width: 80%; /* Retained your original width preference */
+            border-collapse: collapse;
+            color: #e0e2e8;
+            background-color: #2c3044; /* Dark background for table rows */
+            border-radius: 8px;
+            overflow: hidden; /* Clips content to match the border-radius */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-size: 16px;
+        }
+        thead tr {
+            background-color: #353a50; /* A slightly lighter shade for the main header */
         }
         th, td {
-            padding: 2px; /* Adds spacing inside cells */
-            text-align: right; /* Aligns cell content to the right */
-        }
-        th:first-child, td:first-child {
-            text-align: left; /* Aligns the first column to the left */
+            padding: 18px 24px; /* Generous padding for a clean look */
         }
         th {
-            background-color: #f2f2f2; /* This sets a light gray background */
+            /* Style for all header cells (top and side) */
+            text-align: left;
+            font-weight: 700;
+            font-size: 14px;
+            color: #a0a5b5; /* Muted color for header text */
+        }
+        td {
+            /* Style for all data cells */
+            text-align: right;
+        }
+        tbody tr {
+            /* Creates the horizontal lines between rows */
+            border-bottom: 1px solid #353a50;
+        }
+        tbody tr:last-child {
+            /* Removes the border from the very last row for a clean finish */
+            border-bottom: none;
         }
     </style>
 </head>
 <body>
 ");
 
-        // Start the table structure
-        sb.AppendLine("<table>");
-        sb.AppendLine("<thead>");
-        sb.AppendLine("<tr>");
-
-        // Add the top-left corner cell (or leave it blank)
-        sb.AppendLine("<th></th>");
-
-        // Create the header row
-        for (int j = 0; j < Width; j++)
-        {
-            sb.AppendLine($"<th>{ColumnNames[j]}</th>");
-        }
-        sb.AppendLine("</tr>");
-        sb.AppendLine("</thead>");
-        sb.AppendLine("<tbody>");
-
-        // Create the body rows
-        for (int i = 0; i < Height; i++)
-        {
+            // Start the table structure
+            sb.AppendLine("<table>");
+            sb.AppendLine("<thead>");
             sb.AppendLine("<tr>");
-            sb.AppendLine($"<th>{RowNames[i]}</th>"); // This is the first column with row names
 
+            // Add the top-left corner cell (blank)
+            sb.AppendLine("<th></th>");
+
+            // Create the header row
             for (int j = 0; j < Width; j++)
             {
-                var valueString = Values[i, j].ToString("0.###");
-                sb.AppendLine($"<td>{valueString}</td>");
+                sb.AppendLine($"<th>{ColumnNames[j]}</th>");
             }
             sb.AppendLine("</tr>");
-        }
+            sb.AppendLine("</thead>");
+            sb.AppendLine("<tbody>");
 
-        // Add the footer row for restrictions
-        sb.AppendLine("<tr>");
-        sb.AppendLine("<th>Sign</th>");
-        for (int j = 0; j < Width; j++)
-        {
-            sb.AppendLine($"<td>{(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : "")}</td>");
-        }
-        sb.AppendLine("</tr>");
+            // Create the body rows
+            for (int i = 0; i < Height; i++)
+            {
+                sb.AppendLine("<tr>");
+                sb.AppendLine($"<th>{RowNames[i]}</th>"); // Row header
 
-        // Close the table and the HTML document
-        sb.AppendLine("</tbody>");
-        sb.AppendLine("</table>");
-        sb.AppendLine(@"
+                for (int j = 0; j < Width; j++)
+                {
+                    var valueString = Values[i, j].ToString("0.###");
+                    sb.AppendLine($"<td>{valueString}</td>");
+                }
+                sb.AppendLine("</tr>");
+            }
+
+            // Add the footer row for restrictions
+            sb.AppendLine("<tr>");
+            sb.AppendLine("<th>Sign</th>");
+            for (int j = 0; j < Width; j++)
+            {
+                sb.AppendLine($"<td>{(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : "")}</td>");
+            }
+            sb.AppendLine("</tr>");
+
+            // Close the table and the HTML document
+            sb.AppendLine("</tbody>");
+            sb.AppendLine("</table>");
+            sb.AppendLine(@"
 </body>
 </html>
 ");
 
-        // Return the complete HTML string
-        return sb.ToString();
-    }
+            // Return the complete HTML string
+            return sb.ToString();
+        }
 
-    private static (string[] objectiveLine, string[][] constraintLines, string[] restrictionsLine) FromFileValidateFile(string filename)
+        private static (string[] objectiveLine, string[][] constraintLines, string[] restrictionsLine) FromFileValidateFile(string filename)
         {
             // TODO: canonical form out param
             var lines = File.ReadAllLines(filename, Encoding.UTF8)
