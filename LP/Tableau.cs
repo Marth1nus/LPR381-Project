@@ -288,7 +288,7 @@ Pivot on {RowNames[rowI]}, {ColumnNames[colI]}
             color: #f0f0f0;
             margin: 40px;
         }
-        table {
+        .table {
             width: 80%; /* Retained your original width preference */
             border-collapse: collapse;
             color: #e0e2e8;
@@ -329,7 +329,7 @@ Pivot on {RowNames[rowI]}, {ColumnNames[colI]}
 ");
 
             // Start the table structure
-            sb.AppendLine("<table>");
+            sb.AppendLine("<table class='table'>");
             sb.AppendLine("<thead>");
             sb.AppendLine("<tr>");
 

@@ -25,7 +25,22 @@ namespace LPR381
         };
         private Tableau tableau;
 
-        private string htmlPage = "<html><body><h1>Solver</h1></body></html>";
+        private string htmlPage = @"
+<html>
+<head> 
+<style>
+        body {
+            background-color: #1e2125;
+            font-family: 'Lato', sans-serif;
+            color: #f0f0f0;
+            margin: 40px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Solver</h1>
+</body>
+</html>";
 
         private void errorMessageNoTableau()
         {
@@ -52,48 +67,6 @@ namespace LPR381
         private void openToolStripMenuItem_Click(object sender, EventArgs e) => openFileDialog1.ShowDialog(this);
         
         private void saveToolStripMenuItem_Click(object sender, EventArgs e) => saveFileDialog1.ShowDialog(this);
-
-        private void TestMarkdownTable()
-        {
-            // A manually created verbatim string with correct Markdown table syntax
-            string table = @"
-<html>
-<head>
-    <style>
-        table, th, td {
-            border: 1px solid black; /* Sets a 1px solid black border on the table, headers, and cells */
-        }
-        table {
-            border-collapse: collapse; /* Merges the borders of adjacent cells */
-            width: 100%; /* Optional: Makes the table span the full width of the container */
-        }
-    </style>
-</head>
-<body>
-    <table>
-        <thead>
-            <tr>
-                <th>Header 1</th>
-                <th>Header 2</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Row 1-1</td>
-                <td>Row 1-2</td>
-            </tr>
-            <tr>
-                <td>Row 2-1</td>
-                <td>Row 2-2</td>
-            </tr>
-        </tbody>
-    </table>
-</body>
-</html>";
-            // Convert to HTML and display
-            string html = Markdig.Markdown.ToHtml(table);
-            webBrowser1.DocumentText = html;
-        }
 
         private void solveToolStripMenuItem_Click(object sender, EventArgs e)
         {

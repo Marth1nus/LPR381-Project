@@ -96,7 +96,7 @@ namespace LPR381.LP
             color: #28a745; /* A vibrant green for the optimal value */
             font-weight: bold;
         }
-        table {
+        solutionTable {
             width: 30%; /* Make the solution table narrower */
             max-width: 450px; /* Set a maximum width for readability */
             margin: 30px auto; /* Center the table with space above and below */
@@ -140,7 +140,7 @@ namespace LPR381.LP
             result.AppendLine($"<p>Optimal Value: <span>{optimalValue:0.###}</span></p>");
 
             // Start the table structure
-            result.AppendLine("<table>");
+            result.AppendLine("<table class='solutionTable'>");
             result.AppendLine("<thead><tr><th>Variable</th><th>Value</th></tr></thead>");
 
             // Extract values of decision variables from the final tableau
