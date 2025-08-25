@@ -267,51 +267,6 @@ namespace LPR381.LP
                 sb.AppendLine("<html>");
                 sb.AppendLine("<head>");
                 sb.AppendLine("<title>Knapsack Solution</title>");
-                // Optional: Add some CSS for better table display
-//                sb.AppendLine(@"
-//< style >
-//        body {
-//                    background - color: #1e2125;
-//            font - family: 'Lato', sans - serif;
-//                    color: #f0f0f0;
-//            margin: 40px;
-//                }
-//        .table {
-//                    width: 80 %; /* Retained your original width preference */
-//                    border - collapse: collapse;
-//                    color: #e0e2e8;
-//            background - color: #2c3044; /* Dark background for table rows */
-//            border - radius: 8px;
-//                    overflow: hidden; /* Clips content to match the border-radius */
-//                    box - shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-//                    font - size: 16px;
-//                }
-//                thead tr {
-//                    background - color: #353a50; /* A slightly lighter shade for the main header */
-//        }
-//                th, td {
-//                    padding: 18px 24px; /* Generous padding for a clean look */
-//                }
-//                th {
-//                    /* Style for all header cells (top and side) */
-//                    text - align: left;
-//                    font - weight: 700;
-//                    font - size: 14px;
-//                    color: #a0a5b5; /* Muted color for header text */
-//        }
-//                td {
-//                    /* Style for all data cells */
-//                    text - align: right;
-//                }
-//                tbody tr {
-//                    /* Creates the horizontal lines between rows */
-//                    border - bottom: 1px solid #353a50;
-//        }
-//                tbody tr:last - child {
-//                    /* Removes the border from the very last row for a clean finish */
-//                    border - bottom: none;
-//                }
-//</ style >");
                 sb.AppendLine("<style>");
                 sb.AppendLine("body {background - color: #1e2125;font - family: 'Lato', sans - serif;color: #f0f0f0;margin: 40px;}");
                 sb.AppendLine(" thead tr {background - color: #353a50;}");
