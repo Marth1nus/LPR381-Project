@@ -14,13 +14,18 @@ namespace LPR381.LP
             var candidates = new List<(Tableau tableau, string problemName)>();
             RecursiveSolve(tableau.Copy(), "", ref candidates, ref steps);
 
-            const int problemNameMaxLength = 40;
-            steps.Add(String.Join("\n", candidates
-                .Select(candidate => $"| {candidate.tableau.ObjectiveValue,3:0.#} | {candidate.problemName, /* */ -problemNameMaxLength /**/ } |")
-                .Prepend(/*       */ $"| {/*                            */ "--:"} | {/*           */ ":-".PadRight(problemNameMaxLength, '-')} |")
-                .Prepend(/*       */ $"| {/*                            */ "  Z"} | {"Problem Name", /*        */ -problemNameMaxLength /**/ } |")
-                .Prepend("Candidates:\n")
-            ));
+            steps.Add($@"Candidates:
+<table>
+  <thead>
+    <tr>
+      <th>Z</th>
+      <th>Problem Name</th>
+    </tr>
+  </thead>
+  <tbody>
+{String.Join("\n", candidates.Select(candidate => $"    <tr><td>{candidate.tableau.ObjectiveValue,3:0.#}</td><td>{candidate.problemName}</td></tr>"))}
+  </tbody>
+</table>");
 
             if (candidates.Count <= 0)
             {
