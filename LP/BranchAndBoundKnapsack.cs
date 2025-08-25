@@ -1,8 +1,17 @@
-﻿using System;
+﻿using Markdig.Extensions.Tables;
+using MathNet.Numerics.Distributions;
+using MathNet.Numerics;
+using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Policy;
 using System.Text;
+using static System.Net.Mime.MediaTypeNames;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrayNotify;
+using System.Threading;
 
 namespace LPR381.LP
 {
@@ -226,15 +235,15 @@ namespace LPR381.LP
                     colWidth /*                  */: colWidth /*                  */,
                     firstColWidth /*             */: firstColWidth /*             */);
             public string ToStringDefaultInclude(
-                bool /* */ includeValuesExtraColumns /* */ = true,
-                bool /* */ includeValuesBranching /*    */ = true,
-                bool /* */ includeHeaders /*            */ = true,
-                bool /* */ includeAlignment /*          */ = true,
-                bool /* */ includeValues /*             */ = true,
-                bool /* */ includeProfits /*            */ = true,
-                bool /* */ includeCosts /*              */ = true,
-                int /*  */ colWidth /*                  */ = 6,
-                int /*  */ firstColWidth /*             */ = 0)
+    bool includeValuesExtraColumns = true,
+    bool includeValuesBranching = true,
+    bool includeHeaders = true,
+    bool includeAlignment = true,
+    bool includeValues = true,
+    bool includeProfits = true,
+    bool includeCosts = true,
+    int colWidth = 6,
+    int firstColWidth = 0)
             {
                 var problemName = ProblemName;
                 firstColWidth = firstColWidth <= 0 ? colWidth : firstColWidth;
@@ -247,63 +256,160 @@ namespace LPR381.LP
                 var totalColumnsHeaders = includeValuesExtraColumns ? "Profit|Cost|Budget".Split('|') : new string[0];
                 var totalColumnsValues = includeValuesExtraColumns
                     ? new double[] { choices.Select(c => c.choice.Value * c.variable.Profit).Sum(),
-                                     choices.Select(c => c.choice.Value * c.variable.Cost).Sum(),
-                                     Budget }
+                            choices.Select(c => c.choice.Value * c.variable.Cost).Sum(),
+                            Budget }
                     : new double[0];
+
                 var sb = new StringBuilder();
-                if (includeHeaders /*      */)
+
+                // Start building the HTML string
+                sb.AppendLine("<!DOCTYPE html>");
+                sb.AppendLine("<html>");
+                sb.AppendLine("<head>");
+                sb.AppendLine("<title>Knapsack Solution</title>");
+                // Optional: Add some CSS for better table display
+//                sb.AppendLine(@"
+//< style >
+//        body {
+//                    background - color: #1e2125;
+//            font - family: 'Lato', sans - serif;
+//                    color: #f0f0f0;
+//            margin: 40px;
+//                }
+//        .table {
+//                    width: 80 %; /* Retained your original width preference */
+//                    border - collapse: collapse;
+//                    color: #e0e2e8;
+//            background - color: #2c3044; /* Dark background for table rows */
+//            border - radius: 8px;
+//                    overflow: hidden; /* Clips content to match the border-radius */
+//                    box - shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+//                    font - size: 16px;
+//                }
+//                thead tr {
+//                    background - color: #353a50; /* A slightly lighter shade for the main header */
+//        }
+//                th, td {
+//                    padding: 18px 24px; /* Generous padding for a clean look */
+//                }
+//                th {
+//                    /* Style for all header cells (top and side) */
+//                    text - align: left;
+//                    font - weight: 700;
+//                    font - size: 14px;
+//                    color: #a0a5b5; /* Muted color for header text */
+//        }
+//                td {
+//                    /* Style for all data cells */
+//                    text - align: right;
+//                }
+//                tbody tr {
+//                    /* Creates the horizontal lines between rows */
+//                    border - bottom: 1px solid #353a50;
+//        }
+//                tbody tr:last - child {
+//                    /* Removes the border from the very last row for a clean finish */
+//                    border - bottom: none;
+//                }
+//</ style >");
+                sb.AppendLine("<style>");
+                sb.AppendLine("body {background - color: #1e2125;font - family: 'Lato', sans - serif;color: #f0f0f0;margin: 40px;}");
+                sb.AppendLine(" thead tr {background - color: #353a50;}");
+                sb.AppendLine("table {width: 80 %; border - collapse: collapse; color: #e0e2e8; background - color: #2c3044; border - radius: 8px; overflow: hidden; box - shadow: 0 4px 15px rgba(0, 0, 0, 0.2); font - size: 16px; }");
+                sb.AppendLine("th, td { border: 1px solid black; padding: 18px 24px; }");
+                sb.AppendLine("th {text - align: left;font - weight: 700;font - size: 14px; color: #a0a5b5;}");
+                sb.AppendLine("td { text - align: right;}");
+                sb.AppendLine("</style>");
+                sb.AppendLine("</head>");
+                sb.AppendLine("<body>");
+
+                // Add a heading for the problem name
+                sb.AppendLine($"<h1>{problemName}</h1>");
+
+                // Start the HTML table
+                sb.AppendLine("<table>");
+
+                // Table Headers (<thead>)
+                if (includeHeaders)
                 {
-                    sb.Append($"| {ProblemName.PadRight(firstColWidth)} ");
+                    sb.AppendLine("<thead>");
+                    sb.AppendLine("<tr>");
+                    sb.AppendLine($"<th>{problemName}</th>");
                     foreach (var choice in choices)
-                        sb.Append($"| {choice.variable.Name.PadLeft(colWidth)} ");
+                    {
+                        sb.AppendLine($"<th>{choice.variable.Name}</th>");
+                    }
                     foreach (var header in totalColumnsHeaders)
-                        sb.Append($"| {header.PadLeft(colWidth)} ");
-                    sb.Append("|\n");
+                    {
+                        sb.AppendLine($"<th>{header}</th>");
+                    }
+                    sb.AppendLine("</tr>");
+                    sb.AppendLine("</thead>");
                 }
-                if (includeAlignment /*    */)
+
+                // Table Body (<tbody>)
+                sb.AppendLine("<tbody>");
+
+                // Values Row
+                if (includeValues)
                 {
-                    sb.Append($"| {":-".PadRight(firstColWidth, '-')} ");
-                    var align = $"| {"-:".PadLeft(colWidth, '-')} ";
-                    foreach (var choice in choices)
-                        sb.Append(align);
-                    foreach (var header in totalColumnsHeaders)
-                        sb.Append(align);
-                    sb.Append("|\n");
-                }
-                if (includeValues /*       */)
-                {
-                    sb.Append($"| {(includeHeaders ? "Values" : problemName).PadRight(firstColWidth)} ");
+                    sb.AppendLine("<tr>");
+                    sb.AppendLine($"<td>{(includeHeaders ? "Values" : problemName)}</td>");
                     foreach (var choice in choices)
                     {
                         var s = choice.choice.Value.ToString("0.###");
-                        var e = !includeValuesBranching /*              */ ? " "
-                            : choice.choice.Branch == Branch.Floor /*   */ ? "v"
-                            : choice.choice.Branch == Branch.Ceiling /* */ ? "^" : " ";
-                        sb.Append($"| {s.PadLeft(colWidth)}{e}");
+                        var e = !includeValuesBranching ? ""
+                            : choice.choice.Branch == Branch.Floor ? "v"
+                            : choice.choice.Branch == Branch.Ceiling ? "^" : "";
+                        sb.AppendLine($"<td>{s}{e}</td>");
                     }
                     foreach (var value in totalColumnsValues)
-                        sb.Append($"| {value.ToString("0.###").PadLeft(colWidth)} ");
-                    sb.Append("|\n");
+                    {
+                        sb.AppendLine($"<td>{value.ToString("0.###")}</td>");
+                    }
+                    sb.AppendLine("</tr>");
                 }
-                if (includeProfits /*      */)
+
+                // Profits Row
+                if (includeProfits)
                 {
-                    sb.Append($"| {"Profits".PadRight(firstColWidth)} ");
+                    sb.AppendLine("<tr>");
+                    sb.AppendLine("<td>Profits</td>");
                     foreach (var choice in choices)
-                        sb.Append($"| {choice.variable.Profit.ToString("0.###").PadLeft(colWidth)} ");
+                    {
+                        sb.AppendLine($"<td>{choice.variable.Profit.ToString("0.###")}</td>");
+                    }
                     foreach (var value in totalColumnsValues)
-                        sb.Append($"| {"".PadLeft(colWidth)} ");
-                    sb.Append("|\n");
+                    {
+                        sb.AppendLine($"<td></td>"); // Empty cells for the extra columns
+                    }
+                    sb.AppendLine("</tr>");
                 }
-                if (includeCosts /*        */)
+
+                // Costs Row
+                if (includeCosts)
                 {
-                    sb.Append($"| {"Costs".PadRight(firstColWidth)} ");
+                    sb.AppendLine("<tr>");
+                    sb.AppendLine("<td>Costs</td>");
                     foreach (var choice in choices)
-                        sb.Append($"| {choice.variable.Cost.ToString("0.###").PadLeft(colWidth)} ");
+                    {
+                        sb.AppendLine($"<td>{choice.variable.Cost.ToString("0.###")}</td>");
+                    }
                     foreach (var value in totalColumnsValues)
-                        sb.Append($"| {"".PadLeft(colWidth)} ");
-                    sb.Append("|\n");
+                    {
+                        sb.AppendLine($"<td></td>"); // Empty cells for the extra columns
+                    }
+                    sb.AppendLine("</tr>");
                 }
-                sb.Remove(sb.Length - 1, 1);
+
+                // End the HTML table
+                sb.AppendLine("</tbody>");
+                sb.AppendLine("</table>");
+
+                // End the HTML document
+                sb.AppendLine("</body>");
+                sb.AppendLine("</html>");
+
                 return sb.ToString();
             }
         }
