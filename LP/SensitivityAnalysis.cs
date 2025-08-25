@@ -1,7 +1,4 @@
-﻿using MathNet.Numerics.LinearAlgebra;
-using System;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 
 namespace LPR381.LP
 {

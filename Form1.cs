@@ -1,14 +1,13 @@
 ﻿using LPR381.LP;
+using Markdig;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
-using Markdig;
 
 
 namespace LPR381
@@ -23,36 +22,29 @@ namespace LPR381
             { "Dual Simplex", /*              */ DualSimplex /*            */ .Solve },
             { "Primal Simplex", /*            */ PrimalSimplex /*          */ .Solve },
         };
-        private Tableau tableau;
-
-        private string htmlPage = @"
-<html>
-<head> 
-<style>
-        body {
-            background-color: #1e2125;
-            font-family: 'Lato', sans-serif;
-            color: #f0f0f0;
-            margin: 40px;
-        }
-    </style>
-</head>
-<body>
-    <h1>Solver</h1>
-</body>
-</html>";
-
-        private void errorMessageNoTableau()
-        {
-            // A string of HTML to display
-            string htmlContent = "<html><body><h1>Solver</h1><h3 style='color:red;'>No Tableau</h3></body></html>";
-
-            // Set the content of the WebBrowser control
-            webBrowser1.DocumentText = htmlContent;
-        }
-
         private Solver Solver => comboBox1.SelectedValue as Solver;
         private string SolverName => AlgorithmDict.FirstOrDefault(kv => kv.Value == Solver).Key;
+
+        private string _SolutionText = "";
+        private string SolutionText
+        {
+            get => _SolutionText; 
+            set { _SolutionText = value; DisplaySolutionText(); }
+        }
+
+        private Tableau tableau;
+
+        private static readonly MarkdownPipeline Pileline = new MarkdownPipelineBuilder()
+                .UseAdvancedExtensions()   // includes footnotes, tables, definition lists, etc.
+                .UsePipeTables()           // Enables pipe tables like in Pandoc
+                .UseGridTables()           // Optional: enables grid tables
+                .UseAutoLinks()            // convert URLs to links
+                .UseEmphasisExtras()       // allows underscore inside words
+                .UseTaskLists()            // GitHub-style task lists
+                .UseYamlFrontMatter()      // front matter support
+                .UseEmojiAndSmiley()       // emoji like :smile:
+                .UseGenericAttributes()    // allows {#id .class} attributes
+                .Build();
 
         public Form1()
         {
@@ -65,8 +57,10 @@ namespace LPR381
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e) => openFileDialog1.ShowDialog(this);
-        
+
         private void saveToolStripMenuItem_Click(object sender, EventArgs e) => saveFileDialog1.ShowDialog(this);
+
+        private void clearOutputToolStripMenuItem_Click(object sender, EventArgs e) => SolutionText = "";
 
         private void solveToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -76,17 +70,13 @@ namespace LPR381
                 label4.ForeColor = System.Drawing.Color.Black;
                 if (tableau == null)
                 {
-                    errorMessageNoTableau();
+                    SolutionText = "**No Tablueau**\n";
                     return;
                 }
                 var newTableau = tableau.Copy();
                 var steps = Solver(newTableau);
-                var stepString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
-                string htmlSteps = Markdig.Markdown.ToHtml(stepString);
-                string htmlContent = Markdig.Markdown.ToHtml($"# Solve Using {SolverName}\n\n{htmlSteps}\n\n");
-                webBrowser1.DocumentText = htmlContent;
-
-
+                var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
+                SolutionText += $"# Solve Using {SolverName}\n\n{stepsString}\n\n";
                 tableau = newTableau;
             }
             catch (Exception err)
@@ -105,14 +95,14 @@ namespace LPR381
             {
                 if (tableau == null)
                 {
-                    errorMessageNoTableau();
+                    SolutionText = "**No Tablueau**\n";
                     return;
                 }
                 var analysis = SensitivityAnalysis.Analise(tableau.Copy());
-               // richTextBox1.Text += $"# Sensitivity Analysis\n\n{analysis}\n\n";
+                SolutionText += $"# Sensitivity Analysis\n\n{analysis}\n\n";
             }
-            catch (Exception err) 
-            { 
+            catch (Exception err)
+            {
                 Console.WriteLine(err.ToString());
                 label5.Text = "Error";
                 label5.ForeColor = System.Drawing.Color.Red;
@@ -125,7 +115,7 @@ namespace LPR381
             {
                 tableau = Tableau.FromFile(openFileDialog1.FileName);
                 textBox1.Text = openFileDialog1.FileName.Split('\\').Last();
-               // richTextBox1.Text = $"{Tableau.FromFileCanonicalForm(openFileDialog1.FileName)}\n\n# Tableau\n\n{tableau}\n\n";
+                SolutionText = $"{Tableau.FromFileCanonicalForm(openFileDialog1.FileName)}\n\n# Tableau\n\n{tableau}\n\n";
             }
             catch (Exception ex)
             {
@@ -133,11 +123,12 @@ namespace LPR381
                 textBox1.Text = "Failed";
             }
         }
+
         private void saveFileDialog1_FileOk(object sender, CancelEventArgs e)
         {
             try
             {
-                //File.WriteAllText(saveFileDialog1.FileName, richTextBox1.Text);
+                File.WriteAllText(saveFileDialog1.FileName, SolutionText);
                 textBox2.Text = saveFileDialog1.FileName.Split('\\').Last();
             }
             catch (Exception ex)
@@ -147,26 +138,62 @@ namespace LPR381
             }
         }
 
-        private void clearOutputToolStripMenuItem_Click(object sender, EventArgs e)
+        private void DisplaySolutionText()
         {
-            webBrowser1.DocumentText = htmlPage;
-        }
+            var htmlBodyContent = Markdown.ToHtml(SolutionText, Pileline);
 
-        private void richTextBox1_TextChanged(object sender, EventArgs e)
-        {
-            //richTextBox1.SelectionStart = richTextBox1.Text.Length;
-            //richTextBox1.ScrollToCaret();
-        }
+            richTextBox1.Text = SolutionText;
+            richTextBox1.SelectionStart = richTextBox1.Text.Length;
+            richTextBox1.ScrollToCaret();
 
-        private void sensitivityAnalysToolStripMenuItem_Click(object sender, EventArgs e)
-        {
+            richTextBox2.Text = htmlBodyContent;
+            richTextBox2.SelectionStart = richTextBox2.Text.Length;
+            richTextBox2.ScrollToCaret();
 
-        }
-
-        private void btnClear_Click(object sender, EventArgs e)
-        {
-            //richTextBox1.Text = "";
-            webBrowser1.DocumentText = htmlPage;
+            webBrowser1.DocumentText = $@"
+                <!DOCTYPE html>
+                <html lang=""en"">
+                    <head>
+                        <meta charset=""UTF-8"">
+                        <title>LPR381-Project</title>
+                        <style>
+                            body {{
+                                background-color: #1e2125;
+                                font-family: 'Courier New', Courier, monospace;
+                                color: #f0f0f0;
+                                margin: 40px;
+                            }}
+                            table {{
+                                border-collapse: collapse;
+                                color: #e0e2e8;
+                                background-color: #2c3044; /* Dark background for table rows */
+                                border-radius: 8px;
+                                overflow: hidden; /* Clips content to match the border-radius */
+                                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                                font-size: 16px;
+                            }}
+                            thead tr {{
+                                background-color: #353a50; /* A slightly lighter shade for the main header */
+                            }}
+                            tr {{
+                                border-bottom: 1px solid #353a50;
+                            }}
+                            th, td {{
+                                padding: 4px;
+                                width: 64px;
+                            }}
+                            th {{
+                                font-weight: 700;
+                                font-size: 14px;
+                                color: #a0a5b5; /* Muted color for header text */
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        {htmlBodyContent}
+                    </body>
+                </html>
+            ";
         }
     }
 }

@@ -4,8 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Markdig;
-using Markdig.Extensions.Tables;
 
 namespace LPR381.LP
 {
@@ -164,7 +162,7 @@ namespace LPR381.LP
             }
             for (int i = 0; i < Height; i++)
             {
-                if (i == rowI)
+                if (i == rowI) 
                     continue;
                 double factor = Values[i, colI];
                 for (int j = 0; j < Width; j++)
@@ -179,15 +177,8 @@ namespace LPR381.LP
                     Values[i, j] = Math.Round(Values[i, j], 12);
                 }
             }
-            return Markdig.Markdown.ToHtml($@"
-<div style='border: 1px solid black; padding: 2px; margin-bottom: 2px; width: 145px;text-align: center;'>
-Pivot on {RowNames[rowI]}, {ColumnNames[colI]}
-
-</div>
-{this}
-");
+            return $"Pivot on **{RowNames[rowI]}**, **{ColumnNames[colI]}**\n\n{this}";
         }
-
 
         public void AddRow(double[] newRow = null, string name = null)
         {
@@ -282,112 +273,39 @@ Pivot on {RowNames[rowI]}, {ColumnNames[colI]}
 
         public override string ToString()
         {
+            const int colWidth = 8, // "-000.000".Length
+                      decimalLength = 4;
             StringBuilder sb = new StringBuilder();
-
-
-            sb.AppendLine(@"
-<html>
-<head>
-    <link rel=""preconnect"" href=""https://fonts.googleapis.com"">
-    <link rel=""preconnect"" href=""https://fonts.gstatic.com"" crossorigin>
-    <link href=""https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap"" rel=""stylesheet"">
-    <style>
-        body {
-            background-color: #1e2125;
-            font-family: 'Lato', sans-serif;
-            color: #f0f0f0;
-            margin: 40px;
-        }
-        .table {
-            width: 80%; /* Retained your original width preference */
-            border-collapse: collapse;
-            color: #e0e2e8;
-            background-color: #2c3044; /* Dark background for table rows */
-            border-radius: 8px;
-            overflow: hidden; /* Clips content to match the border-radius */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            font-size: 16px;
-        }
-        thead tr {
-            background-color: #353a50; /* A slightly lighter shade for the main header */
-        }
-        th, td {
-            padding: 18px 24px; /* Generous padding for a clean look */
-        }
-        th {
-            /* Style for all header cells (top and side) */
-            text-align: left;
-            font-weight: 700;
-            font-size: 14px;
-            color: #a0a5b5; /* Muted color for header text */
-        }
-        td {
-            /* Style for all data cells */
-            text-align: right;
-        }
-        tbody tr {
-            /* Creates the horizontal lines between rows */
-            border-bottom: 1px solid #353a50;
-        }
-        tbody tr:last-child {
-            /* Removes the border from the very last row for a clean finish */
-            border-bottom: none;
-        }
-    </style>
-</head>
-<body>
-");
-
-            // Start the table structure
-            sb.AppendLine("<table class='table'>");
-            sb.AppendLine("<thead>");
-            sb.AppendLine("<tr>");
-
-            // Add the top-left corner cell (blank)
-            sb.AppendLine("<th></th>");
-
-            // Create the header row
-
+            /* | T1     |     x1 |     s1 |    rhs | */
+            sb.Append($"| T{TableauIteration, 1 - colWidth} ");
             for (int j = 0; j < Width; j++)
-            {
-                sb.AppendLine($"<th>{ColumnNames[j]}</th>");
-            }
-            sb.AppendLine("</tr>");
-            sb.AppendLine("</thead>");
-            sb.AppendLine("<tbody>");
-
-            // Create the body rows
+                sb.Append($"| {ColumnNames[j].PadLeft(colWidth-decimalLength), -colWidth} ");
+            sb.AppendLine($"|");
+            /* | ------ | ------ | ------ | ------ | */
+            for (int j = 0; j < Width + 1; j++)
+                sb.Append($"| {"-:".PadLeft(colWidth, '-')} ");
+            sb.AppendLine($"|");
+            /* |  max Z | 00.000 | 00.000 | 00.000 | */
+            /* |     C1 | 00.000 | 00.000 | 00.000 | */
             for (int i = 0; i < Height; i++)
             {
-                sb.AppendLine("<tr>");
-                sb.AppendLine($"<th>{RowNames[i]}</th>"); // Row header
-
+                sb.Append($"| {RowNames[i],colWidth} ");
                 for (int j = 0; j < Width; j++)
                 {
                     var valueString = Values[i, j].ToString("0.###");
-                    sb.AppendLine($"<td>{valueString}</td>");
+                    var valueStringIndexOfDot = valueString.IndexOf(".");
+                    if (valueStringIndexOfDot == -1) 
+                        valueStringIndexOfDot = valueString.Length;
+                    var valueStringTargetLength= valueStringIndexOfDot + decimalLength;
+                    sb.Append($"| {valueString.PadRight(valueStringTargetLength), colWidth} ");
                 }
-                sb.AppendLine("</tr>");
+                sb.AppendLine($"|");
             }
-
-            // Add the footer row for restrictions
-            sb.AppendLine("<tr>");
-            sb.AppendLine("<th>Sign</th>");
+            /* |   Sign |    int |      + |        | */
+            sb.Append($"| {"",colWidth} ");
             for (int j = 0; j < Width; j++)
-            {
-                sb.AppendLine($"<td>{(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : "")}</td>");
-            }
-            sb.AppendLine("</tr>");
-
-            // Close the table and the HTML document
-            sb.AppendLine("</tbody>");
-            sb.AppendLine("</table>");
-            sb.AppendLine(@"
-</body>
-</html>
-");
-
-            // Return the complete HTML string
+                sb.Append($"| {(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : "").PadLeft(colWidth - decimalLength), -colWidth} ");
+            sb.AppendLine($"|");
             return sb.ToString();
         }
 

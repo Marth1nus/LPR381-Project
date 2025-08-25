@@ -1,17 +1,7 @@
-﻿using Markdig.Extensions.Tables;
-using MathNet.Numerics.Distributions;
-using MathNet.Numerics;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Security.Policy;
 using System.Text;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrayNotify;
-using System.Threading;
 
 namespace LPR381.LP
 {
@@ -36,7 +26,7 @@ namespace LPR381.LP
                     })
                     .ToArray(),
             };
-            steps.Add($"[{knapsackTableau.ProblemName}] Initial Table  \n{knapsackTableau}");
+            steps.Add($"[{knapsackTableau.ProblemName}] Initial Table\n\n{knapsackTableau}");
             
             var candidatesList = new List<Tableau>();
             RecursiveSolve(knapsackTableau, candidatesList, steps, 0);
@@ -52,7 +42,7 @@ namespace LPR381.LP
                 var best = candidates
                     .Select(candidate => { var profit = candidate.GetProfit(); return (profit, candidate); })
                     .Aggregate((max, x) => x.profit > max.profit ? x : max).candidate;
-                steps.Add("Solutions:  \n" + String.Join("\n", candidates.Select((c, i) => c.ToStringDefaultExclude(
+                steps.Add("Solutions:\n\n" + String.Join("\n", candidates.Select((c, i) => c.ToStringDefaultExclude(
                     includeValuesExtraColumns /* */: true,
                     includeValues /*             */: true,
                     firstColWidth /*             */: problemNameMaxLength
@@ -62,7 +52,7 @@ namespace LPR381.LP
                     includeAlignment /*          */: true,
                     firstColWidth /*             */: problemNameMaxLength
                 ))));
-                steps.Add($"Best Solution Found  \n" + best.ToStringDefaultExclude(
+                steps.Add($"Best Solution Found\n\n" + best.ToStringDefaultExclude(
                     includeValuesExtraColumns /* */: true,
                     includeHeaders /*            */: true,
                     includeAlignment /*          */: true,
@@ -106,7 +96,7 @@ namespace LPR381.LP
                     remainingBudget -= choice.Value * variable.Cost;
                     if (remainingBudget < 0)
                     {
-                        steps.Add($"Solution Infeasible  \n{tableau}");
+                        steps.Add($"Solution Infeasible\n\n{tableau}");
                         return;
                     }
                 }
@@ -133,7 +123,7 @@ namespace LPR381.LP
             }
             if (branchI < 0)
             {
-                steps.Add($"Solution Feasible  \n{tableau}");
+                steps.Add($"Solution Feasible\n\n{tableau}");
                 condidates.Add(tableau);
                 return;
             }
@@ -146,7 +136,7 @@ namespace LPR381.LP
                         includeValues /*             */ : true,
                         includeValuesExtraColumns /* */ : true,
                         includeValuesBranching /*    */ : true);
-                steps.Add($"Branch on **{variableName}** \n{tableauString}");
+                steps.Add($"Branch on **{variableName}**\n\n{tableauString}");
             }
 
             for (Branch branch = Branch.Floor; branch <= Branch.Ceiling; branch++)
@@ -235,15 +225,15 @@ namespace LPR381.LP
                     colWidth /*                  */: colWidth /*                  */,
                     firstColWidth /*             */: firstColWidth /*             */);
             public string ToStringDefaultInclude(
-    bool includeValuesExtraColumns = true,
-    bool includeValuesBranching = true,
-    bool includeHeaders = true,
-    bool includeAlignment = true,
-    bool includeValues = true,
-    bool includeProfits = true,
-    bool includeCosts = true,
-    int colWidth = 6,
-    int firstColWidth = 0)
+                bool /* */ includeValuesExtraColumns /* */ = true,
+                bool /* */ includeValuesBranching /*    */ = true,
+                bool /* */ includeHeaders /*            */ = true,
+                bool /* */ includeAlignment /*          */ = true,
+                bool /* */ includeValues /*             */ = true,
+                bool /* */ includeProfits /*            */ = true,
+                bool /* */ includeCosts /*              */ = true,
+                int /*  */ colWidth /*                  */ = 6,
+                int /*  */ firstColWidth /*             */ = 0)
             {
                 var problemName = ProblemName;
                 firstColWidth = firstColWidth <= 0 ? colWidth : firstColWidth;
@@ -256,115 +246,63 @@ namespace LPR381.LP
                 var totalColumnsHeaders = includeValuesExtraColumns ? "Profit|Cost|Budget".Split('|') : new string[0];
                 var totalColumnsValues = includeValuesExtraColumns
                     ? new double[] { choices.Select(c => c.choice.Value * c.variable.Profit).Sum(),
-                            choices.Select(c => c.choice.Value * c.variable.Cost).Sum(),
-                            Budget }
+                                     choices.Select(c => c.choice.Value * c.variable.Cost).Sum(),
+                                     Budget }
                     : new double[0];
-
                 var sb = new StringBuilder();
-
-                // Start building the HTML string
-                sb.AppendLine("<!DOCTYPE html>");
-                sb.AppendLine("<html>");
-                sb.AppendLine("<head>");
-                sb.AppendLine("<title>Knapsack Solution</title>");
-                sb.AppendLine("<style>");
-                sb.AppendLine("body {background - color: #1e2125;font - family: 'Lato', sans - serif;color: #f0f0f0;margin: 40px;}");
-                sb.AppendLine(" thead tr {background - color: #353a50;}");
-                sb.AppendLine("table {width: 80 %; border - collapse: collapse; color: #e0e2e8; background - color: #2c3044; border - radius: 8px; overflow: hidden; box - shadow: 0 4px 15px rgba(0, 0, 0, 0.2); font - size: 16px; }");
-                sb.AppendLine("th, td { border: 1px solid black; padding: 18px 24px; }");
-                sb.AppendLine("th {text - align: left;font - weight: 700;font - size: 14px; color: #a0a5b5;}");
-                sb.AppendLine("td { text - align: right;}");
-                sb.AppendLine("</style>");
-                sb.AppendLine("</head>");
-                sb.AppendLine("<body>");
-
-                // Add a heading for the problem name
-                sb.AppendLine($"<h1>{problemName}</h1>");
-
-                // Start the HTML table
-                sb.AppendLine("<table>");
-
-                // Table Headers (<thead>)
-                if (includeHeaders)
+                if (includeHeaders /*      */)
                 {
-                    sb.AppendLine("<thead>");
-                    sb.AppendLine("<tr>");
-                    sb.AppendLine($"<th>{problemName}</th>");
+                    sb.Append($"| {ProblemName.PadRight(firstColWidth)} ");
                     foreach (var choice in choices)
-                    {
-                        sb.AppendLine($"<th>{choice.variable.Name}</th>");
-                    }
+                        sb.Append($"| {choice.variable.Name.PadLeft(colWidth)} ");
                     foreach (var header in totalColumnsHeaders)
-                    {
-                        sb.AppendLine($"<th>{header}</th>");
-                    }
-                    sb.AppendLine("</tr>");
-                    sb.AppendLine("</thead>");
+                        sb.Append($"| {header.PadLeft(colWidth)} ");
+                    sb.Append("|\n");
                 }
-
-                // Table Body (<tbody>)
-                sb.AppendLine("<tbody>");
-
-                // Values Row
-                if (includeValues)
+                if (includeAlignment /*    */)
                 {
-                    sb.AppendLine("<tr>");
-                    sb.AppendLine($"<td>{(includeHeaders ? "Values" : problemName)}</td>");
+                    sb.Append($"| {":-".PadRight(firstColWidth, '-')} ");
+                    var align = $"| {"-:".PadLeft(colWidth, '-')} ";
+                    foreach (var choice in choices)
+                        sb.Append(align);
+                    foreach (var header in totalColumnsHeaders)
+                        sb.Append(align);
+                    sb.Append("|\n");
+                }
+                if (includeValues /*       */)
+                {
+                    sb.Append($"| {(includeHeaders ? "Values" : problemName).PadRight(firstColWidth)} ");
                     foreach (var choice in choices)
                     {
                         var s = choice.choice.Value.ToString("0.###");
-                        var e = !includeValuesBranching ? ""
-                            : choice.choice.Branch == Branch.Floor ? "v"
-                            : choice.choice.Branch == Branch.Ceiling ? "^" : "";
-                        sb.AppendLine($"<td>{s}{e}</td>");
+                        var e = !includeValuesBranching /*              */ ? " "
+                            : choice.choice.Branch == Branch.Floor /*   */ ? "v"
+                            : choice.choice.Branch == Branch.Ceiling /* */ ? "^" : " ";
+                        sb.Append($"| {s.PadLeft(colWidth)}{e}");
                     }
                     foreach (var value in totalColumnsValues)
-                    {
-                        sb.AppendLine($"<td>{value.ToString("0.###")}</td>");
-                    }
-                    sb.AppendLine("</tr>");
+                        sb.Append($"| {value.ToString("0.###").PadLeft(colWidth)} ");
+                    sb.Append("|\n");
                 }
-
-                // Profits Row
-                if (includeProfits)
+                if (includeProfits /*      */)
                 {
-                    sb.AppendLine("<tr>");
-                    sb.AppendLine("<td>Profits</td>");
+                    sb.Append($"| {"Profits".PadRight(firstColWidth)} ");
                     foreach (var choice in choices)
-                    {
-                        sb.AppendLine($"<td>{choice.variable.Profit.ToString("0.###")}</td>");
-                    }
+                        sb.Append($"| {choice.variable.Profit.ToString("0.###").PadLeft(colWidth)} ");
                     foreach (var value in totalColumnsValues)
-                    {
-                        sb.AppendLine($"<td></td>"); // Empty cells for the extra columns
-                    }
-                    sb.AppendLine("</tr>");
+                        sb.Append($"| {"".PadLeft(colWidth)} ");
+                    sb.Append("|\n");
                 }
-
-                // Costs Row
-                if (includeCosts)
+                if (includeCosts /*        */)
                 {
-                    sb.AppendLine("<tr>");
-                    sb.AppendLine("<td>Costs</td>");
+                    sb.Append($"| {"Costs".PadRight(firstColWidth)} ");
                     foreach (var choice in choices)
-                    {
-                        sb.AppendLine($"<td>{choice.variable.Cost.ToString("0.###")}</td>");
-                    }
+                        sb.Append($"| {choice.variable.Cost.ToString("0.###").PadLeft(colWidth)} ");
                     foreach (var value in totalColumnsValues)
-                    {
-                        sb.AppendLine($"<td></td>"); // Empty cells for the extra columns
-                    }
-                    sb.AppendLine("</tr>");
+                        sb.Append($"| {"".PadLeft(colWidth)} ");
+                    sb.Append("|\n");
                 }
-
-                // End the HTML table
-                sb.AppendLine("</tbody>");
-                sb.AppendLine("</table>");
-
-                // End the HTML document
-                sb.AppendLine("</body>");
-                sb.AppendLine("</html>");
-
+                sb.Remove(sb.Length - 1, 1);
                 return sb.ToString();
             }
         }
