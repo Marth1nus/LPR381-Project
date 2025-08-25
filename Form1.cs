@@ -16,14 +16,16 @@ namespace LPR381
     {
         private static readonly Dictionary<string, Solver> AlgorithmDict = new Dictionary<string, Solver>
         {
-            { "Branch and Bound", /*          */ BranchAndBound /*         */ .Solve },
-            { "Branch and Bound Knapsack", /* */ BranchAndBoundKnapsack /* */ .Solve },
-            { "Cutting Plane", /*             */ CuttingPlane /*           */ .Solve },
-            { "Dual Simplex", /*              */ DualSimplex /*            */ .Solve },
-            { "Primal Simplex", /*            */ PrimalSimplex /*          */ .Solve },
-        };
-        private Solver Solver => comboBox1.SelectedValue as Solver;
-        private string SolverName => AlgorithmDict.FirstOrDefault(kv => kv.Value == Solver).Key;
+            { "Primal Simplex" /*        */, PrimalSimplex /*          */ .Solve },
+            { "Dual Simplex" /*          */, DualSimplex /*            */ .Solve },
+            { "Cutting Plane" /*         */, CuttingPlane /*           */ .Solve },
+            { "Branch&Bound" /*          */, BranchAndBound /*         */ .Solve },
+            { "Branch&Bound-Knapsack" /* */, BranchAndBoundKnapsack /* */ .Solve },
+            { "Sensitivity Analysis" /*  */, SensitivityAnalysis /*    */ .Solve },
+        }; 
+        private Solver Solver => AlgorithmDict[comboBox1.SelectedItem.ToString()];
+        private string SolverName => comboBox1.SelectedItem.ToString();
+
 
         private string _SolutionText = "";
         private string SolutionText
@@ -49,18 +51,16 @@ namespace LPR381
         public Form1()
         {
             InitializeComponent();
-            comboBox1.DataSource = new BindingSource(AlgorithmDict, null);
-            comboBox1.DisplayMember = "Key";
-            comboBox1.ValueMember = "Value";
-            comboBox1.SelectedValue = AlgorithmDict["Primal Simplex"];
+            comboBox1.Items.Clear();
+            foreach (var kv in AlgorithmDict)
+                comboBox1.Items.Add(kv.Key);
+            comboBox1.SelectedIndex = 4;
             Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e) => openFileDialog1.ShowDialog(this);
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e) => saveFileDialog1.ShowDialog(this);
-
-        private void clearOutputToolStripMenuItem_Click(object sender, EventArgs e) => SolutionText = "";
 
         private void solveToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -76,7 +76,7 @@ namespace LPR381
                 var newTableau = tableau.Copy();
                 var steps = Solver(newTableau);
                 var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
-                SolutionText += $"# Solve Using {SolverName}\n\n{stepsString}\n\n";
+                SolutionText += $"# Algorithim Selected: {SolverName}\n\n{stepsString}\n\n";
                 tableau = newTableau;
             }
             catch (Exception err)
@@ -87,27 +87,7 @@ namespace LPR381
             }
         }
 
-        private void sensitivityAnalysisToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            label5.Text = "";
-            label5.ForeColor = System.Drawing.Color.Black;
-            try
-            {
-                if (tableau == null)
-                {
-                    SolutionText = "**No Tablueau**\n";
-                    return;
-                }
-                var analysis = SensitivityAnalysis.Analise(tableau.Copy());
-                SolutionText += $"# Sensitivity Analysis\n\n{analysis}\n\n";
-            }
-            catch (Exception err)
-            {
-                Console.WriteLine(err.ToString());
-                label5.Text = "Error";
-                label5.ForeColor = System.Drawing.Color.Red;
-            }
-        }
+        private void clearOutputToolStripMenuItem_Click(object sender, EventArgs e) => SolutionText = "";
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
         {
@@ -162,6 +142,10 @@ namespace LPR381
                                 font-family: 'Courier New', Courier, monospace;
                                 color: #f0f0f0;
                                 margin: 40px;
+                            }}
+                            blockquote {{
+                                border-left: 4px solid #555b6e;
+                                padding: 4px 32px;
                             }}
                             table {{
                                 border-collapse: collapse;

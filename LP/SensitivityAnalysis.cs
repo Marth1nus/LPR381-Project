@@ -1,14 +1,17 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace LPR381.LP
 {
     public class SensitivityAnalysis
     {
-        public static string Analise(Tableau tableau)
+        public static List<String> Solve(Tableau tableau)
         {
-            var analysis = new StringBuilder();
+            var steps = new List<String>() { "Start Sensitivity Analysis" };
             // code here <3
-            return analysis.ToString();
+            steps.Add("End Sensitivity Analysis");
+            return steps;
         }
     }
 }
