@@ -17,8 +17,8 @@ namespace LPR381.LP
         public string[] ColumnNames { get; set; } // example [x1, x2, s1, s2, rhs]
         public string[] ColumnRestrictions { get; set; } // one of [+, -, urs, int, bin]
         public double[,] Values { get; set; } // contains Width, Height, and the values in the tableau.
-        public int TableIteration { get; set; } // Just keeps track of how many pivots have been done.
-        public Tableau InitialTable { get; set; } // Tracks The intial table
+        public int TableauIteration { get; set; } // Just keeps track of how many pivots have been done.
+        public Tableau InitialTableau { get; set; } // Tracks The intial table
         public int Height => Values.GetLength(0);
         public int Width => Values.GetLength(1);
         public double ObjectiveValue => Values[0, Width - 1];
@@ -33,7 +33,7 @@ namespace LPR381.LP
             ColumnNames /*        */ = Enumerable.Range(1, width - 1).Select(j => $"x{j}").Append("rhs").ToArray();
             ColumnRestrictions /* */ = Enumerable.Repeat("+", width).ToArray();
             Values /*             */ = new double[height, width];
-            TableIteration /*     */ = 0;
+            TableauIteration /*   */ = 0;
         }
 
         public Tableau Copy() => new Tableau
@@ -42,8 +42,8 @@ namespace LPR381.LP
             ColumnNames /*        */ = ColumnNames.ToArray(),
             ColumnRestrictions /* */ = ColumnRestrictions.ToArray(),
             Values /*             */ = Copy(Values),
-            TableIteration /*     */ = TableIteration,
-            InitialTable /*       */ = InitialTable
+            TableauIteration /*   */ = TableauIteration,
+            InitialTableau /*     */ = InitialTableau
         };
 
         public Tableau Assign(Tableau other)
@@ -53,8 +53,8 @@ namespace LPR381.LP
             ColumnNames /*        */ = other.ColumnNames.ToArray();
             ColumnRestrictions /* */ = other.ColumnRestrictions.ToArray();
             Values /*             */ = Copy(other.Values);
-            TableIteration /*     */ = other.TableIteration;
-            InitialTable /*       */ = other.InitialTable;
+            TableauIteration /*   */ = other.TableauIteration;
+            InitialTableau /*     */ = other.InitialTableau;
             return this;
         }
 
@@ -115,14 +115,14 @@ namespace LPR381.LP
         public bool IsPrimalFeasible => GetPrimalInoptimal().GetValueOrDefault((0, true, false)).feasible;
         public bool IsPrimalInfeasible => !IsPrimalFeasible;
 
-        public int? GetBasicVariableI(int j)
+        public int? GetBasicVariableI(int j, double expectedSingularNonZero = 1.0)
         {
             if (!(0 <= j && j < Width - 1))
                 throw new ArgumentOutOfRangeException($"{nameof(j)} must be in range [{0}..{Width - 2}]");
             int? indexOf1 = null;
             for (int i = 0; i < Height; i++)
             {
-                if (Values[i, j] == 1.0)
+                if (Values[i, j] == /* 1.0 */ expectedSingularNonZero)
                 {
                     if (indexOf1 != null)
                         return null;
@@ -136,8 +136,10 @@ namespace LPR381.LP
         }
 
         public IEnumerable<int> GetVariableIndices() => Enumerable.Range(0, Width - 1);
-        public IEnumerable<int> GetBasicVariableIndices() => GetVariableIndices().Where(j => GetBasicVariableI(j).HasValue);
-        public IEnumerable<int> GetNonBasicVariableIndices() => GetVariableIndices().Where(j => !GetBasicVariableI(j).HasValue);
+        public IEnumerable<int> GetBasicVariableIndices() => GetVariableIndices().Where(j => GetBasicVariableI(j, 1.0).HasValue);
+        public IEnumerable<int> GetNonBasicVariableIndices() => GetVariableIndices().Where(j => !GetBasicVariableI(j, 1.0).HasValue);
+        public IEnumerable<int> GetBasicLikeVariableIndices() => GetVariableIndices().Where(j => GetBasicVariableI(j, -1.0).HasValue);
+        public IEnumerable<int> GetNonBasicLikeVariableIndices() => GetVariableIndices().Where(j => !GetBasicVariableI(j, -1.0).HasValue);
 
         public void ValidateLengths()
         {
@@ -153,8 +155,8 @@ namespace LPR381.LP
 
         public string Pivot(int rowI, int colI)
         {
-            InitialTable = InitialTable ?? Copy();
-            TableIteration++;
+            InitialTableau = InitialTableau ?? Copy();
+            TableauIteration++;
             double pivot = Values[rowI, colI];
             for (int j = 0; j < Width; j++)
             {
@@ -186,8 +188,10 @@ Pivot on {RowNames[rowI]}, {ColumnNames[colI]}
 ");
         }
 
-            public void AddRow(double[] newRow, string name = null)
+
+        public void AddRow(double[] newRow = null, string name = null)
         {
+            newRow = newRow ?? new double[Width];
             if (newRow.Length != Width)
                 throw new ArgumentException($"New row must have {Width} values");
             var oldValues = Values;
@@ -202,8 +206,10 @@ Pivot on {RowNames[rowI]}, {ColumnNames[colI]}
             RowNames = RowNames.Append(name ?? $"c{Height - 1}").ToArray();
         }
 
-        public void RemoveRow(int rowI)
+        public void RemoveRow(int rowI = -1)
         {
+            if (rowI < 0)
+                rowI += Height; // -1 means last row
             if (rowI < 0 || Height <= rowI)
                 throw new ArgumentException($"Out of range rowI:{rowI} parameter");
             var oldValues = Values;
@@ -217,8 +223,9 @@ Pivot on {RowNames[rowI]}, {ColumnNames[colI]}
                     Values[i, j] = oldValues[i + 1, j];
         }
 
-        public void AddColumn(double[] newColumn, string name = null, string restriction = "urs")
+        public void AddColumn(double[] newColumn = null, string name = null, string restriction = "urs")
         {
+            newColumn = newColumn ?? new double[Width];
             if (newColumn.Length != Height)
                 throw new ArgumentException($"New row must have {Height} values");
             var oldValues = Values;
@@ -238,8 +245,10 @@ Pivot on {RowNames[rowI]}, {ColumnNames[colI]}
             ColumnRestrictions = ColumnRestrictions.Append(restriction).ToArray();
         }
 
-        public void RemoveColumn(int colI)
+        public void RemoveColumn(int colI = -2)
         {
+            if (colI < 0)
+                colI += Width; // -1 means last column
             if (colI < 0 || Width <= colI)
                 throw new ArgumentException($"Out of range colI:{colI} parameter");
             var oldValues = Values;
@@ -274,6 +283,7 @@ Pivot on {RowNames[rowI]}, {ColumnNames[colI]}
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
+
 
             sb.AppendLine(@"
 <html>
@@ -337,6 +347,7 @@ Pivot on {RowNames[rowI]}, {ColumnNames[colI]}
             sb.AppendLine("<th></th>");
 
             // Create the header row
+
             for (int j = 0; j < Width; j++)
             {
                 sb.AppendLine($"<th>{ColumnNames[j]}</th>");
@@ -489,10 +500,10 @@ Pivot on {RowNames[rowI]}, {ColumnNames[colI]}
                 ColumnNames /*        */ = columnNames,
                 ColumnRestrictions /* */ = columnRestrictions,
                 Values /*             */ = values,
-                TableIteration /*     */ = 0
+                TableauIteration /*     */ = 0
             };
             res.AddBinaryLessThanOneConstraints();
-            res.InitialTable = res.Copy();
+            res.InitialTableau = res.Copy();
             return res;
         }
 
