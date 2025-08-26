@@ -16,12 +16,13 @@ namespace LPR381
     {
         private static readonly Dictionary<string, Solver> AlgorithmDict = new Dictionary<string, Solver>
         {
-            { "Primal Simplex" /*        */, PrimalSimplex /*          */ .Solve },
-            { "Dual Simplex" /*          */, DualSimplex /*            */ .Solve },
-            { "Cutting Plane" /*         */, CuttingPlane /*           */ .Solve },
-            { "Branch&Bound" /*          */, BranchAndBound /*         */ .Solve },
-            { "Branch&Bound-Knapsack" /* */, BranchAndBoundKnapsack /* */ .Solve },
-            { "Sensitivity Analysis" /*  */, SensitivityAnalysis /*    */ .Solve },
+            { "Primal Simplex" /*        */, PrimalSimplex /*                         */ .Solve },
+            { "Primal Simplex Revised" /*        */, PrimalSimplex /*          */ .SolveRevised },
+            { "Dual Simplex" /*          */, DualSimplex /*                           */ .Solve },
+            { "Cutting Plane" /*         */, CuttingPlane /*                          */ .Solve },
+            { "Branch&Bound" /*          */, BranchAndBound /*                        */ .Solve },
+            { "Branch&Bound-Knapsack" /* */, BranchAndBoundKnapsack /*                */ .Solve },
+            { "Sensitivity Analysis" /*  */, SensitivityAnalysis /*                   */ .Solve },
         }; 
         private Solver Solver => AlgorithmDict[comboBox1.SelectedItem.ToString()];
         private string SolverName => comboBox1.SelectedItem.ToString();
