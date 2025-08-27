@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MathNet.Numerics.LinearAlgebra;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -113,6 +114,11 @@ namespace LPR381.LP
         public bool IsPrimalFeasible => GetPrimalInoptimal().GetValueOrDefault((0, true, false)).feasible;
         public bool IsPrimalInfeasible => !IsPrimalFeasible;
 
+        public bool IsOptimal => IsPrimalOptimal && IsConstraintsSatisfied;
+        public bool IsInoptimal => !IsOptimal;
+        public bool IsFeasible => IsPrimalFeasible;
+        public bool IsInfeasible => !IsPrimalFeasible;
+
         public int? GetBasicVariableI(int j, double expectedSingularNonZero = 1.0)
         {
             if (!(0 <= j && j < Width - 1))
@@ -133,7 +139,10 @@ namespace LPR381.LP
             return indexOf1;
         }
 
+        public IEnumerable<int> GetConstraintIndices() => Enumerable.Range(1, Height - 1);
         public IEnumerable<int> GetVariableIndices() => Enumerable.Range(0, Width - 1);
+        public IEnumerable<int> GetDescisionVariableIndices() => GetVariableIndices().Where(j => ColumnNames[j].StartsWith("x"));
+        public IEnumerable<int> GetSlackVariableIndices() => GetVariableIndices().Where(j => !ColumnNames[j].StartsWith("x"));
         public IEnumerable<int> GetBasicVariableIndices() => GetVariableIndices().Where(j => GetBasicVariableI(j, 1.0).HasValue);
         public IEnumerable<int> GetNonBasicVariableIndices() => GetVariableIndices().Where(j => !GetBasicVariableI(j, 1.0).HasValue);
         public IEnumerable<int> GetBasicLikeVariableIndices() => GetVariableIndices().Where(j => GetBasicVariableI(j, -1.0).HasValue);
@@ -147,6 +156,42 @@ namespace LPR381.LP
         }
 
         public IEnumerable<double> GetVariableValues() => GetVariableIndices().Select(GetVariableValue);
+
+        public Vector<double> Get_c() => InitialTableau != null ? InitialTableau.Get_c()
+                                      : Vector<double>.Build.DenseOfEnumerable(GetDescisionVariableIndices().Select(j => this[0, j]));
+        public Vector<double> Get_b() => InitialTableau != null ? InitialTableau.Get_b()
+                                      : Vector<double>.Build.DenseOfEnumerable(GetConstraintIndices().Select(i => this[i, Width - 1]));
+        public Matrix<double> Get_A() => InitialTableau != null ? InitialTableau.Get_A()
+                                      : Matrix<double>.Build.DenseOfArray(Copy(from:Values, CountJ:GetDescisionVariableIndices().Count(), fromStartI:1));
+        public Matrix<double> Get_B()
+        {
+            if (!IsOptimal)
+                throw new InvalidOperationException("Tableau must be optimal");
+            InitialTableau = InitialTableau ?? Copy();
+            var basicVariableIndices = GetBasicVariableIndices().ToArray();
+            var B = new double[Height - 1, basicVariableIndices.Length];
+            for (int i = 1; i < Height; i++)
+                for (int ji = 0; ji < basicVariableIndices.Length; ji++)
+                    B[i - 1, ji] = InitialTableau[i, basicVariableIndices[ji]];
+            return Matrix<double>.Build.DenseOfArray(B);
+        }
+        public Matrix<double> Get_BInverse() => Get_B().Inverse();
+        public Vector<double> Get_cBv()
+        {
+            if (!IsOptimal)
+                throw new InvalidOperationException("Tableau must be optimal");
+            InitialTableau = InitialTableau ?? Copy();
+            var cB = GetBasicVariableIndices().Select(j => InitialTableau[0, j]).ToArray();
+            return Vector<double>.Build.DenseOfArray(cB);
+        }
+        public Vector<double> Get_cNBv()
+        {
+            if (!IsOptimal)
+                throw new InvalidOperationException("Tableau must be optimal");
+            InitialTableau = InitialTableau ?? Copy();
+            var cNB = GetNonBasicVariableIndices().Select(j => InitialTableau[0, j]).ToArray();
+            return Vector<double>.Build.DenseOfArray(cNB);
+        }
 
         public void ValidateLengths()
         {
@@ -204,6 +249,7 @@ namespace LPR381.LP
                 for (int j = 0; j < Width; j++)
                     Values[i, j] = newRow[j];
             RowNames = RowNames.Append(name ?? $"c{Height - 1}").ToArray();
+            InitialTableau = null;
         }
 
         public void RemoveRow(int rowI = -1)
@@ -221,6 +267,7 @@ namespace LPR381.LP
             for (; i < Height; i++)
                 for (int j = 0; j < Width; j++)
                     Values[i, j] = oldValues[i + 1, j];
+            InitialTableau = null;
         }
 
         public void AddColumn(double[] newColumn = null, string name = null, string restriction = "urs")
@@ -243,6 +290,7 @@ namespace LPR381.LP
             var columnNamesLast = ColumnNames.Length > 0 ? ColumnNames.Last() : "rhs";
             ColumnNames = ColumnNames.Take(ColumnNames.Length - 1).Append(name ?? $"s{Height}").Append(columnNamesLast).ToArray();
             ColumnRestrictions = ColumnRestrictions.Append(restriction).ToArray();
+            InitialTableau = null;
         }
 
         public void RemoveColumn(int colI = -2)
@@ -261,6 +309,7 @@ namespace LPR381.LP
                 for (; j < Width; j++)
                     Values[i, j] = oldValues[i, j + 1];
             }
+            InitialTableau = null;
         }
 
         public int AddBinaryLessThanOneConstraints()
