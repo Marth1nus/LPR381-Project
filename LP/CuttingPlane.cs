@@ -8,8 +8,14 @@ namespace LPR381.LP
         public static List<String> Solve(Tableau tableau)
         {
             var steps = new List<String>() { "Start Cutting Plane" };
-            for (int iteration = 0; iteration < 128; iteration++)
+            const int maxIterations = 128;
+            for (int iteration = 0; ; iteration++)
             {
+                if (iteration >= maxIterations)
+                {
+                    steps.Add("Algorithm terminated: Maximum iterations reached.");
+                    break;
+                }
                 steps.AddRange(DualSimplex.Solve(tableau));
                 steps.AddRange(PrimalSimplex.Solve(tableau));
                 if (!tableau.IsPrimalOptimal)

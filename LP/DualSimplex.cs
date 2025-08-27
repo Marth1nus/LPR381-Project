@@ -9,8 +9,14 @@ namespace LPR381.LP
         {
             var steps = new List<String>() { "Start Dual Simplex" };
             DualFrom(tableau, steps);
-            for (int iteration = 0; iteration < 128; iteration++)
+            const int maxIterations = 128;
+            for (int iteration = 0; ; iteration++)
             {
+                if (iteration >= maxIterations)
+                {
+                    steps.Add("Algorithm terminated: Maximum iterations reached.");
+                    break;
+                }
                 // get pivot row IndexMin(rhs)
                 int pivotI = 1; // start after objective row and find min value
                 for (int i = 2; i < tableau.Height; i++)

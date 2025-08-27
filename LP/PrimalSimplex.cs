@@ -173,9 +173,14 @@ namespace LPR381.LP
                 for (int j = 0; j < numTotalVars; j++)
                     A[i, j] = initialTableau.Values[i + 1, j];
 
-            const int MAX_ITERATIONS = 100;
-            for (int iteration = 0; iteration < MAX_ITERATIONS; iteration++)
+            const int maxIterations = 128;
+            for (int iteration = 0; ; iteration++)
             {
+                if (iteration >= maxIterations)
+                {
+                    steps.Add("Algorithm terminated: Maximum iterations reached.");
+                    break;
+                }
                 // A. Check for Optimality
                 double[] c_B = basicVarIndices.Select(index => c[index]).ToArray();
                 double[] y = VectorMatrixMultiply(c_B, B_inv);
@@ -254,11 +259,6 @@ namespace LPR381.LP
                     E[i, leavingRowInBasis] = (i == leavingRowInBasis) ? (1.0 / pivotElement) : (-d[i] / pivotElement);
                 }
                 B_inv = MatrixMultiply(E, B_inv);
-
-                if (iteration == MAX_ITERATIONS - 1)
-                {
-                    steps.Add("Algorithm terminated: Maximum iterations reached.");
-                }
             }
 
             steps.Add("End Revised Primal Simplex");
@@ -269,8 +269,14 @@ namespace LPR381.LP
         public static List<string> Solve(Tableau tableau)
         {
             var steps = new List<string> { "Start Primal Simplex" };
-            for (int iteration = 0; iteration < 128; iteration++)
+            const int maxIterations = 128;
+            for (int iteration = 0; ; iteration++)
             {
+                if (iteration >= maxIterations)
+                {
+                    steps.Add("Algorithm terminated: Maximum iterations reached.");
+                    break;
+                }
                 //  Check for optimality by looking at the objective row
                 int pivotColumn = -1;
                 for (int j = 0; j < tableau.Width - 1; j++)
