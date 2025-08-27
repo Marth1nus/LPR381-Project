@@ -175,7 +175,18 @@ namespace LPR381.LP
                     B[i - 1, ji] = InitialTableau[i, basicVariableIndices[ji]];
             return Matrix<double>.Build.DenseOfArray(B);
         }
-        public Matrix<double> Get_BInverse() => Get_B().Inverse();
+        public Matrix<double> Get_N()
+        {
+            if (!IsOptimal)
+                throw new InvalidOperationException("Tableau must be optimal");
+            InitialTableau = InitialTableau ?? Copy();
+            var nonBasicVariableIndices = GetNonBasicVariableIndices().ToArray();
+            var B = new double[Height - 1, nonBasicVariableIndices.Length];
+            for (int i = 1; i < Height; i++)
+                for (int ji = 0; ji < nonBasicVariableIndices.Length; ji++)
+                    B[i - 1, ji] = InitialTableau[i, nonBasicVariableIndices[ji]];
+            return Matrix<double>.Build.DenseOfArray(B);
+        }
         public Vector<double> Get_cBv()
         {
             if (!IsOptimal)
