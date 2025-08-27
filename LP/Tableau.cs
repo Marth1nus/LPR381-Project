@@ -117,7 +117,7 @@ namespace LPR381.LP
         public bool IsOptimal => IsPrimalOptimal && IsConstraintsSatisfied;
         public bool IsInoptimal => !IsOptimal;
         public bool IsFeasible => IsPrimalFeasible;
-        public bool IsInfeasible => !IsPrimalFeasible;
+        public bool IsInfeasible => !IsFeasible;
 
         public int? GetBasicVariableI(int j, double expectedSingularNonZero = 1.0)
         {
@@ -158,11 +158,11 @@ namespace LPR381.LP
         public IEnumerable<double> GetVariableValues() => GetVariableIndices().Select(GetVariableValue);
 
         public Vector<double> Get_c() => InitialTableau != null ? InitialTableau.Get_c()
-                                      : Vector<double>.Build.DenseOfEnumerable(GetDescisionVariableIndices().Select(j => this[0, j]));
+                                       : Vector<double>.Build.DenseOfEnumerable(GetDescisionVariableIndices().Select(j => this[0, j]));
         public Vector<double> Get_b() => InitialTableau != null ? InitialTableau.Get_b()
-                                      : Vector<double>.Build.DenseOfEnumerable(GetConstraintIndices().Select(i => this[i, Width - 1]));
+                                       : Vector<double>.Build.DenseOfEnumerable(GetConstraintIndices().Select(i => this[i, Width - 1]));
         public Matrix<double> Get_A() => InitialTableau != null ? InitialTableau.Get_A()
-                                      : Matrix<double>.Build.DenseOfArray(Copy(from:Values, CountJ:GetDescisionVariableIndices().Count(), fromStartI:1));
+                                       : Matrix<double>.Build.DenseOfArray(Copy(from:Values, CountJ:GetDescisionVariableIndices().Count(), fromStartI:1));
         public Matrix<double> Get_B()
         {
             if (!IsOptimal)
