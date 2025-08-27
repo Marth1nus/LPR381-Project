@@ -143,34 +143,6 @@ namespace LPR381.LP
         }
 
         /// <summary>
-        /// Constructs the final solution string from an optimal tableau.
-        /// </summary>
-        private static string ConstructSolutionRevised(Tableau tableau)
-        {
-            var sb = new StringBuilder();
-            int width = tableau.Width;
-
-            sb.AppendLine("Optimal solution found.");
-
-            for (int j = 0; j < width - 1; j++) // For each variable column
-            {
-                int? basicRow = tableau.GetBasicVariableI(j);
-                if (basicRow.HasValue)
-                {
-                    // It's a basic variable, its value is on the RHS of its pivot row.
-                    sb.AppendLine($"{tableau.ColumnNames[j]} = {tableau.Values[basicRow.Value, width - 1]:F2}");
-                }
-                else
-                {
-                    // It's a non-basic variable, its value is 0.
-                    sb.AppendLine($"{tableau.ColumnNames[j]} = 0.00");
-                }
-            }
-            sb.Append($"Optimal Value (Z) = {tableau.ObjectiveValue:F2}");
-            return sb.ToString();
-        }
-
-        /// <summary>
         /// Implements the Revised Primal Simplex algorithm to solve a linear programming problem.
         /// The output format matches the standard Primal Simplex method's step-by-step tableau.
         /// </summary>
@@ -227,7 +199,7 @@ namespace LPR381.LP
                 {
                     // OPTIMAL
                     Tableau finalTableau = ReconstructTableau(numConstraints, numTotalVars, B_inv, basicVarIndices, A, b, c, initialTableau);
-                    steps.Add(ConstructSolutionRevised(finalTableau));
+                    steps.Add(ConstructSolution(finalTableau));
                     break;
                 }
 
@@ -352,27 +324,15 @@ namespace LPR381.LP
         // Constructs and returns a string representation of the optimal solution
         private static string ConstructSolution(Tableau tableau)
         {
-            var result = new StringBuilder();
-            result.AppendLine("Optimal Solution:  ");
-            double optimalValue = tableau[0, tableau.Width - 1]; // Extract optimal value from RHS of objective row
-            result.AppendLine($"Optimal Value: {optimalValue:0.###}  ");
-
-            // Extract values of decision variables from the final tableau
-            for (int j = 0; j < tableau.Width - 1; j++)
+            var sb = new StringBuilder();
+            sb.AppendLine("Optimal solution found.  ");
+            foreach (var (name, value) in tableau.GetVariableIndices()
+                .Select(j => (tableau.ColumnNames[j] /* */, tableau.GetVariableValue(j) /* */))
+                .Append(/* */("Optimal Value(Z)" /*     */, tableau.ObjectiveValue /*      */)))
             {
-                string varName = tableau.ColumnNames[j];
-                double varValue = 0;
-                for (int i = 1; i < tableau.Height; i++)
-                {
-                    if (tableau.RowNames[i].StartsWith("c") && tableau[i, j] == 1)
-                    {
-                        varValue = tableau[i, tableau.Width - 1];
-                        break;
-                    }
-                }
-                result.AppendLine($"{varName} = {varValue:0.###}  ");
+                sb.AppendLine($"{name} = {value:0.###}  ");
             }
-            return result.ToString();
+            return sb.ToString();
         }
     }
 }
