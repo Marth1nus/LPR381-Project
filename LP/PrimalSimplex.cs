@@ -1,16 +1,13 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
 namespace LPR381.LP
 {
-    public static class PrimalSimplex
+    public static class MatrixHelpers
     {
-
-
-        #region Matrix and Vector Helpers
-        // Helper method to create an identity matrix of a given size.
-        private static double[,] CreateIdentityMatrix(int size)
+        public static double[,] CreateIdentityMatrix(int size)
         {
             double[,] matrix = new double[size, size];
             for (int i = 0; i < size; i++)
@@ -20,8 +17,7 @@ namespace LPR381.LP
             return matrix;
         }
 
-        // Helper method for matrix-vector multiplication (M * v).
-        private static double[] MatrixVectorMultiply(double[,] matrix, double[] vector)
+        public static double[] MatrixVectorMultiply(double[,] matrix, double[] vector)
         {
             int rows = matrix.GetLength(0);
             int cols = matrix.GetLength(1);
@@ -32,12 +28,12 @@ namespace LPR381.LP
                 {
                     result[i] += matrix[i, j] * vector[j];
                 }
+                result[i] = Math.Round(result[i], 12);
             }
             return result;
         }
 
-        // Helper method for vector-matrix multiplication (v * M).
-        private static double[] VectorMatrixMultiply(double[] vector, double[,] matrix)
+        public static double[] VectorMatrixMultiply(double[] vector, double[,] matrix)
         {
             int rows = matrix.GetLength(0);
             int cols = matrix.GetLength(1);
@@ -52,8 +48,7 @@ namespace LPR381.LP
             return result;
         }
 
-        // Helper method for matrix-matrix multiplication (A * B).
-        private static double[,] MatrixMultiply(double[,] matrixA, double[,] matrixB)
+        public static double[,] MatrixMultiply(double[,] matrixA, double[,] matrixB)
         {
             int aRows = matrixA.GetLength(0);
             int aCols = matrixA.GetLength(1);
@@ -68,110 +63,115 @@ namespace LPR381.LP
                     {
                         result[i, j] += matrixA[i, k] * matrixB[k, j];
                     }
+                    result[i, j] = Math.Round(result[i, j], 12);
                 }
             }
             return result;
         }
 
-        // Helper method for vector dot product.
-        private static double DotProduct(double[] vectorA, double[] vectorB)
+        public static double DotProduct(double[] vectorA, double[] vectorB)
         {
             double result = 0;
             for (int i = 0; i < vectorA.Length; i++)
             {
                 result += vectorA[i] * vectorB[i];
             }
+            result = Math.Round(result, 12);
             return result;
         }
-        #endregion
+    }
 
-        /// <summary>
-        /// Reconstructs the full simplex tableau from the components of the revised method.
-        /// This is used for logging/display purposes only.
-        /// </summary>
+    public static class PrimalSimplex
+    {
+
+
         private static Tableau ReconstructTableau(
-            int numConstraints, int numTotalVars,
-            double[,] B_inv, List<int> basicVarIndices,
-            double[,] A_orig, double[] b_orig, double[] c_orig,
-            Tableau initialTableauForHeaders)
+     int numConstraints, int numTotalVars,
+     double[,] bInv, List<int> basicVarIndices,
+     double[,] aOrig, double[] bOrig, double[] cOrig,
+     Tableau initialTableauForHeaders)
         {
             double[,] newValues = new double[numConstraints + 1, numTotalVars + 1];
+            double[] cB = new double[numConstraints];
+            for (int i = 0; i < basicVarIndices.Count; i++)
+            {
+                cB[i] = cOrig[basicVarIndices[i]];
+            }
+            double[] y = MatrixHelpers.VectorMatrixMultiply(cB, bInv);
+            y = y.Select(val => Math.Round(val, 12)).ToArray();
 
-            // Calculate y = c_B * B_inv
-            double[] c_B = basicVarIndices.Select(index => c_orig[index]).ToArray();
-            double[] y = VectorMatrixMultiply(c_B, B_inv);
-
-            // Row 0: Objective Row
-            // Tableau format shows y*A_j - c_j, which is -reduced_cost
             for (int j = 0; j < numTotalVars; j++)
             {
-                if (basicVarIndices.Contains(j))
+                int basicIndexRow = -1;
+                for (int i = 0; i < basicVarIndices.Count; i++)
                 {
-                    newValues[0, j] = 0;
+                    if (basicVarIndices[i] == j)
+                    {
+                        basicIndexRow = i;
+                        break;
+                    }
+                }
+                if (basicIndexRow != -1)
+                {
+                    newValues[0, j] = 0.0;
+                    for (int i = 0; i < numConstraints; i++)
+                    {
+                        newValues[i + 1, j] = (i == basicIndexRow) ? 1.0 : 0.0;
+                    }
                 }
                 else
                 {
-                    double[] A_j = new double[numConstraints];
-                    for (int i = 0; i < numConstraints; i++) A_j[i] = A_orig[i, j];
-                    newValues[0, j] = DotProduct(y, A_j) - c_orig[j];
+                    double[] aJ = new double[numConstraints];
+                    for (int i = 0; i < numConstraints; i++)
+                    {
+                        aJ[i] = aOrig[i, j];
+                    }
+                    double[] aBarJ = MatrixHelpers.MatrixVectorMultiply(bInv, aJ);
+
+                    double yAj = 0;
+                    for (int i = 0; i < numConstraints; i++)
+                    {
+                        yAj += y[i] * aOrig[i, j];
+                    }
+                    newValues[0, j] = yAj - cOrig[j];
+                    for (int i = 0; i < numConstraints; i++)
+                    {
+                        newValues[i + 1, j] = aBarJ[i];
+                    }
                 }
             }
-            // RHS of obj row: Z = y * b
-            newValues[0, numTotalVars] = DotProduct(y, b_orig);
-
-            // Rows 1 to m: Constraint Rows
-            // Updated A matrix: A_bar = B_inv * A_orig
-            double[,] A_bar = MatrixMultiply(B_inv, A_orig);
+            double zValue = MatrixHelpers.DotProduct(y, bOrig);
+            newValues[0, numTotalVars] = Math.Round(zValue, 12);
+            double[] bBar = MatrixHelpers.MatrixVectorMultiply(bInv, bOrig);
             for (int i = 0; i < numConstraints; i++)
             {
-                for (int j = 0; j < numTotalVars; j++)
-                {
-                    newValues[i + 1, j] = A_bar[i, j];
-                }
+                newValues[i + 1, numTotalVars] = Math.Round(bBar[i], 12);
             }
-
-            // Updated b vector: b_bar = B_inv * b_orig
-            double[] b_bar = MatrixVectorMultiply(B_inv, b_orig);
-            for (int i = 0; i < numConstraints; i++)
-            {
-                newValues[i + 1, numTotalVars] = b_bar[i];
-            }
-
             var reconstructed = initialTableauForHeaders.Copy();
             reconstructed.Values = newValues;
             return reconstructed;
         }
 
-        /// <summary>
-        /// Implements the Revised Primal Simplex algorithm to solve a linear programming problem.
-        /// The output format matches the standard Primal Simplex method's step-by-step tableau.
-        /// </summary>
         public static List<string> SolveRevised(Tableau tableau)
         {
-            // Initial setup to match the requested output format
             var steps = new List<string> { "Start Revised Primal Simplex" };
-            Tableau initialTableau = tableau.Copy(); // Keep original for headers and data
-            steps.Add(initialTableau.ToString());
-
             int numConstraints = tableau.Height - 1;
             int numTotalVars = tableau.Width - 1;
 
-            // 1. Initialization
-            double[,] B_inv = CreateIdentityMatrix(numConstraints);
-
+            double[,] bInv = MatrixHelpers.CreateIdentityMatrix(numConstraints);
             var basicVarIndices = tableau.GetBasicVariableIndices().ToList();
             var nonBasicVarIndices = tableau.GetNonBasicVariableIndices().ToList();
 
             double[] c = new double[numTotalVars];
-            for (int j = 0; j < numTotalVars; j++) c[j] = -initialTableau.Values[0, j];
+            for (int j = 0; j < numTotalVars; j++) c[j] = -tableau.Values[0, j];
 
             double[] b = new double[numConstraints];
-            for (int i = 0; i < numConstraints; i++) b[i] = initialTableau.Values[i + 1, numTotalVars];
+            for (int i = 0; i < numConstraints; i++) b[i] = tableau.Values[i + 1, numTotalVars];
 
             double[,] A = new double[numConstraints, numTotalVars];
             for (int i = 0; i < numConstraints; i++)
                 for (int j = 0; j < numTotalVars; j++)
-                    A[i, j] = initialTableau.Values[i + 1, j];
+                    A[i, j] = tableau.Values[i + 1, j];
 
             const int maxIterations = 128;
             for (int iteration = 0; ; iteration++)
@@ -181,17 +181,24 @@ namespace LPR381.LP
                     steps.Add("Algorithm terminated: Maximum iterations reached.");
                     break;
                 }
-                // A. Check for Optimality
-                double[] c_B = basicVarIndices.Select(index => c[index]).ToArray();
-                double[] y = VectorMatrixMultiply(c_B, B_inv);
+
+                double[] cB = new double[numConstraints];
+                for (int i = 0; i < basicVarIndices.Count; i++)
+                {
+                    cB[i] = c[basicVarIndices[i]];
+                }
+                double[] y = MatrixHelpers.VectorMatrixMultiply(cB, bInv);
 
                 int enteringCol = -1;
                 double maxReducedCost = 0.0;
                 foreach (int j in nonBasicVarIndices)
                 {
-                    double[] A_j = new double[numConstraints];
-                    for (int i = 0; i < numConstraints; i++) A_j[i] = A[i, j];
-                    double reducedCost = c[j] - DotProduct(y, A_j);
+                    double yAj = 0;
+                    for (int i = 0; i < numConstraints; i++)
+                    {
+                        yAj += y[i] * A[i, j];
+                    }
+                    double reducedCost = c[j] - yAj;
 
                     if (reducedCost > 1e-9 && reducedCost > maxReducedCost)
                     {
@@ -202,32 +209,43 @@ namespace LPR381.LP
 
                 if (enteringCol == -1)
                 {
-                    // OPTIMAL
-                    Tableau finalTableau = ReconstructTableau(numConstraints, numTotalVars, B_inv, basicVarIndices, A, b, c, initialTableau);
+                    Tableau finalTableau = ReconstructTableau(numConstraints, numTotalVars, bInv, basicVarIndices, A, b, c, tableau);
                     steps.Add(ConstructSolution(finalTableau));
                     break;
                 }
 
-                // B. Ratio Test
-                double[] A_entering = new double[numConstraints];
-                for (int i = 0; i < numConstraints; i++) A_entering[i] = A[i, enteringCol];
-                double[] d = MatrixVectorMultiply(B_inv, A_entering);
-
-                if (d.All(val => val <= 1e-9))
+                double[] d = new double[numConstraints];
+                for (int i = 0; i < numConstraints; i++)
                 {
-                    // UNBOUNDED
-                    steps.Add("Unbounded solution");
+                    for (int k = 0; k < numConstraints; k++)
+                    {
+                        d[i] += bInv[i, k] * A[k, enteringCol];
+                    }
+                }
+
+                bool isUnbounded = true;
+                for (int i = 0; i < numConstraints; i++)
+                {
+                    if (d[i] > 1e-9)
+                    {
+                        isUnbounded = false;
+                        break;
+                    }
+                }
+                if (isUnbounded)
+                {
+                    steps.Add("Unbounded solution.");
                     break;
                 }
 
-                double[] x_B = MatrixVectorMultiply(B_inv, b);
+                double[] xB = MatrixHelpers.MatrixVectorMultiply(bInv, b);
                 int leavingRowInBasis = -1;
                 double minRatio = double.MaxValue;
                 for (int i = 0; i < numConstraints; i++)
                 {
                     if (d[i] > 1e-9)
                     {
-                        double ratio = x_B[i] / d[i];
+                        double ratio = xB[i] / d[i];
                         if (ratio < minRatio)
                         {
                             minRatio = ratio;
@@ -235,30 +253,19 @@ namespace LPR381.LP
                         }
                     }
                 }
-
                 int leavingCol = basicVarIndices[leavingRowInBasis];
 
-                // C. LOGGING: Reconstruct tableau and perform pivot for display
-                Tableau tableauForLogging = ReconstructTableau(numConstraints, numTotalVars, B_inv, basicVarIndices, A, b, c, initialTableau);
-                // Find the actual row index in the full tableau for the leaving variable
-                int? pivotRowForLogging = tableauForLogging.GetBasicVariableI(leavingCol);
-                if (pivotRowForLogging.HasValue)
-                {
-                    steps.Add(tableauForLogging.Pivot(pivotRowForLogging.Value, enteringCol));
-                }
-
-                // D. PIVOT: Update the actual Revised Simplex state variables
                 basicVarIndices[leavingRowInBasis] = enteringCol;
                 nonBasicVarIndices.Remove(enteringCol);
                 nonBasicVarIndices.Add(leavingCol);
 
                 double pivotElement = d[leavingRowInBasis];
-                double[,] E = CreateIdentityMatrix(numConstraints);
+                double[,] E = MatrixHelpers.CreateIdentityMatrix(numConstraints);
                 for (int i = 0; i < numConstraints; i++)
                 {
                     E[i, leavingRowInBasis] = (i == leavingRowInBasis) ? (1.0 / pivotElement) : (-d[i] / pivotElement);
                 }
-                B_inv = MatrixMultiply(E, B_inv);
+                bInv = MatrixHelpers.MatrixMultiply(E, bInv);
             }
 
             steps.Add("End Revised Primal Simplex");
