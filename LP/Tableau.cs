@@ -165,8 +165,6 @@ namespace LPR381.LP
                                        : Matrix<double>.Build.DenseOfArray(Copy(from:Values, CountJ:GetDescisionVariableIndices().Count(), fromStartI:1));
         private Matrix<double> Get_B_or_N(int[] indices)
         {
-            // TODO: InitialTableau may be sized differently from OptimalTableau aka `this`
-            // Consider adding origonal shaped constraints to InitialTableau In Branch&Bound and CuttingPlane to fix this.
             if (!IsOptimal)
                 throw new InvalidOperationException("Tableau must be optimal");
             InitialTableau = InitialTableau ?? Copy();
