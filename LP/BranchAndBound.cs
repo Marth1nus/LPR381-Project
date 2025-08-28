@@ -98,38 +98,31 @@ namespace LPR381.LP
             var problemNameParent = problemName;
             var fraction = tableau[fractionI, tableau.Width - 1];
             steps.Add($"[{problemName}] Branch on **{tableau.ColumnNames[fractionJ]}**={fraction}");
+            var newCol = new double[tableau.Height];
+            var newRow = new double[tableau.Width + 1];
 
-            // Branch on floor
-            tableau = tableauParent.Copy();
-            problemName = problemNameParent + ".1";
-            if (problemName.StartsWith("."))
-                problemName = problemName.Substring(1);
-            tableau.AddColumn(new double[tableau.Height], $"s{tableau.Height}", "+");
-            tableau.AddRow(new double[tableau.Width], $"c{tableau.Height}");
-            tableau[tableau.Height - 1, fractionJ /*  */ ] = 1.0;
-            tableau[tableau.Height - 1, tableau.Width - 2] = 1.0;
-            tableau[tableau.Height - 1, tableau.Width - 1] = Math.Floor(fraction);
-            steps.Add($"[{problemName}] Branch **{tableau.ColumnNames[fractionJ]}**<={Math.Floor(fraction)}\n\n{tableau}");
-            for (int j = 0; j < tableau.Width; j++)
-                tableau[tableau.Height - 1, j] = tableau[tableau.Height - 1, j] - tableau[fractionI, j];
-            steps.Add($"[{problemName}] Restore basic variable (new=new-old)\n\n{tableau}");
-            RecursiveSolve(tableau.Copy(), problemName, ref candidates, ref steps, depthTracker + 1);
-
-            // Branch on ceil
-            tableau = tableauParent.Copy();
-            problemName = problemNameParent + ".2";
-            if (problemName.StartsWith("."))
-                problemName = problemName.Substring(1);
-            tableau.AddColumn(new double[tableau.Height], $"e{tableau.Height}", "+");
-            tableau.AddRow(new double[tableau.Width], $"c{tableau.Height}");
-            tableau[tableau.Height - 1, fractionJ /*  */ ] = 1.0;
-            tableau[tableau.Height - 1, tableau.Width - 2] = -1.0;
-            tableau[tableau.Height - 1, tableau.Width - 1] = Math.Ceiling(fraction);
-            steps.Add($"[{problemName}] Branch **{tableau.ColumnNames[fractionJ]}**>={Math.Ceiling(fraction)}\n\n{tableau}");
-            for (int j = 0; j < tableau.Width; j++)
-                tableau[tableau.Height - 1, j] = tableau[fractionI, j] - tableau[tableau.Height - 1, j];
-            steps.Add($"[{problemName}] Restore basic variable (new=old-new)\n\n{tableau}");
-            RecursiveSolve(tableau.Copy(), problemName, ref candidates, ref steps, depthTracker + 1);
+            for (int branch = 0; branch < 2; branch++)
+            {
+                var floor = branch == 0;
+                tableau = tableauParent.Copy();
+                tableau.InitialTableau = tableau.InitialTableau?.Copy();
+                problemName = problemNameParent + (floor ? ".1" : ".2");
+                if (problemName.StartsWith("."))
+                    problemName = problemName.Substring(1);
+                tableau.InitialTableau?.AddColumn(newCol, $"{(floor ? "s" : "e")}{tableau.Height}", "+");
+                tableau/*            */.AddColumn(newCol, $"{(floor ? "s" : "e")}{tableau.Height}", "+");
+                newRow[fractionJ /*  */ ] = floor ? 1.0 /*            */ : 1.0 /*              */;
+                newRow[tableau.Width - 2] = floor ? 1.0 /*            */ : -1.0 /*             */;
+                newRow[tableau.Width - 1] = floor ? Math.Floor(fraction) : Math.Ceiling(fraction);
+                tableau.InitialTableau?.AddRow(newRow, $"c{tableau.Height}");
+                tableau/*            */.AddRow(newRow, $"c{tableau.Height}");
+                steps.Add($"[{problemName}] Branch **{tableau.ColumnNames[fractionJ]}**{(floor ? "<=" : ">=")}{newRow[tableau.Width - 1]}\n\n{tableau}");
+                for (int j = 0; j < tableau.Width; j++)
+                    tableau[tableau.Height - 1, j] = floor ? tableau[tableau.Height - 1, j] - tableau[fractionI, j]
+                                                           : tableau[fractionI, j] - tableau[tableau.Height - 1, j];
+                steps.Add($"[{problemName}] Restore basic variable ({(floor ? "new=new-old" : "new=old-new")})\n\n{tableau}");
+                RecursiveSolve(tableau.Copy(), problemName, ref candidates, ref steps, depthTracker + 1);
+            }
         }
     }
 }

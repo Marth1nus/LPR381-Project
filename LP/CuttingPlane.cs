@@ -53,14 +53,17 @@ namespace LPR381.LP
                     break;
                 }
 
-                tableau.AddColumn(new double[tableau.Height], $"s{tableau.Height}", "+");
+                var newColumn = new double[tableau.Height];
+                tableau.InitialTableau?.AddColumn(newColumn, $"s{tableau.Height}", "+");
+                tableau /*           */.AddColumn(newColumn, $"s{tableau.Height}", "+");
                 var newRow = new double[tableau.Width];
                 for (int j = 0; j < tableau.Width; j++)
                 {
                     newRow[j] = Math.Floor(tableau[fractionI, j]) - tableau[fractionI, j];
                 }
                 newRow[tableau.Width - 2] = 1;
-                tableau.AddRow(newRow, $"c{tableau.Height}");
+                tableau.InitialTableau?.AddRow(newRow, $"c{tableau.Height}");
+                tableau /*           */.AddRow(newRow, $"c{tableau.Height}");
 
                 steps.Add($"Cut on **{tableau.ColumnNames[fractionJ]}**={tableau[fractionI, tableau.Width - 1]}\n\n{tableau}");
             }
