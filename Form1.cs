@@ -179,7 +179,6 @@ namespace LPR381
                     </body>
                 </html>
             ";
-            webBrowser1.Document?.Window.ScrollTo(0, webBrowser1.Document.Body.ScrollRectangle.Height);
         }
     }
 }
