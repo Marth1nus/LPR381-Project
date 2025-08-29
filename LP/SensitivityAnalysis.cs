@@ -115,10 +115,12 @@ namespace LPR381.LP
             if (!EnsureOptimal(tableau, steps))
                 return steps;
 
-            newValue = 30;
             Tableau tableau1 = ChangeRhsValue(tableau, constraintRow, newValue);
 
-            steps.Add(tableau1.ToString());
+            //steps = Solve(tableau1);
+            steps = BranchAndBound.Solve(tableau1);
+
+            //steps.Add(tableau1.ToString());
 
             return steps;
         }
@@ -130,6 +132,8 @@ namespace LPR381.LP
 
             // This line updates a single cell (row, column) with a single double value.
             newTableau[constraintRow, newTableau.Width - 1] = newValue;
+
+            //make optimal again if needed
             
             return newTableau;
         }

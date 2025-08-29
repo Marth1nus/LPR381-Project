@@ -260,11 +260,12 @@ namespace LPR381
                     if ( comboBox4.SelectedIndex != -1)
                     {
                         row = int.Parse(comboBox4.SelectedItem.ToString());
+                        newValue = (double)numericUpDown1.Value;
                     }
                     else
                     {
                         MessageBox.Show(
-                            "Please select an item from both the Prefix and Suffix combo boxes.",
+                            "Please select an item from both the Suffix combo box.",
                             "Missing Selection",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error
