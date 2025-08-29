@@ -1,5 +1,7 @@
-﻿using System;
+﻿using MathNet.Numerics.LinearAlgebra;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LPR381.LP
 {
@@ -17,43 +19,36 @@ namespace LPR381.LP
                     steps.Add("Algorithm terminated: Maximum iterations reached.");
                     break;
                 }
-                // get pivot row IndexMin(rhs)
-                int pivotI = 1; // start after objective row and find min value
-                for (int i = 2; i < tableau.Height; i++)
-                    if (tableau[i, tableau.Width - 1] < tableau[pivotI, tableau.Width - 1])
-                        pivotI = i;
 
-                // break if all rhs are positive
-                if (tableau[pivotI, tableau.Width - 1] >= 0.0)
+                var rhs = tableau[null, tableau.Width - 1];
+                var minRhs = rhs.Min();
+                if (minRhs >= 0.0)
                 {
                     steps.Add("All rhs values are positive");
                     break;
                 }
+                var pi = Array.IndexOf(rhs.ToArray(), minRhs);
 
-                // get pivot column
-                int pivotJ = -1;
-                double minAbsRatio = double.PositiveInfinity;
-                for (int j = 0; j < tableau.Width - 1; j++)
+                var numerator = tableau[0, tableau.IndicesForVariables];
+                var denominator = tableau[pi, tableau.IndicesForVariables];
+                var minAbsRatio = double.MaxValue;
+                var pj = -1;
+                foreach (var j in tableau.IndicesForVariables.Where(j => denominator[j] < 0.0))
                 {
-                    double numerator = tableau[0, j],
-                           demoninator = tableau[pivotI, j];
-                    if (demoninator >= 0) continue;
-                    double absRatio = Math.Abs(numerator / demoninator);
+                    var absRatio = Math.Abs(numerator[j] / denominator[j]);
                     if (absRatio < minAbsRatio)
                     {
                         minAbsRatio = absRatio;
-                        pivotJ = j;
+                        pj = j;
                     }
                 }
-
-                if (pivotJ == -1)
+                if (pj < 0)
                 {
-                    steps.Add($"Infeasible. Ratio Test has no valid minimum.\nrow:**{tableau.RowNames[pivotI]}**");
+                    steps.Add($"Infeasible. Ratio Test has no valid minimum.\nrow:**{tableau.RowNames[pi]}**");
                     break;
                 }
 
-                // Pivot
-                steps.Add(tableau.Pivot(pivotI, pivotJ));
+                steps.Add(tableau.Pivot(pi, pj));
             }
             steps.Add("End Dual Simplex");
             return steps;
@@ -61,32 +56,15 @@ namespace LPR381.LP
 
         public static (Tableau tableau, bool madeChanges) DualFrom(Tableau tableau, List<string> steps)
         {
-            bool madeChanges = false;
-            for (int j = 0; j < tableau.Width; j++)
-            {
-                int Negative1I = -1;
-                // indentify basic-like column. remember i of -1
-                for (int i = 1; i < tableau.Height; i++)
-                {
-                    if (tableau[i, j] == -1)
-                    {
-                        Negative1I = i;
-                    }
-                    else if (tableau[i, j] != 0)
-                    {
-                        Negative1I = -1; // non basic-like column
-                        break;
-                    }
-                }
-                if (Negative1I < 0)
-                    continue; // non basic-like column found
-                // Multiply the row by -1
-                for (int k = 0; k < tableau.Width; k++)
-                    tableau[Negative1I, k] *= -1;
-                steps.Add($"Multiplied row **{tableau.RowNames[Negative1I]}** by -1\nTo make **{tableau.ColumnNames[j]}** basic\n{tableau}");
-                madeChanges = true;
-            }
-            return (tableau, madeChanges);
+            var excessConstraintIndices = tableau.IndicesForVariables
+                .Select(j => tableau.GetBasicVariableI(j, -1.0) ?? -1)
+                .Where(i => i >= 0).ToArray();
+            if (excessConstraintIndices.Length == 0)
+                return (tableau, false);
+            tableau[excessConstraintIndices, null] *= -1.0;
+            foreach (var i in excessConstraintIndices)
+                steps.Add($"{tableau.RowNames[i]} *= -1");
+            return (tableau, true);
         }
     }
 }
