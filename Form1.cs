@@ -165,7 +165,8 @@ namespace LPR381
                             }}
                             th, td {{
                                 padding: 4px;
-                                width: 64px;
+                                width: 96px;
+                                white-space: nowrap;
                             }}
                             th {{
                                 font-weight: 700;
