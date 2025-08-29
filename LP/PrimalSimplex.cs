@@ -159,8 +159,8 @@ namespace LPR381.LP
             int numTotalVars = tableau.Width - 1;
 
             double[,] bInv = MatrixHelpers.CreateIdentityMatrix(numConstraints);
-            var basicVarIndices = tableau.GetBasicVariableIndices().ToList();
-            var nonBasicVarIndices = tableau.GetNonBasicVariableIndices().ToList();
+            var basicVarIndices = tableau.IndicesForBasicVariables.ToList();
+            var nonBasicVarIndices = tableau.IndicesForNonBasicVariables.ToList();
 
             double[] c = new double[numTotalVars];
             for (int j = 0; j < numTotalVars; j++) c[j] = -tableau.Values[0, j];
@@ -339,7 +339,7 @@ namespace LPR381.LP
         {
             var sb = new StringBuilder();
             sb.AppendLine("Optimal solution found.  ");
-            foreach (var (name, value) in tableau.GetVariableIndices()
+            foreach (var (name, value) in tableau.IndicesForVariables
                 .Select(j => (tableau.ColumnNames[j] /* */, tableau.GetVariableValue(j) /* */))
                 .Append(/* */("Optimal Value(Z)" /*     */, tableau.ObjectiveValue /*      */)))
             {

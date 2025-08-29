@@ -15,7 +15,7 @@ namespace LPR381.LP
             Tableau knapsackTableau = new Tableau
             {
                 Budget = tableau[1, tableau.Width - 1],
-                Variables = tableau.GetVariableIndices()
+                Variables = tableau.IndicesForVariables
                     .Where(j => tableau.GetBasicVariableI(j, +1.0) == null && // exclude slacks
                                 tableau.GetBasicVariableI(j, -1.0) == null)   // exclude excesses
                     .Select(j => new Variable
