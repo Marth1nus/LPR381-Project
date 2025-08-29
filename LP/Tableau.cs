@@ -1,13 +1,11 @@
 ﻿using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 
 namespace LPR381.LP
 {
@@ -176,7 +174,7 @@ namespace LPR381.LP
 
         public IEnumerable<int> IndicesForConstraints /*           */ => Enumerable.Range(1, Height /* */ - 1);
         public IEnumerable<int> IndicesForVariables /*             */ => Enumerable.Range(0, Width /*  */ - 1);
-        public IEnumerable<int> IndicesForDescisionVariables /*    */ => IndicesForVariables.Where(j => ColumnNames[j].StartsWith("x"));
+        public IEnumerable<int> IndicesForDecisionVariables /*     */ => IndicesForVariables.Where(j => ColumnNames[j].StartsWith("x"));
         public IEnumerable<int> IndicesForSlackVariables /*        */ => IndicesForVariables.Where(j => !ColumnNames[j].StartsWith("x"));
         public IEnumerable<int> IndicesForBasicVariables /*        */ => IndicesForVariables.Where(IsBasicVariable /*        */);
         public IEnumerable<int> IndicesForNonBasicVariables /*     */ => IndicesForVariables.Where(IsNonBasicVariable /*     */);
@@ -192,9 +190,9 @@ namespace LPR381.LP
 
         public IEnumerable<double> GetVariableValues() => IndicesForVariables.Select(GetVariableValue);
 
-        public Vector<double> Get_c /*    */() => (InitialTableau ?? this)[/*                     */ 0, IndicesForDescisionVariables /* */];
+        public Vector<double> Get_c /*    */() => (InitialTableau ?? this)[/*                     */ 0, IndicesForDecisionVariables /*  */];
         public Vector<double> Get_b /*    */() => (InitialTableau ?? this)[/* */ IndicesForConstraints, Width - 1 /*                    */];
-        public Matrix<double> Get_A /*    */() => (InitialTableau ?? this)[/* */ IndicesForConstraints, IndicesForDescisionVariables /* */];
+        public Matrix<double> Get_A /*    */() => (InitialTableau ?? this)[/* */ IndicesForConstraints, IndicesForDecisionVariables /*  */];
         public Matrix<double> Get_B /*    */() => /*             */ (this)[/* */ IndicesForConstraints, IndicesForBasicVariables /*     */];
         public Matrix<double> Get_N /*    */() => /*             */ (this)[/* */ IndicesForConstraints, IndicesForNonBasicVariables /*  */];
         public Vector<double> Get_cBv /*  */() => /*             */ (this)[/*                      */ 0, IndicesForBasicVariables /*    */];
