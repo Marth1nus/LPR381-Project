@@ -60,6 +60,7 @@
             this.clearOutputToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+            this.sensitivityAnalysisToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
             this.tableLayoutPanel4.SuspendLayout();
@@ -419,7 +420,8 @@
             // 
             this.actionToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.solveToolStripMenuItem,
-            this.clearOutputToolStripMenuItem});
+            this.clearOutputToolStripMenuItem,
+            this.sensitivityAnalysisToolStripMenuItem});
             this.actionToolStripMenuItem.Name = "actionToolStripMenuItem";
             this.actionToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
             this.actionToolStripMenuItem.Text = "Action";
@@ -427,14 +429,14 @@
             // solveToolStripMenuItem
             // 
             this.solveToolStripMenuItem.Name = "solveToolStripMenuItem";
-            this.solveToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.solveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.solveToolStripMenuItem.Text = "Solve";
             this.solveToolStripMenuItem.Click += new System.EventHandler(this.solveToolStripMenuItem_Click);
             // 
             // clearOutputToolStripMenuItem
             // 
             this.clearOutputToolStripMenuItem.Name = "clearOutputToolStripMenuItem";
-            this.clearOutputToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.clearOutputToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.clearOutputToolStripMenuItem.Text = "Clear Output";
             this.clearOutputToolStripMenuItem.Click += new System.EventHandler(this.clearOutputToolStripMenuItem_Click);
             // 
@@ -457,6 +459,13 @@
             this.saveFileDialog1.RestoreDirectory = true;
             this.saveFileDialog1.Title = "Save Solved LP";
             this.saveFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.saveFileDialog1_FileOk);
+            // 
+            // sensitivityAnalysisToolStripMenuItem
+            // 
+            this.sensitivityAnalysisToolStripMenuItem.Name = "sensitivityAnalysisToolStripMenuItem";
+            this.sensitivityAnalysisToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.sensitivityAnalysisToolStripMenuItem.Text = "Sensitivity Analysis";
+            this.sensitivityAnalysisToolStripMenuItem.Click += new System.EventHandler(this.sensitivityAnalysisToolStripMenuItem_Click);
             // 
             // Form1
             // 
@@ -520,6 +529,7 @@
         private System.Windows.Forms.RichTextBox richTextBox2;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.ToolStripMenuItem sensitivityAnalysisToolStripMenuItem;
     }
 }
 
