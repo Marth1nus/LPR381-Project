@@ -36,11 +36,11 @@ namespace LPR381
         };
         private static readonly Dictionary<string, SolverWithTwoParams> SensitivityDictWithTwoParams = new Dictionary<string, SolverWithTwoParams>
         {
-            { "Display the range of a selected Non-Basic Variable" /*                                           */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
+            { "Display the range of a selected Non-Basic Variable" /*                                           */, SensitivityAnalysis /*                   */ .SolveDisplayObjectiveRanges },
             { "Apply and display a change of a selected Non-Basic Variable" /*                                  */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
-            { "Display the range of a selected Basic Variable" /*                                               */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
+            { "Display the range of a selected Basic Variable" /*                                               */, SensitivityAnalysis /*                   */ .SolveDisplayObjectiveRanges },
             { "Apply and display a change of a selected Basic Variable" /*                                      */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
-            { "Display the range of a selected constraint right-hand-side value" /*                             */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
+            { "Display the range of a selected constraint right-hand-side value" /*                             */, SensitivityAnalysis /*                   */ .SolveDisplayRhsRanges },
             { "Apply and display a change of a selected constraint right-hand-side value" /*                    */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
             { "Display the range of a selected variable in a Non-Basic Variable column" /*                      */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
             { "Apply and display a change of a selected variable in a Non-Basic Variable column" /*             */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
