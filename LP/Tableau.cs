@@ -169,15 +169,19 @@ namespace LPR381.LP
             }
             return indexOf1;
         }
+        public bool IsBasicVariable /*        */(int j) => /*  */ GetBasicVariableI(j, +1.0).HasValue;
+        public bool IsNonBasicVariable /*     */(int j) => /* */ !GetBasicVariableI(j, +1.0).HasValue;
+        public bool IsBasicLikeVariable /*    */(int j) => /*  */ GetBasicVariableI(j, -1.0).HasValue;
+        public bool IsNonBasicLikeVariable /* */(int j) => /* */ !GetBasicVariableI(j, -1.0).HasValue;
 
         public IEnumerable<int> IndicesForConstraints /*           */ => Enumerable.Range(1, Height /* */ - 1);
         public IEnumerable<int> IndicesForVariables /*             */ => Enumerable.Range(0, Width /*  */ - 1);
         public IEnumerable<int> IndicesForDescisionVariables /*    */ => IndicesForVariables.Where(j => ColumnNames[j].StartsWith("x"));
         public IEnumerable<int> IndicesForSlackVariables /*        */ => IndicesForVariables.Where(j => !ColumnNames[j].StartsWith("x"));
-        public IEnumerable<int> IndicesForBasicVariables /*        */ => IndicesForVariables.Where(j => GetBasicVariableI(j, 1.0).HasValue);
-        public IEnumerable<int> IndicesForNonBasicVariables /*     */ => IndicesForVariables.Where(j => !GetBasicVariableI(j, 1.0).HasValue);
-        public IEnumerable<int> IndicesForBasicLikeVariables /*    */ => IndicesForVariables.Where(j => GetBasicVariableI(j, -1.0).HasValue);
-        public IEnumerable<int> IndicesForNonBasicLikeVariables /* */ => IndicesForVariables.Where(j => !GetBasicVariableI(j, -1.0).HasValue);
+        public IEnumerable<int> IndicesForBasicVariables /*        */ => IndicesForVariables.Where(IsBasicVariable /*        */);
+        public IEnumerable<int> IndicesForNonBasicVariables /*     */ => IndicesForVariables.Where(IsNonBasicVariable /*     */);
+        public IEnumerable<int> IndicesForBasicLikeVariables /*    */ => IndicesForVariables.Where(IsBasicLikeVariable /*    */);
+        public IEnumerable<int> IndicesForNonBasicLikeVariables /* */ => IndicesForVariables.Where(IsNonBasicLikeVariable /* */);
 
         public double GetVariableValue(int j)
         {
