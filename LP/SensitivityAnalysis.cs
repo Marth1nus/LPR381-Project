@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Numerics;
+using MathNet.Numerics.LinearAlgebra;
 using System.Text;
 
 namespace LPR381.LP
@@ -111,18 +111,8 @@ namespace LPR381.LP
 
         public static List<String> SolveApplyDisplayRHS(Tableau tableau, int constraintRow, double newValue)
         {
-            var steps = new List<String>();
-            if (!EnsureOptimal(tableau, steps))
-                return steps;
-
-            Tableau tableau1 = ChangeRhsValue(tableau, constraintRow, newValue);
-
-            //steps = Solve(tableau1);
-            steps = BranchAndBound.Solve(tableau1);
-
-            //steps.Add(tableau1.ToString());
-
-            return steps;
+            //code here
+            return null;
         }
 
         public static Tableau ChangeRhsValue(Tableau optimalTableau, int constraintRow, double newValue)
