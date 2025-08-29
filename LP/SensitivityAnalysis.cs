@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 
 namespace LPR381.LP
@@ -82,6 +83,55 @@ namespace LPR381.LP
                 steps.Add($"Range{s} for {groupName} variable coefficient{s}\n\n{markdownTable}");
             }
             return steps;
+        }
+
+        public static List<String> SolveApplyDisplayObjective(Tableau tableau, IEnumerable<int> variableIndices = null)
+        {
+            variableIndices = variableIndices ?? tableau.IndicesForVariables;
+            var steps = new List<String>();
+            if (!EnsureOptimal(tableau, steps))
+                return steps;
+            var newTableau = ApplyDisplayObjective(tableau, variableIndices);
+
+            return steps;
+        }
+
+        public static List<String> ApplyDisplayObjective(Tableau optimalTableau, IEnumerable<int> variableIndices = null)
+        {
+            var steps = new List<String>();
+
+            var initialTableau = optimalTableau.InitialTableau ?? optimalTableau;
+            var B = initialTableau[optimalTableau.IndicesForConstraints, optimalTableau.IndicesForBasicVariables];
+            var BInverse = B.Inverse();
+            var cBv = initialTableau[0, optimalTableau.IndicesForBasicVariables];
+
+
+            return steps;
+        }
+
+        public static List<String> SolveApplyDisplayRHS(Tableau tableau, int constraintRow, double newValue)
+        {
+            var steps = new List<String>();
+            if (!EnsureOptimal(tableau, steps))
+                return steps;
+
+            newValue = 30;
+            Tableau tableau1 = ChangeRhsValue(tableau, constraintRow, newValue);
+
+            steps.Add(tableau1.ToString());
+
+            return steps;
+        }
+
+        public static Tableau ChangeRhsValue(Tableau optimalTableau, int constraintRow, double newValue)
+        {
+            // 1. Create a deep copy of the tableau to avoid modifying the original
+            var newTableau = optimalTableau.Copy();
+
+            // This line updates a single cell (row, column) with a single double value.
+            newTableau[constraintRow, newTableau.Width - 1] = newValue;
+            
+            return newTableau;
         }
 
         public static List<String> SolveDisplayRhsRanges(Tableau tableau, IEnumerable<int> constaintIndices = null)

@@ -31,22 +31,31 @@ namespace LPR381
         {
             { "Add a new activity to an optimal solution" /*                                                    */, SensitivityAnalysis /*                   */ .Solve },
             { "Add a new constraint to an optimal solution" /*                                                  */, SensitivityAnalysis /*                   */ .Solve },
-            { "Display the shadow prices" /*                                                                    */, SensitivityAnalysis /*                   */ .SolveDisplayShadowPrices },
+            { "Display the shadow prices" /*                                                                    */, SensitivityAnalysis /*                   */ .SolveDisplayShadowPrices },// [x]
             { "Duality" /*                                                                                      */, SensitivityAnalysis /*                   */ .Solve },
         };
         private static readonly Dictionary<string, SolverWithTwoParams> SensitivityDictWithTwoParams = new Dictionary<string, SolverWithTwoParams>
         {
-            { "Display the range of a selected Non-Basic Variable" /*                                           */, SensitivityAnalysis /*                   */ .SolveDisplayObjectiveRanges },
-            { "Apply and display a change of a selected Non-Basic Variable" /*                                  */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
-            { "Display the range of a selected Basic Variable" /*                                               */, SensitivityAnalysis /*                   */ .SolveDisplayObjectiveRanges },
-            { "Apply and display a change of a selected Basic Variable" /*                                      */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
-            { "Display the range of a selected constraint right-hand-side value" /*                             */, SensitivityAnalysis /*                   */ .SolveDisplayRhsRanges },
-            { "Apply and display a change of a selected constraint right-hand-side value" /*                    */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
-            { "Display the range of a selected variable in a Non-Basic Variable column" /*                      */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
+            { "Display the range of a selected Non-Basic Variable" /*                                           */, SensitivityAnalysis /*                   */ .SolveDisplayObjectiveRanges },// [x]
+            { "Apply and display a change of a selected Non-Basic Variable" /*                                  */, SensitivityAnalysis /*                   */ .SolveApplyDisplayObjective },
+            { "Display the range of a selected Basic Variable" /*                                               */, SensitivityAnalysis /*                   */ .SolveDisplayObjectiveRanges },// [x]
+            { "Apply and display a change of a selected Basic Variable" /*                                      */, SensitivityAnalysis /*                   */ .SolveApplyDisplayObjective },
+            { "Display the range of a selected constraint right-hand-side value" /*                             */, SensitivityAnalysis /*                   */ .SolveDisplayRhsRanges },// [x]
+            //{ "Apply and display a change of a selected constraint right-hand-side value" /*                    */, SensitivityAnalysis /*                   */ .SolveApplyDisplayRHS },
+            { "Display the range of a selected variable in a Non-Basic Variable column" /*                      */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },// [x]
             { "Apply and display a change of a selected variable in a Non-Basic Variable column" /*             */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
+        };
+
+        private static readonly Dictionary<string, SolverWithThreeParams> SensitivityDictWithThreeParams = new Dictionary<string, SolverWithThreeParams>
+        {
+            //{ "Apply and display a change of a selected Non-Basic Variable" /*                                  */, SensitivityAnalysis /*                   */ .SolveApplyDisplayObjective },
+            //{ "Apply and display a change of a selected Basic Variable" /*                                      */, SensitivityAnalysis /*                   */ .SolveApplyDisplayObjective },
+            { "Apply and display a change of a selected constraint right-hand-side value" /*                    */, SensitivityAnalysis /*                   */ .SolveApplyDisplayRHS },
+            //{ "Apply and display a change of a selected variable in a Non-Basic Variable column" /*             */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
         };
         private Solver SolverSensitivity => SensitivityDict[comboBox2.SelectedItem.ToString()];
         private SolverWithTwoParams SolverSensitivityWithTwoParams => SensitivityDictWithTwoParams[comboBox2.SelectedItem.ToString()];
+        private SolverWithThreeParams SolverSensitivityWithThreeParams => SensitivityDictWithThreeParams[comboBox2.SelectedItem.ToString()];
         private string SolverNameSensitivity => comboBox2.SelectedItem.ToString();
 
         private string _SolutionText = "";
@@ -240,6 +249,30 @@ namespace LPR381
                         return;
                     }
                     var steps = SolverSensitivityWithTwoParams(newTableau, new[] { Array.IndexOf(tableau.ColumnNames, var) });
+                    var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
+                    SolutionText += $"# Algorithim Selected: {SolverNameSensitivity}\n\n{stepsString}\n\n";
+                    tableau = newTableau;
+                }
+                else if (SensitivityDictWithThreeParams.ContainsKey(SolverNameSensitivity))
+                {
+                    int row;
+                    double newValue = 30;
+                    if ( comboBox4.SelectedIndex != -1)
+                    {
+                        row = int.Parse(comboBox4.SelectedItem.ToString());
+                    }
+                    else
+                    {
+                        MessageBox.Show(
+                            "Please select an item from both the Prefix and Suffix combo boxes.",
+                            "Missing Selection",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error
+                        );
+                        return;
+                    }
+
+                    var steps = SolverSensitivityWithThreeParams(newTableau, row , newValue);
                     var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
                     SolutionText += $"# Algorithim Selected: {SolverNameSensitivity}\n\n{stepsString}\n\n";
                     tableau = newTableau;
