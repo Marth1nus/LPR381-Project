@@ -27,6 +27,27 @@ namespace LPR381
         private Solver Solver => AlgorithmDict[comboBox1.SelectedItem.ToString()];
         private string SolverName => comboBox1.SelectedItem.ToString();
 
+        private static readonly Dictionary<string, Solver> SensitivityDict = new Dictionary<string, Solver>
+        {
+            { "Add a new activity to an optimal solution" /*                                                    */, SensitivityAnalysis /*                   */ .Solve },
+            { "Add a new constraint to an optimal solution" /*                                                  */, SensitivityAnalysis /*                   */ .Solve },
+            { "Display the shadow prices" /*                                                                    */, SensitivityAnalysis /*                   */ .SolveDisplayShadowPrices },
+            { "Duality" /*                                                                                      */, SensitivityAnalysis /*                   */ .Solve },
+        };
+        private static readonly Dictionary<string, SolverWithTwoParams> SensitivityDictWithTwoParams = new Dictionary<string, SolverWithTwoParams>
+        {
+            { "Display the range of a selected Non-Basic Variable" /*                                           */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
+            { "Apply and display a change of a selected Non-Basic Variable" /*                                  */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
+            { "Display the range of a selected Basic Variable" /*                                               */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
+            { "Apply and display a change of a selected Basic Variable" /*                                      */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
+            { "Display the range of a selected constraint right-hand-side value" /*                             */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
+            { "Apply and display a change of a selected constraint right-hand-side value" /*                    */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
+            { "Display the range of a selected variable in a Non-Basic Variable column" /*                      */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
+            { "Apply and display a change of a selected variable in a Non-Basic Variable column" /*             */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
+        };
+        private Solver SolverSensitivity => SensitivityDict[comboBox2.SelectedItem.ToString()];
+        private SolverWithTwoParams SolverSensitivityWithTwoParams => SensitivityDictWithTwoParams[comboBox2.SelectedItem.ToString()];
+        private string SolverNameSensitivity => comboBox2.SelectedItem.ToString();
 
         private string _SolutionText = "";
         private string SolutionText
@@ -181,11 +202,58 @@ namespace LPR381
             ";
         }
 
-        private void sensitivityAnalysisToolStripMenuItem_Click(object sender, EventArgs e)
+        private void applySensitivityAnalysis(object sender, EventArgs e)
         {
-            this.Hide();
-            Form2 form2 = new Form2();
-            form2.Show();
+            try
+            {
+                label4.Text = "";
+                label4.ForeColor = System.Drawing.Color.Black;
+                if (tableau == null)
+                {
+                    SolutionText = "**No Tablueau**\n";
+                    return;
+                }
+                var newTableau = tableau.Copy();
+    
+                if (SensitivityDict.ContainsKey(SolverNameSensitivity))
+                {
+                    var steps = SolverSensitivity(newTableau);
+                    var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
+                    SolutionText += $"# Algorithim Selected: {SolverNameSensitivity}\n\n{stepsString}\n\n";
+                    tableau = newTableau;
+                }
+                else if (SensitivityDictWithTwoParams.ContainsKey(SolverNameSensitivity))
+                {
+                    string var = "";
+                    if (comboBox3.SelectedIndex != -1 && comboBox4.SelectedIndex != -1)
+                    {
+                        var = comboBox3.SelectedItem.ToString() + comboBox4.SelectedItem.ToString();
+                    } else
+                    {
+                        MessageBox.Show(
+                            "Please select an item from both the Prefix and Suffix combo boxes.",
+                            "Missing Selection",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error
+                        );
+                        return;
+                    }
+                    var steps = SolverSensitivityWithTwoParams(newTableau, new[] { Array.IndexOf(tableau.ColumnNames, var) });
+                    var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
+                    SolutionText += $"# Algorithim Selected: {SolverNameSensitivity}\n\n{stepsString}\n\n";
+                    tableau = newTableau;
+                }
+            }
+            catch (Exception err)
+            {
+                MessageBox.Show(err.Message + $"\n\n{err}", "Solve Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                label4.Text = "Error";
+                label4.ForeColor = System.Drawing.Color.Red;
+            }
+            label4.ForeColor = System.Drawing.Color.Red;
+            }
         }
     }
-}
+
+
+

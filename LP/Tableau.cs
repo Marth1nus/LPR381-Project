@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 namespace LPR381.LP
 {
     public delegate List<string> Solver(Tableau tableau);
+    public delegate List<string> SolverWithTwoParams(Tableau tableau, IEnumerable<int> variableIndices);
 
     public class Tableau
     {

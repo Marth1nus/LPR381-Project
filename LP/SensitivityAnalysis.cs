@@ -43,6 +43,9 @@ namespace LPR381.LP
             steps.AddRange(SolveDisplayShadowPrices(tableau)); // (11. [x])
 
             // More code here <3
+            //
+            steps.AddRange(SolveDisplayNonBasicRanges(tableau, new[] { Array.IndexOf(tableau.ColumnNames, "s3") }));
+            //
 
             steps.Add("End Sensitivity Analysis");
             return steps;
