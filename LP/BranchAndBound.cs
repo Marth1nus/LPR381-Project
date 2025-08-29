@@ -11,7 +11,7 @@ namespace LPR381.LP
         {
             var steps = new List<String>() { "Start Branch&Bound" };
             var candidates = new List<(Tableau tableau, string problemName)>();
-            RecursiveSolve(tableau.Copy(), "", ref candidates, ref steps);
+            RecursiveSolve(tableau.Copy(), "", candidates, steps);
 
             const int problemNameMaxLength = 40;
             steps.Add(String.Join("\n", candidates
@@ -37,9 +37,9 @@ namespace LPR381.LP
         }
          
         private static void RecursiveSolve(
-            /*     */ Tableau tableau, string problemName,
-            ref List<(Tableau tableau, string problemName)> candidates,
-            ref List<String> steps,
+            /* */ Tableau tableau, string problemName,
+            List<(Tableau tableau, string problemName)> candidates,
+            List<String> steps,
             int depthTracker = 0)
         {
             if (depthTracker >= maxBranchingDepth)
@@ -117,11 +117,10 @@ namespace LPR381.LP
                 tableau.InitialTableau?.AddRow(newRow, $"c{tableau.Height}");
                 tableau/*            */.AddRow(newRow, $"c{tableau.Height}");
                 steps.Add($"[{problemName}] Branch **{tableau.ColumnNames[fractionJ]}**{(floor ? "<=" : ">=")}{newRow[tableau.Width - 1]}\n\n{tableau}");
-                for (int j = 0; j < tableau.Width; j++)
-                    tableau[tableau.Height - 1, j] = floor ? tableau[tableau.Height - 1, j] - tableau[fractionI, j]
-                                                           : tableau[fractionI, j] - tableau[tableau.Height - 1, j];
+                tableau[tableau.Height - 1, null] = floor ? tableau[tableau.Height - 1, null] - tableau[fractionI, null]
+                                                          : tableau[fractionI, null] - tableau[tableau.Height - 1, null];
                 steps.Add($"[{problemName}] Restore basic variable ({(floor ? "new=new-old" : "new=old-new")})\n\n{tableau}");
-                RecursiveSolve(tableau.Copy(), problemName, ref candidates, ref steps, depthTracker + 1);
+                RecursiveSolve(tableau.Copy(), problemName, candidates, steps, depthTracker + 1);
             }
         }
     }

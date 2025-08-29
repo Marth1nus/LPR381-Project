@@ -79,16 +79,15 @@ namespace LPR381.LP
                     break;
                 }
 
-                var cB = -tableau[0, tableau.IndicesForBasicVariables];
+                var cB = -tableau[0, basicVarIndices];
                 var y = cB * bInv;
 
                 var enteringCol = -1;
                 var maxReducedCost = 0.0;
                 foreach (var j in nonBasicVarIndices)
                 {
-                    var yAj = y.DotProduct(A.Column(j));
+                    var yAj = y * A.Column(j);
                     var reducedCost = c[j] - yAj;
-
                     if (reducedCost > 1e-9 && reducedCost > maxReducedCost)
                     {
                         maxReducedCost = reducedCost;
@@ -103,8 +102,7 @@ namespace LPR381.LP
                 }
 
                 var d = bInv * A.Column(enteringCol);
-
-                if (d.Any(v => v < 1e-9))
+                if (!d.Any(v => v > 1e-9))
                 {
                     steps.Add("Unbounded solution.");
                     break;
@@ -135,7 +133,7 @@ namespace LPR381.LP
                 var E = Matrix<double>.Build.DenseIdentity(tableau.Height - 1);
                 E.SetColumn(leavingRowInBasis, -d / pivotElement);
                 E[leavingRowInBasis, leavingRowInBasis] = 1.0 / pivotElement;
-                bInv = E * bInv;
+                bInv = (E * bInv).Map(v => Math.Round(v, 12));
             }
 
             steps.Add("End Revised Primal Simplex");
