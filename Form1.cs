@@ -16,13 +16,13 @@ namespace LPR381
     {
         private static readonly Dictionary<string, Solver> AlgorithmDict = new Dictionary<string, Solver>
         {
-            { "Primal Simplex" /*        */, PrimalSimplex /*                         */ .Solve },
-            { "Primal Simplex Revised" /*        */, PrimalSimplex /*          */ .SolveRevised },
-            { "Dual Simplex" /*          */, DualSimplex /*                           */ .Solve },
-            { "Cutting Plane" /*         */, CuttingPlane /*                          */ .Solve },
-            { "Branch&Bound" /*          */, BranchAndBound /*                        */ .Solve },
-            { "Branch&Bound-Knapsack" /* */, BranchAndBoundKnapsack /*                */ .Solve },
-            { "Sensitivity Analysis" /*  */, SensitivityAnalysis /*                   */ .Solve },
+            { "Primal Simplex" /*         */, PrimalSimplex /*                         */ .Solve },
+            { "Primal Simplex Revised" /* */, PrimalSimplex /*                         */ .SolveRevised },
+            { "Dual Simplex" /*           */, DualSimplex /*                           */ .Solve },
+            { "Cutting Plane" /*          */, CuttingPlane /*                          */ .Solve },
+            { "Branch&Bound" /*           */, BranchAndBound /*                        */ .Solve },
+            { "Branch&Bound-Knapsack" /*  */, BranchAndBoundKnapsack /*                */ .Solve },
+            { "Sensitivity Analysis" /*   */, SensitivityAnalysis /*                   */ .Solve },
         }; 
         private Solver Solver => AlgorithmDict[comboBox1.SelectedItem.ToString()];
         private string SolverName => comboBox1.SelectedItem.ToString();
@@ -82,7 +82,7 @@ namespace LPR381
             }
             catch (Exception err)
             {
-                Console.WriteLine(err.ToString());
+                MessageBox.Show(err.Message + $"\n\n{err}", "Solve Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 label4.Text = "Error";
                 label4.ForeColor = System.Drawing.Color.Red;
             }
@@ -98,9 +98,9 @@ namespace LPR381
                 textBox1.Text = openFileDialog1.FileName.Split('\\').Last();
                 SolutionText = $"{Tableau.FromFileCanonicalForm(openFileDialog1.FileName)}\n\n# Tableau\n\n{tableau}\n\n";
             }
-            catch (Exception ex)
+            catch (Exception err)
             {
-                Console.WriteLine(ex.ToString());
+                MessageBox.Show(err.Message + $"\n\n{err}", "File Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 textBox1.Text = "Failed";
             }
         }
@@ -112,9 +112,9 @@ namespace LPR381
                 File.WriteAllText(saveFileDialog1.FileName, SolutionText);
                 textBox2.Text = saveFileDialog1.FileName.Split('\\').Last();
             }
-            catch (Exception ex)
+            catch (Exception err)
             {
-                Console.WriteLine(ex.ToString());
+                MessageBox.Show(err.Message + $"\n\n{err}", "File Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 textBox2.Text = "Failed";
             }
         }

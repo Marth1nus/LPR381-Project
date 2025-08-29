@@ -1,4 +1,5 @@
-﻿using MathNet.Numerics.LinearAlgebra;
+﻿using MathNet.Numerics;
+using MathNet.Numerics.LinearAlgebra;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,10 +22,38 @@ namespace LPR381.LP
         public int Height => Values.GetLength(0);
         public int Width => Values.GetLength(1);
         public double ObjectiveValue => Values[0, Width - 1];
-        public double this[int i, int j] { get => Values[i, j]; set => Values[i, j] = value; }
 
         // Assume Values[, Width-1] is the RHS column
         // Assume Values[0,] is the Objective row
+
+        public /*   */ double this[/*               */ int i, /*               */ int j]
+        { 
+            get => Values[i, j]; 
+            set => Values[i, j] = value; 
+        }
+        public Vector<double> this[IEnumerable<int> iIndices, /*               */ int j]
+        {
+            get => Vector<double>.Build.DenseOfEnumerable(
+                    (iIndices ?? Enumerable.Range(0, Height /* */)).Select((i, vi) => this[i, j]));
+            set => Consume(
+                    (iIndices ?? Enumerable.Range(0, Height /* */)).Select((i, vi) => this[i, j] = value[vi]));
+        }
+        public Vector<double> this[/*               */ int i, IEnumerable<int> jIndices]
+        {
+            get => Vector<double>.Build.DenseOfEnumerable(
+                    (jIndices ?? Enumerable.Range(0, Width /*  */)).Select((j, vj) => this[i, j]));
+            set => Consume(
+                    (jIndices ?? Enumerable.Range(0, Width /*  */)).Select((j, vj) => this[i, j] = value[vj]));
+        }
+        public Matrix<double> this[IEnumerable<int> iIndices, IEnumerable<int> jIndices]
+        {
+            get => Matrix<double>.Build.DenseOfRows(
+                    (iIndices ?? Enumerable.Range(0, Height /* */)).Select((i, vi) =>
+                    (jIndices ?? Enumerable.Range(0, Width /*  */)).Select((j, vj) => this[i, j])));
+            set => Consume(
+                    (iIndices ?? Enumerable.Range(0, Height /* */)).Select((i, vi) =>
+                    (jIndices ?? Enumerable.Range(0, Width /*  */)).Select((j, vj) => this[i, j] = value[vi, vj])).SelectMany(x => x));
+        }
 
         public Tableau(int height = 2, int width = 3, bool maxElseMin = true)
         {
@@ -138,15 +167,19 @@ namespace LPR381.LP
             }
             return indexOf1;
         }
+        public bool IsBasicVariable /*        */(int j) => /*  */ GetBasicVariableI(j, +1.0).HasValue;
+        public bool IsNonBasicVariable /*     */(int j) => /* */ !GetBasicVariableI(j, +1.0).HasValue;
+        public bool IsBasicLikeVariable /*    */(int j) => /*  */ GetBasicVariableI(j, -1.0).HasValue;
+        public bool IsNonBasicLikeVariable /* */(int j) => /* */ !GetBasicVariableI(j, -1.0).HasValue;
 
-        public IEnumerable<int> GetConstraintIndices() => Enumerable.Range(1, Height - 1);
-        public IEnumerable<int> GetVariableIndices() => Enumerable.Range(0, Width - 1);
-        public IEnumerable<int> GetDescisionVariableIndices() => GetVariableIndices().Where(j => ColumnNames[j].StartsWith("x"));
-        public IEnumerable<int> GetSlackVariableIndices() => GetVariableIndices().Where(j => !ColumnNames[j].StartsWith("x"));
-        public IEnumerable<int> GetBasicVariableIndices() => GetVariableIndices().Where(j => GetBasicVariableI(j, 1.0).HasValue);
-        public IEnumerable<int> GetNonBasicVariableIndices() => GetVariableIndices().Where(j => !GetBasicVariableI(j, 1.0).HasValue);
-        public IEnumerable<int> GetBasicLikeVariableIndices() => GetVariableIndices().Where(j => GetBasicVariableI(j, -1.0).HasValue);
-        public IEnumerable<int> GetNonBasicLikeVariableIndices() => GetVariableIndices().Where(j => !GetBasicVariableI(j, -1.0).HasValue);
+        public IEnumerable<int> IndicesForConstraints /*           */ => Enumerable.Range(1, Height /* */ - 1);
+        public IEnumerable<int> IndicesForVariables /*             */ => Enumerable.Range(0, Width /*  */ - 1);
+        public IEnumerable<int> IndicesForDecisionVariables /*     */ => IndicesForVariables.Where(j => ColumnNames[j].StartsWith("x"));
+        public IEnumerable<int> IndicesForSlackVariables /*        */ => IndicesForVariables.Where(j => !ColumnNames[j].StartsWith("x"));
+        public IEnumerable<int> IndicesForBasicVariables /*        */ => IndicesForVariables.Where(IsBasicVariable /*        */);
+        public IEnumerable<int> IndicesForNonBasicVariables /*     */ => IndicesForVariables.Where(IsNonBasicVariable /*     */);
+        public IEnumerable<int> IndicesForBasicLikeVariables /*    */ => IndicesForVariables.Where(IsBasicLikeVariable /*    */);
+        public IEnumerable<int> IndicesForNonBasicLikeVariables /* */ => IndicesForVariables.Where(IsNonBasicLikeVariable /* */);
 
         public double GetVariableValue(int j)
         {
@@ -155,37 +188,15 @@ namespace LPR381.LP
                                       : /* non basic variable: */ 0.0;
         }
 
-        public IEnumerable<double> GetVariableValues() => GetVariableIndices().Select(GetVariableValue);
+        public IEnumerable<double> GetVariableValues() => IndicesForVariables.Select(GetVariableValue);
 
-        public Vector<double> Get_c() => InitialTableau != null ? InitialTableau.Get_c()
-                                       : Vector<double>.Build.DenseOfEnumerable(GetDescisionVariableIndices().Select(j => this[0, j]));
-        public Vector<double> Get_b() => InitialTableau != null ? InitialTableau.Get_b()
-                                       : Vector<double>.Build.DenseOfEnumerable(GetConstraintIndices().Select(i => this[i, Width - 1]));
-        public Matrix<double> Get_A() => InitialTableau != null ? InitialTableau.Get_A()
-                                       : Matrix<double>.Build.DenseOfArray(Copy(from:Values, CountJ:GetDescisionVariableIndices().Count(), fromStartI:1));
-        private Matrix<double> Get_B_or_N(int[] indices)
-        {
-            if (!IsOptimal)
-                throw new InvalidOperationException("Tableau must be optimal");
-            InitialTableau = InitialTableau ?? Copy();
-            var result = new double[Height - 1, indices.Length];
-            for (int i = 1; i < Height; i++)
-                for (int ji = 0; ji < indices.Length; ji++)
-                    result[i - 1, ji] = InitialTableau[i, indices[ji]];
-            return Matrix<double>.Build.DenseOfArray(result);
-        }
-        public Matrix<double> Get_B() => Get_B_or_N(GetBasicVariableIndices /*    */().ToArray());
-        public Matrix<double> Get_N() => Get_B_or_N(GetNonBasicVariableIndices /* */().ToArray());
-        private Vector<double> Get_cBv_or_cNBv(int[] indices)
-        {
-            if (!IsOptimal)
-                throw new InvalidOperationException("Tableau must be optimal");
-            InitialTableau = InitialTableau ?? Copy();
-            var cB = indices.Select(j => InitialTableau[0, j]).ToArray();
-            return Vector<double>.Build.DenseOfArray(cB);
-        }
-        public Vector<double> Get_cBv /*  */() => Get_cBv_or_cNBv(GetBasicVariableIndices /*    */().ToArray());
-        public Vector<double> Get_cNBv /* */() => Get_cBv_or_cNBv(GetNonBasicVariableIndices /* */().ToArray());
+        public Vector<double> Get_c /*    */() => (InitialTableau ?? this)[/*                     */ 0, IndicesForDecisionVariables /*  */];
+        public Vector<double> Get_b /*    */() => (InitialTableau ?? this)[/* */ IndicesForConstraints, Width - 1 /*                    */];
+        public Matrix<double> Get_A /*    */() => (InitialTableau ?? this)[/* */ IndicesForConstraints, IndicesForDecisionVariables /*  */];
+        public Matrix<double> Get_B /*    */() => /*             */ (this)[/* */ IndicesForConstraints, IndicesForBasicVariables /*     */];
+        public Matrix<double> Get_N /*    */() => /*             */ (this)[/* */ IndicesForConstraints, IndicesForNonBasicVariables /*  */];
+        public Vector<double> Get_cBv /*  */() => /*             */ (this)[/*                      */ 0, IndicesForBasicVariables /*    */];
+        public Vector<double> Get_cNBv /* */() => /*             */ (this)[/*                      */ 0, IndicesForNonBasicVariables /* */];
 
         public void ValidateLengths()
         {
@@ -322,12 +333,12 @@ namespace LPR381.LP
         public override string ToString()
         {
             const int colWidth = 8, // "-000.000".Length
-                      decimalLength = 4;
+                      decimalLength = 3;
             StringBuilder sb = new StringBuilder();
             /* | T1     |     x1 |     s1 |    rhs | */
-            sb.Append($"| T{TableauIteration, 1 - colWidth} ");
+            sb.Append($"| T{TableauIteration,1 - colWidth} ");
             for (int j = 0; j < Width; j++)
-                sb.Append($"| {ColumnNames[j].PadLeft(colWidth-decimalLength), -colWidth} ");
+                sb.Append($"| {ColumnNames[j].PadLeft(colWidth - 1 - decimalLength),-colWidth} ");
             sb.AppendLine($"|");
             /* | ------ | ------ | ------ | ------ | */
             for (int j = 0; j < Width + 1; j++)
@@ -339,22 +350,28 @@ namespace LPR381.LP
             {
                 sb.Append($"| {RowNames[i],colWidth} ");
                 for (int j = 0; j < Width; j++)
-                {
-                    var valueString = Values[i, j].ToString("0.###");
-                    var valueStringIndexOfDot = valueString.IndexOf(".");
-                    if (valueStringIndexOfDot == -1) 
-                        valueStringIndexOfDot = valueString.Length;
-                    var valueStringTargetLength= valueStringIndexOfDot + decimalLength;
-                    sb.Append($"| {valueString.PadRight(valueStringTargetLength), colWidth} ");
-                }
+                    sb.Append($"| {FormatDouble(Values[i, j], colWidth, decimalLength)} ");
                 sb.AppendLine($"|");
             }
             /* |   Sign |    int |      + |        | */
             sb.Append($"| {"",colWidth} ");
             for (int j = 0; j < Width; j++)
-                sb.Append($"| {(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : "").PadLeft(colWidth - decimalLength), -colWidth} ");
+                sb.Append($"| {(j < ColumnRestrictions.Length ? ColumnRestrictions[j] : "").PadLeft(colWidth - 1 - decimalLength),-colWidth} ");
             sb.AppendLine($"|");
             return sb.ToString();
+        }
+
+        public static string FormatDouble(double value, int columnWidth = 8, int decimalLength = 3)
+        {
+            if (!value.IsFinite())
+                return value.ToString().PadLeft(columnWidth);
+            var valueString = value.ToString(decimalLength <= 0 ? "0" : "0.".PadRight(2 + decimalLength, '#'));
+            var valueStringIndexOfDot = valueString.IndexOf(".");
+            if (valueStringIndexOfDot == -1)
+                valueStringIndexOfDot = valueString.Length;
+            var valueStringTargetLength = valueStringIndexOfDot + 1 + decimalLength;
+            valueString = valueString.PadRight(valueStringTargetLength).PadLeft(columnWidth);
+            return valueString;
         }
 
         private static (string[] objectiveLine, string[][] constraintLines, string[] restrictionsLine) FromFileValidateFile(string filename)
@@ -504,6 +521,13 @@ namespace LPR381.LP
                 for (int j = 0; j < CountJ; j++)
                     to[toStartI + i, toStartJ + j] = from[fromStartI + i, fromStartJ + j];
             return to;
+        }
+
+        public static void Consume<T>(IEnumerable<T> enumerable)
+        {
+            foreach (var _ in enumerable)
+            {
+            }
         }
     }
 }
