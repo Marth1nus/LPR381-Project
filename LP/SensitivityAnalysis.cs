@@ -1,9 +1,12 @@
-﻿using System;
+﻿using MathNet.Numerics.LinearAlgebra;
+using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
-using MathNet.Numerics.LinearAlgebra;
+using System.Runtime.InteropServices;
 using System.Text;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 
 namespace LPR381.LP
 {
@@ -51,16 +54,34 @@ namespace LPR381.LP
             steps.Add("End Sensitivity Analysis");
             return steps;
         }
-
-        public static List<String> SolveDisplayObjectiveRanges(Tableau tableau, IEnumerable<int> variableIndices = null)
+        
+        public static List<String> SolveApplyChangeObjectiveRow /*   */ (Tableau optimalTableau)
         {
-            variableIndices = variableIndices ?? tableau.IndicesForVariables;
             var steps = new List<String>();
-            if (!EnsureOptimal(tableau, steps))
+
+            return steps;
+        }
+        public static List<String> SolveApplyChangeRHSColumn /*      */ (Tableau optimalTableau)
+        {
+            var steps = new List<String>();
+
+            return steps;
+        }
+        public static List<String> SolveApplyChangeNonBasicColumn /* */ (Tableau optimalTableau)
+        {
+            var steps = new List<String>();
+
+            return steps;
+        }
+        public static List<String> SolveDisplayObjectiveRanges /*    */ (Tableau optimalTableau, IEnumerable<int> variableIndices = null)
+        {
+            variableIndices = variableIndices ?? optimalTableau.IndicesForVariables;
+            var steps = new List<String>();
+            if (!EnsureOptimal(optimalTableau, steps))
                 return steps;
-            var variableRanges = GetObjectiveRanges(tableau, variableIndices);
-            var /*    */ rangesBasic = (/**/"Basic", variableRanges.Where(x => tableau.IsBasicVariable(x.j)).ToArray());
-            var /* */ rangesNonBasic = ("Non-Basic", variableRanges.Where(x => !tableau.IsBasicVariable(x.j)).ToArray());
+            var variableRanges = GetObjectiveRanges(optimalTableau, variableIndices);
+            var /*    */ rangesBasic = (/**/"Basic", variableRanges.Where(x => optimalTableau.IsBasicVariable(x.j)).ToArray());
+            var /* */ rangesNonBasic = ("Non-Basic", variableRanges.Where(x => !optimalTableau.IsBasicVariable(x.j)).ToArray());
             var /*      */ rangesAll = (/*  */"All", variableRanges);
             var groups = /*    */ rangesBasic.Item2.Length == 0 ? new[] { /* */ rangesNonBasic }
                        : /* */ rangesNonBasic.Item2.Length == 0 ? new[] { /*    */ rangesBasic }
@@ -84,57 +105,13 @@ namespace LPR381.LP
             }
             return steps;
         }
-
-        public static List<String> SolveApplyDisplayObjective(Tableau tableau, IEnumerable<int> variableIndices = null)
+        public static List<String> SolveDisplayRhsRanges /*          */ (Tableau optimalTableau, IEnumerable<int> constaintIndices = null)
         {
-            variableIndices = variableIndices ?? tableau.IndicesForVariables;
+            constaintIndices = constaintIndices ?? optimalTableau.IndicesForConstraints;
             var steps = new List<String>();
-            if (!EnsureOptimal(tableau, steps))
+            if (!EnsureOptimal(optimalTableau, steps))
                 return steps;
-            var newTableau = ApplyDisplayObjective(tableau, variableIndices);
-
-            return steps;
-        }
-
-        public static List<String> ApplyDisplayObjective(Tableau optimalTableau, IEnumerable<int> variableIndices = null)
-        {
-            var steps = new List<String>();
-
-            var initialTableau = optimalTableau.InitialTableau ?? optimalTableau;
-            var B = initialTableau[optimalTableau.IndicesForConstraints, optimalTableau.IndicesForBasicVariables];
-            var BInverse = B.Inverse();
-            var cBv = initialTableau[0, optimalTableau.IndicesForBasicVariables];
-
-
-            return steps;
-        }
-
-        public static List<String> SolveApplyDisplayRHS(Tableau tableau, int constraintRow, double newValue)
-        {
-            //code here
-            return null;
-        }
-
-        public static Tableau ChangeRhsValue(Tableau optimalTableau, int constraintRow, double newValue)
-        {
-            // 1. Create a deep copy of the tableau to avoid modifying the original
-            var newTableau = optimalTableau.Copy();
-
-            // This line updates a single cell (row, column) with a single double value.
-            newTableau[constraintRow, newTableau.Width - 1] = newValue;
-
-            //make optimal again if needed
-            
-            return newTableau;
-        }
-
-        public static List<String> SolveDisplayRhsRanges(Tableau tableau, IEnumerable<int> constaintIndices = null)
-        {
-            constaintIndices = constaintIndices ?? tableau.IndicesForConstraints;
-            var steps = new List<String>();
-            if (!EnsureOptimal(tableau, steps))
-                return steps;
-            var rhsRanges = GetRhsRanges(tableau, constaintIndices);
+            var rhsRanges = GetRhsRanges(optimalTableau, constaintIndices);
             if (rhsRanges.Length == 0)
             {
                 steps.Add("No constraints found");
@@ -153,14 +130,13 @@ namespace LPR381.LP
             steps.Add($"Range{s} for rhs coefficient{s}\n\n{markdownTable}");
             return steps;
         }
-
-        public static List<String> SolveDisplayNonBasicRanges(Tableau tableau, IEnumerable<int> variableIndices = null)
+        public static List<String> SolveDisplayNonBasicRanges /*     */ (Tableau optimalTableau, IEnumerable<int> variableIndices = null)
         {
             var steps = new List<String>();
-            if (!EnsureOptimal(tableau, steps))
+            if (!EnsureOptimal(optimalTableau, steps))
                 return steps;
-            variableIndices = variableIndices ?? tableau.IndicesForNonBasicVariables;
-            var nonBasicRanges = GetNonBasicRanges(tableau, variableIndices);
+            variableIndices = variableIndices ?? optimalTableau.IndicesForNonBasicVariables;
+            var nonBasicRanges = GetNonBasicRanges(optimalTableau, variableIndices);
             if (nonBasicRanges.Length == 0)
             {
                 steps.Add("No constraints found");
@@ -179,8 +155,7 @@ namespace LPR381.LP
             steps.Add($"Range{s} for non-basic value{s}\n\n{markdownTable}");
             return steps;
         }
-
-        public static List<String> SolveDisplayShadowPrices(Tableau optimalTableau)
+        public static List<String> SolveDisplayShadowPrices /*       */ (Tableau optimalTableau)
         {
             var steps = new List<String>();
             if (!EnsureOptimal(optimalTableau, steps))
@@ -284,7 +259,6 @@ namespace LPR381.LP
                 return (j, name, isBasic, low, current, high);
             }).ToArray();
         }
-        
         private static (int i, string name, double low, double current, double high)[] GetRhsRanges(Tableau optimalTableau, IEnumerable<int> constraintIndices = null)
         {
             constraintIndices = constraintIndices ?? optimalTableau.IndicesForConstraints;
@@ -323,7 +297,6 @@ namespace LPR381.LP
                 return (i, name, low, current, high);
             }).ToArray();
         }
-
         private static (int j, string name, double low, double current, double high)[] GetNonBasicRanges(Tableau optimalTableau, IEnumerable<int> variableIndices)
         {
             var initialTableau = optimalTableau.InitialTableau ?? optimalTableau;
