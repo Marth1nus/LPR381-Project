@@ -559,8 +559,8 @@ namespace LPR381.LP
 
         public Tableau BuildDual()
         {
-            int m = IndicesForConstraints.Count(); 
-            int n = IndicesForDecisionVariables.Count();
+            int m = IndicesForConstraints.Count(); // Number of primal constraints
+            int n = IndicesForDecisionVariables.Count(); // Number of primal decision variables
 
             var dual = new Tableau
             {
@@ -573,22 +573,26 @@ namespace LPR381.LP
 
             bool isPrimalMax = RowNames[0].StartsWith("max");
             dual.RowNames[0] = isPrimalMax ? "min z" : "max z";
-            for (int i = 0; i < m; i++)
-                dual[0, i] = isPrimalMax ? Get_b()[i] : -Get_b()[i];
 
-            
+            // Set dual objective (b'w)
+            var b = Get_b();
+            for (int i = 0; i < m; i++)
+                dual[0, i] = isPrimalMax ? b[i] : -b[i];
+
+            // Set dual constraints (A'w >= c)
+            var A = Get_A();
+            var c = Get_c();
             for (int j = 0; j < n; j++)
             {
                 for (int i = 0; i < m; i++)
-                    dual[j + 1, i] = Get_A()[i, j];
-                dual[j + 1, m] = isPrimalMax ? Get_c()[j] : -Get_c()[j];
+                    dual[j + 1, i] = A[i, j]; // Transpose A
+                dual[j + 1, m] = isPrimalMax ? c[j] : -c[j]; // RHS of dual constraint
+                dual.RowNames[j + 1] = $"y{j + 1}"; // Dual variables
             }
 
-            
-            for (int j = 0; j < n; j++)
-                dual.RowNames[j + 1] = $"y{j + 1}";
+            // Set column names and restrictions
             for (int i = 0; i < m; i++)
-                dual.ColumnNames[i] = $"w{i + 1}";
+                dual.ColumnNames[i] = $"w{i + 1}"; // Dual slack variables
             dual.ColumnNames[m] = "rhs";
             dual.ColumnRestrictions = Enumerable.Repeat("+", m + 1).ToArray();
 

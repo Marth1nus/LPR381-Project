@@ -489,12 +489,12 @@ namespace LPR381.LP
             var dualValue = dual.ObjectiveValue;
             var diff = Math.Abs(primalValue - dualValue);
 
-            if (diff < 1e-6)
+            if (diff < 1e-6 && dual.IsFeasible)
                 return $"Strong Duality holds (Primal = {Tableau.FormatDouble(primalValue)}, Dual = {Tableau.FormatDouble(dualValue)})";
             else if (primal.RowNames[0].StartsWith("max") ? primalValue <= dualValue : primalValue >= dualValue)
                 return $"Weak Duality holds (Primal = {Tableau.FormatDouble(primalValue)}, Dual = {Tableau.FormatDouble(dualValue)})";
             else
-                return $"Duality violated (Primal = {Tableau.FormatDouble(primalValue)}, Dual = {Tableau.FormatDouble(dualValue)}, check feasibility)";
+                return $"Duality violated (Primal = {Tableau.FormatDouble(primalValue)}, Dual = {Tableau.FormatDouble(dualValue)}, dual solution may be infeasible)";
         }
 
     }

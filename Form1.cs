@@ -50,9 +50,23 @@ namespace LPR381
                 .UseGenericAttributes()    // allows {#id .class} attributes
                 .Build();
 
+        // ARMAND Tasks 9, 10, and 12 of sensistivity analysis.
+        private Label lblColumn;
+        private TextBox txtColumn;
+        private Label lblCost;
+        private TextBox txtCost;
+        private Button btnAddActivity;
+        private Label lblRow;
+        private TextBox txtRow;
+        private Label lblRhs;
+        private TextBox txtRhs;
+        private Button btnAddConstraint;
+        private Button btnSolveDual;
+
         public Form1()
         {
             InitializeComponent();
+            InitializeNewComponents();
             comboBox1.Items.Clear();
             foreach (var kv in AlgorithmDict)
                 comboBox1.Items.Add(kv.Key);
@@ -60,6 +74,224 @@ namespace LPR381
             Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
             UpdateSensitivityAnalysisOptions();
         }
+
+        // ARMAND
+        private void InitializeNewComponents()
+        {
+            // Task 9: Add Activity
+            lblColumn = new Label
+            {
+                Text = "New Column Coefficients (comma-separated):",
+                Dock = DockStyle.Fill,
+                Margin = new Padding(4)
+            };
+            txtColumn = new TextBox
+            {
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0)
+            };
+            lblCost = new Label
+            {
+                Text = "Cost/Profit:",
+                Dock = DockStyle.Fill,
+                Margin = new Padding(4)
+            };
+            txtCost = new TextBox
+            {
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0)
+            };
+            btnAddActivity = new Button
+            {
+                Text = "Add Activity",
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0)
+            };
+            btnAddActivity.Click += BtnAddActivity_Click;
+
+            // Task 10: Add Constraint
+            lblRow = new Label
+            {
+                Text = "New Row Coefficients (comma-separated):",
+                Dock = DockStyle.Fill,
+                Margin = new Padding(4)
+            };
+            txtRow = new TextBox
+            {
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0)
+            };
+            lblRhs = new Label
+            {
+                Text = "RHS:",
+                Dock = DockStyle.Fill,
+                Margin = new Padding(4)
+            };
+            txtRhs = new TextBox
+            {
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0)
+            };
+            btnAddConstraint = new Button
+            {
+                Text = "Add Constraint",
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0)
+            };
+            btnAddConstraint.Click += BtnAddConstraint_Click;
+
+            // Task 12: Solve Dual
+            btnSolveDual = new Button
+            {
+                Text = "Solve Dual",
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0)
+            };
+            btnSolveDual.Click += BtnSolveDual_Click;
+
+            // Add to tableLayoutPanel2 (adjust row indices based on existing layout)
+            tableLayoutPanel2.Controls.Add(lblColumn, 0, 11); // New row 11
+            tableLayoutPanel2.Controls.Add(txtColumn, 1, 11);
+            tableLayoutPanel2.Controls.Add(lblCost, 0, 12);   // New row 12
+            tableLayoutPanel2.Controls.Add(txtCost, 1, 12);
+            tableLayoutPanel2.Controls.Add(btnAddActivity, 1, 13); // New row 13
+            tableLayoutPanel2.Controls.Add(lblRow, 0, 14);    // New row 14
+            tableLayoutPanel2.Controls.Add(txtRow, 1, 14);
+            tableLayoutPanel2.Controls.Add(lblRhs, 0, 15);    // New row 15
+            tableLayoutPanel2.Controls.Add(txtRhs, 1, 15);
+            tableLayoutPanel2.Controls.Add(btnAddConstraint, 1, 16); // New row 16
+            tableLayoutPanel2.Controls.Add(btnSolveDual, 1, 17);    // New row 17
+
+            // Ensure tableLayoutPanel2 has enough rows
+            while (tableLayoutPanel2.RowCount <= 17)
+            {
+                tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            }
+        }
+
+        private void BtnAddActivity_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                label13.Text = "";
+                label13.ForeColor = System.Drawing.Color.Black;
+                if (tableau == null)
+                {
+                    SolutionText = "**No Tableau**\n";
+                    return;
+                }
+
+                // Parse column coefficients
+                double[] column = txtColumn.Text.Split(',')
+                    .Select(s => double.Parse(s.Trim()))
+                    .ToArray();
+                if (column.Length != tableau.Height - 1)
+                {
+                    label13.Text = $"Column must have {tableau.Height - 1} coefficients.";
+                    label13.ForeColor = System.Drawing.Color.Red;
+                    return;
+                }
+
+                // Parse cost
+                if (!double.TryParse(txtCost.Text, out double cost))
+                {
+                    label13.Text = "Invalid cost value.";
+                    label13.ForeColor = System.Drawing.Color.Red;
+                    return;
+                }
+
+                // Call SolveAddActivity
+                var newTableau = tableau.Copy(); // Copy to avoid modifying original
+                var steps = SensitivityAnalysis.SolveAddActivity(newTableau, column, cost);
+                var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
+                SolutionText += $"# Add New Activity\n\n{stepsString}\n\n";
+                tableau = newTableau; // Update tableau with new solution
+                UpdateSensitivityAnalysisOptions();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", "Add Activity Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                label13.Text = "Failed";
+                label13.ForeColor = System.Drawing.Color.Red;
+            }
+        }
+
+        private void BtnAddConstraint_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                label13.Text = "";
+                label13.ForeColor = System.Drawing.Color.Black;
+                if (tableau == null)
+                {
+                    SolutionText = "**No Tableau**\n";
+                    return;
+                }
+
+                // Parse row coefficients
+                double[] row = txtRow.Text.Split(',')
+                    .Select(s => double.Parse(s.Trim()))
+                    .ToArray();
+                int expectedCoefficients = tableau.Width - 1; // Should be 13 based on the error
+                if (row.Length != expectedCoefficients)
+                {
+                    label13.Text = $"Row must have {expectedCoefficients} values excluding RHS.";
+                    label13.ForeColor = System.Drawing.Color.Red;
+                    return;
+                }
+
+                // Parse RHS
+                if (!double.TryParse(txtRhs.Text, out double rhs))
+                {
+                    label13.Text = "Invalid RHS value.";
+                    label13.ForeColor = System.Drawing.Color.Red;
+                    return;
+                }
+
+                // Call SolveAddConstraint
+                var newTableau = tableau.Copy(); // Copy to avoid modifying original
+                var steps = SensitivityAnalysis.SolveAddConstraint(newTableau, row, rhs);
+                var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
+                SolutionText += $"# Add New Constraint\n\n{stepsString}\n\n";
+                tableau = newTableau; // Update tableau with new solution
+                UpdateSensitivityAnalysisOptions();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", "Add Constraint Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                label13.Text = "Failed";
+                label13.ForeColor = System.Drawing.Color.Red;
+            }
+        }
+
+        private void BtnSolveDual_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                label13.Text = "";
+                label13.ForeColor = System.Drawing.Color.Black;
+                if (tableau == null)
+                {
+                    SolutionText = "**No Tableau**\n";
+                    return;
+                }
+
+                // Call SolveDual
+                var newTableau = tableau.Copy(); // Copy to avoid modifying original
+                var steps = SensitivityAnalysis.SolveDual(newTableau);
+                var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
+                SolutionText += $"# Solve Dual\n\n{stepsString}\n\n";
+                tableau = newTableau; // Update tableau
+                UpdateSensitivityAnalysisOptions();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", "Solve Dual Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                label13.Text = "Failed";
+                label13.ForeColor = System.Drawing.Color.Red;
+            }
+        }
+
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e) => openFileDialog1.ShowDialog(this);
 
