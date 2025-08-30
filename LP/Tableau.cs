@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 namespace LPR381.LP
 {
     public delegate List<string> Solver(Tableau tableau);
-    public delegate List<string> SolverWithTwoParams(Tableau tableau, IEnumerable<int> variableIndices); 
+    public delegate List<string> SolverWithTwoParams(Tableau tableau, IEnumerable<int> variableIndices);
     public delegate List<string> SolverWithThreeParams(Tableau tableau, int variableIndices, double newValue);
 
     public class Tableau
@@ -29,9 +29,9 @@ namespace LPR381.LP
         // Assume Values[0,] is the Objective row
 
         public /*   */ double this[/*               */ int i, /*               */ int j]
-        { 
-            get => Values[i, j]; 
-            set => Values[i, j] = value; 
+        {
+            get => Values[i, j];
+            set => Values[i, j] = value;
         }
         public Vector<double> this[IEnumerable<int> iIndices, /*               */ int j]
         {
@@ -65,7 +65,6 @@ namespace LPR381.LP
             Values /*             */ = new double[height, width];
             TableauIteration /*   */ = 0;
         }
-
         public Tableau Copy() => new Tableau
         {
             RowNames /*           */ = RowNames.ToArray(),
@@ -75,7 +74,6 @@ namespace LPR381.LP
             TableauIteration /*   */ = TableauIteration,
             InitialTableau /*     */ = InitialTableau
         };
-
         public Tableau Assign(Tableau other)
         {
             if (other == null) throw new ArgumentNullException(nameof(other));
@@ -97,13 +95,13 @@ namespace LPR381.LP
                                                : /* non basic variable: */ 0;
                 switch (ColumnRestrictions[j])
                 {
-                    case   "+": if (value >= 0.0) break; else return j;
-                    case   "-": if (value <= 0.0) break; else return j;
-                    case    "":
+                    case "+": if (value >= 0.0) break; else return j;
+                    case "-": if (value <= 0.0) break; else return j;
+                    case "":
                     case "urs": break;
                     case "int": if (value == Math.Floor(value)) break; else return j;
                     case "bin": if (value == 0.0 || value == 1) break; else return j;
-                    default   : throw new Exception($"Invalid restriction {ColumnRestrictions[j]} at column {j}");
+                    default: throw new Exception($"Invalid restriction {ColumnRestrictions[j]} at column {j}");
                 }
             }
             return null;
@@ -189,7 +187,6 @@ namespace LPR381.LP
             return optionalI.HasValue ? Values[optionalI.Value, Width - 1]
                                       : /* non basic variable: */ 0.0;
         }
-
         public IEnumerable<double> GetVariableValues() => IndicesForVariables.Select(GetVariableValue);
 
         public Vector<double> Get_c /*    */() => (InitialTableau ?? this)[/*                     */ 0, IndicesForDecisionVariables /*  */];
@@ -199,18 +196,6 @@ namespace LPR381.LP
         public Matrix<double> Get_N /*    */() => /*             */ (this)[/* */ IndicesForConstraints, IndicesForNonBasicVariables /*  */];
         public Vector<double> Get_cBv /*  */() => /*             */ (this)[/*                      */ 0, IndicesForBasicVariables /*    */];
         public Vector<double> Get_cNBv /* */() => /*             */ (this)[/*                      */ 0, IndicesForNonBasicVariables /* */];
-
-        public void ValidateLengths()
-        {
-            if (!(Height >= 2 && Width >= 3))
-                throw new Exception("Table must be at least 2x3");
-            if (!(RowNames.Length == Height))
-                throw new Exception("Row Length inconsistent");
-            if (!(ColumnNames.Length == Width))
-                throw new Exception("Column Length inconsistent");
-            if (!(ColumnRestrictions.Length <= Width))
-                throw new Exception("Column Restriction Length too long");
-        }
 
         public string Pivot(int rowI, int colI)
         {
@@ -223,7 +208,7 @@ namespace LPR381.LP
             }
             for (int i = 0; i < Height; i++)
             {
-                if (i == rowI) 
+                if (i == rowI)
                     continue;
                 double factor = Values[i, colI];
                 for (int j = 0; j < Width; j++)
@@ -257,7 +242,6 @@ namespace LPR381.LP
                     Values[i, j] = newRow[j];
             RowNames = RowNames.Append(name ?? $"c{Height - 1}").ToArray();
         }
-
         public void RemoveRow(int rowI = -1)
         {
             if (rowI < 0)
@@ -274,7 +258,6 @@ namespace LPR381.LP
                 for (int j = 0; j < Width; j++)
                     Values[i, j] = oldValues[i + 1, j];
         }
-
         public void AddColumn(double[] newColumn = null, string name = null, string restriction = "urs")
         {
             newColumn = newColumn ?? new double[Width];
@@ -296,7 +279,6 @@ namespace LPR381.LP
             ColumnNames = ColumnNames.Take(ColumnNames.Length - 1).Append(name ?? $"s{Height}").Append(columnNamesLast).ToArray();
             ColumnRestrictions = ColumnRestrictions.Append(restriction).ToArray();
         }
-
         public void RemoveColumn(int colI = -2)
         {
             if (colI < 0)
@@ -362,7 +344,6 @@ namespace LPR381.LP
             sb.AppendLine($"|");
             return sb.ToString();
         }
-
         public static string FormatDouble(double value, int columnWidth = 8, int decimalLength = 3)
         {
             if (!value.IsFinite())
@@ -412,7 +393,6 @@ namespace LPR381.LP
                 throw new Exception($"Restrictions Row contains unknown symbol. While checking: {lastChecked}");
             return (objectiveLine, constraintLines, restrictionsLine);
         }
-
         public static Tableau FromFile(string filename)
         {
             var (objectiveLine, constraintLines, restrictionsLine) = FromFileValidateFile(filename);
@@ -491,7 +471,6 @@ namespace LPR381.LP
             res.InitialTableau = res.Copy();
             return res;
         }
-
         public static string FromFileCanonicalForm(string filename)
         {
             var canonicalForm = "";
@@ -524,12 +503,22 @@ namespace LPR381.LP
                     to[toStartI + i, toStartJ + j] = from[fromStartI + i, fromStartJ + j];
             return to;
         }
-
         public static void Consume<T>(IEnumerable<T> enumerable)
         {
             foreach (var _ in enumerable)
             {
             }
+        }
+        public void ValidateLengths()
+        {
+            if (!(Height >= 2 && Width >= 3))
+                throw new Exception("Table must be at least 2x3");
+            if (!(RowNames.Length == Height))
+                throw new Exception("Row Length inconsistent");
+            if (!(ColumnNames.Length == Width))
+                throw new Exception("Column Length inconsistent");
+            if (!(ColumnRestrictions.Length <= Width))
+                throw new Exception("Column Restriction Length too long");
         }
     }
 }

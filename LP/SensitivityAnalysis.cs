@@ -1,12 +1,8 @@
-﻿using MathNet.Numerics.LinearAlgebra;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 
 namespace LPR381.LP
 {
