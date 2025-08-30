@@ -11,13 +11,13 @@ namespace LPR381.LP
 
         /* 
           1. [x] Display the range of a selected Non-Basic Variable.
-          2. [ ] Apply and display a change of a selected Non-Basic Variable.
+          2. [?] Apply and display a change of a selected Non-Basic Variable.
           3. [x] Display the range of a selected Basic Variable.
-          4. [ ] Apply and display a change of a selected Basic Variable.
+          4. [?] Apply and display a change of a selected Basic Variable.
           5. [x] Display the range of a selected constraint right-hand-side value.
-          6. [ ] Apply and display a change of a selected constraint right-hand - side value.
-          7. [?] Display the range of a selected variable in a Non-Basic Variable column.
-          8. [ ] Apply and display a change of a selected variable in a Non-Basic Variable column.
+          6. [?] Apply and display a change of a selected constraint right-hand - side value.
+          7. [x] Display the range of a selected variable in a Non-Basic Variable column.
+          8. [?] Apply and display a change of a selected variable in a Non-Basic Variable column.
           9. [ ] Add a new activity to an optimal solution.
          10. [ ] Add a new constraint to an optimal solution.
          11. [x] Display the shadow prices.
@@ -51,22 +51,85 @@ namespace LPR381.LP
             return steps;
         }
         
-        public static List<String> SolveApplyChangeObjectiveRow /*   */ (Tableau optimalTableau)
+        public static List<String> SolveApplyChangeObjectiveRow /*   */ (Tableau optimalTableau, int j, double newValue)
         {
             var steps = new List<String>();
-
+            if (!EnsureOptimal(optimalTableau, steps))
+                return steps;
+            var i = 0; // objective row
+            var initialTableau = (optimalTableau.InitialTableau ?? optimalTableau).Copy();
+            var currentValue = initialTableau[i, j];
+            var range = GetObjectiveRanges(optimalTableau, new[] { j }).FirstOrDefault();
+            steps.Add($"{range.current}{initialTableau.ColumnNames[j]} can range between [{range.low}{initialTableau.ColumnNames[j]}, {range.high}{initialTableau.ColumnNames[j]}]");
+            if (range.low <= currentValue && currentValue <= range.high)
+            {
+                steps.Add($"\n {newValue}{initialTableau.ColumnNames[j]} does not change the optimal solution");
+                initialTableau[i, j] = newValue;
+            }
+            else
+            {
+                steps.Add($"\n {newValue}{initialTableau.ColumnNames[j]} requires re-optimization");
+                initialTableau[i, j] = newValue;
+            }
+            var manualSolveSteps = new List<String>();
+            EnsureOptimal(optimalTableau.Assign(initialTableau), manualSolveSteps); // TODO: replace with math version;
             return steps;
         }
-        public static List<String> SolveApplyChangeRHSColumn /*      */ (Tableau optimalTableau)
+        public static List<String> SolveApplyChangeRHSColumn /*      */ (Tableau optimalTableau, int i, double newValue)
         {
             var steps = new List<String>();
-
+            if (!EnsureOptimal(optimalTableau, steps))
+                return steps;
+            var j = optimalTableau.Width - 1; // rhs column
+            var initialTableau = (optimalTableau.InitialTableau ?? optimalTableau).Copy();
+            var currentValue = initialTableau[i, j];
+            var range = GetRhsRanges(optimalTableau, new[] { i }).FirstOrDefault();
+            steps.Add($"{initialTableau.RowNames[j]}:rhs={range.current} can range between [{range.low}, {range.high}]");
+            if (range.low <= currentValue && currentValue <= range.high)
+            {
+                steps.Add($"\n {newValue} does not change the optimal solution");
+                initialTableau[i, j] = newValue;
+            }
+            else
+            {
+                steps.Add($"\n {newValue} requires re-optimization");
+                initialTableau[i, j] = newValue;
+            }
+            var manualSolveSteps = new List<String>();
+            EnsureOptimal(optimalTableau.Assign(initialTableau), manualSolveSteps); // TODO: replace with math version;
             return steps;
         }
-        public static List<String> SolveApplyChangeNonBasicColumn /* */ (Tableau optimalTableau)
+        public static List<String> SolveApplyChangeNonBasicColumn /* */ (Tableau optimalTableau, int i, int j, double newValue)
         {
             var steps = new List<String>();
-
+            if (!EnsureOptimal(optimalTableau, steps))
+                return steps;
+            if (!optimalTableau.IsNonBasicVariable(j))
+            {
+                steps.Add($"{optimalTableau.ColumnNames[j]} is not a Non-Basic Variable");
+                return steps;
+            }
+            if (i < 1)
+            {
+                steps.Add($"Objective row can not be modified using this function");
+                return steps;
+            }
+            var initialTableau = (optimalTableau.InitialTableau ?? optimalTableau).Copy();
+            var currentValue = initialTableau[i, j];
+            var range = GetRhsRanges(optimalTableau, new[] { i }).FirstOrDefault();
+            steps.Add($"{initialTableau.RowNames[j]}:rhs={range.current} can range between [{range.low}, {range.high}]");
+            if (range.low <= currentValue && currentValue <= range.high)
+            {
+                steps.Add($"\n {newValue} does not change the optimal solution");
+                initialTableau[i, j] = newValue;
+            }
+            else
+            {
+                steps.Add($"\n {newValue} requires re-optimization");
+                initialTableau[i, j] = newValue;
+            }
+            var manualSolveSteps = new List<String>();
+            EnsureOptimal(optimalTableau.Assign(initialTableau), manualSolveSteps); // TODO: replace with math version;
             return steps;
         }
         public static List<String> SolveDisplayObjectiveRanges /*    */ (Tableau optimalTableau, IEnumerable<int> variableIndices = null)

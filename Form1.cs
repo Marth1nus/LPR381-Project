@@ -1,8 +1,10 @@
 ﻿using LPR381.LP;
 using Markdig;
+using Markdig.Syntax.Inlines;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -26,37 +28,6 @@ namespace LPR381
         }; 
         private Solver Solver => AlgorithmDict[comboBox1.SelectedItem.ToString()];
         private string SolverName => comboBox1.SelectedItem.ToString();
-
-        private static readonly Dictionary<string, Solver> SensitivityDict = new Dictionary<string, Solver>
-        {
-            { "Add a new activity to an optimal solution" /*                                                    */, SensitivityAnalysis /*                   */ .Solve },
-            { "Add a new constraint to an optimal solution" /*                                                  */, SensitivityAnalysis /*                   */ .Solve },
-            { "Display the shadow prices" /*                                                                    */, SensitivityAnalysis /*                   */ .SolveDisplayShadowPrices },// [x]
-            { "Duality" /*                                                                                      */, SensitivityAnalysis /*                   */ .Solve },
-        };
-        private static readonly Dictionary<string, SolverWithTwoParams> SensitivityDictWithTwoParams = new Dictionary<string, SolverWithTwoParams>
-        {
-            { "Display the range of a selected Non-Basic Variable" /*                                           */, SensitivityAnalysis /*                   */ .SolveDisplayObjectiveRanges },// [x]
-            { "Apply and display a change of a selected Non-Basic Variable" /*                                  */, SensitivityAnalysis /*                   */ .SolveApplyDisplayObjective },
-            { "Display the range of a selected Basic Variable" /*                                               */, SensitivityAnalysis /*                   */ .SolveDisplayObjectiveRanges },// [x]
-            { "Apply and display a change of a selected Basic Variable" /*                                      */, SensitivityAnalysis /*                   */ .SolveApplyDisplayObjective },
-            { "Display the range of a selected constraint right-hand-side value" /*                             */, SensitivityAnalysis /*                   */ .SolveDisplayRhsRanges },// [x]
-            //{ "Apply and display a change of a selected constraint right-hand-side value" /*                    */, SensitivityAnalysis /*                   */ .SolveApplyDisplayRHS },
-            { "Display the range of a selected variable in a Non-Basic Variable column" /*                      */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },// [x]
-            { "Apply and display a change of a selected variable in a Non-Basic Variable column" /*             */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
-        };
-
-        private static readonly Dictionary<string, SolverWithThreeParams> SensitivityDictWithThreeParams = new Dictionary<string, SolverWithThreeParams>
-        {
-            //{ "Apply and display a change of a selected Non-Basic Variable" /*                                  */, SensitivityAnalysis /*                   */ .SolveApplyDisplayObjective },
-            //{ "Apply and display a change of a selected Basic Variable" /*                                      */, SensitivityAnalysis /*                   */ .SolveApplyDisplayObjective },
-            { "Apply and display a change of a selected constraint right-hand-side value" /*                    */, SensitivityAnalysis /*                   */ .SolveApplyDisplayRHS },
-            //{ "Apply and display a change of a selected variable in a Non-Basic Variable column" /*             */, SensitivityAnalysis /*                   */ .SolveDisplayNonBasicRanges },
-        };
-        private Solver SolverSensitivity => SensitivityDict[comboBox2.SelectedItem.ToString()];
-        private SolverWithTwoParams SolverSensitivityWithTwoParams => SensitivityDictWithTwoParams[comboBox2.SelectedItem.ToString()];
-        private SolverWithThreeParams SolverSensitivityWithThreeParams => SensitivityDictWithThreeParams[comboBox2.SelectedItem.ToString()];
-        private string SolverNameSensitivity => comboBox2.SelectedItem.ToString();
 
         private string _SolutionText = "";
         private string SolutionText
@@ -87,6 +58,7 @@ namespace LPR381
                 comboBox1.Items.Add(kv.Key);
             comboBox1.SelectedIndex = 4;
             Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
+            UpdateSensitivityAnalysisOptions();
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e) => openFileDialog1.ShowDialog(this);
@@ -112,10 +84,11 @@ namespace LPR381
             }
             catch (Exception err)
             {
-                MessageBox.Show(err.Message + $"\n\n{err}", "Solve Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"{err.Message}\n\n{err}", "Solve Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 label4.Text = "Error";
                 label4.ForeColor = System.Drawing.Color.Red;
             }
+                UpdateSensitivityAnalysisOptions();
         }
 
         private void clearOutputToolStripMenuItem_Click(object sender, EventArgs e) => SolutionText = "";
@@ -127,10 +100,11 @@ namespace LPR381
                 tableau = Tableau.FromFile(openFileDialog1.FileName);
                 textBox1.Text = openFileDialog1.FileName.Split('\\').Last();
                 SolutionText = $"{Tableau.FromFileCanonicalForm(openFileDialog1.FileName)}\n\n# Tableau\n\n{tableau}\n\n";
+                UpdateSensitivityAnalysisOptions();
             }
             catch (Exception err)
             {
-                MessageBox.Show(err.Message + $"\n\n{err}", "File Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"{err.Message}\n\n{err}", "File Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 textBox1.Text = "Failed";
             }
         }
@@ -144,8 +118,75 @@ namespace LPR381
             }
             catch (Exception err)
             {
-                MessageBox.Show(err.Message + $"\n\n{err}", "File Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"{err.Message}\n\n{err}", "File Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 textBox2.Text = "Failed";
+            }
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                label13.Text = "";
+                label13.ForeColor = System.Drawing.Color.Black;
+
+                var steps = (List<string>)null;
+                var sensitivityAnalysisName = "";
+                var rowName = comboBox2.SelectedText;
+                var colName = comboBox3.SelectedText;
+                var newValue = (double)numericUpDown1.Value;
+
+                for (bool singleIteration = true; singleIteration; singleIteration = false)
+                {
+                    var i = tableau.RowNames.ToList().IndexOf(rowName);
+                    if (i < 0)
+                    {
+                        label13.Text = "Row not found";
+                        label13.ForeColor = System.Drawing.Color.Red;
+                        break;
+                    }
+
+                    var j = tableau.ColumnNames.ToList().IndexOf(colName);
+                    if (j < 0)
+                    {
+                        label13.Text = "Column not found";
+                        label13.ForeColor = System.Drawing.Color.Red;
+                        break;
+                    }
+
+                    if /**/ (i == 0)
+                    {
+                        sensitivityAnalysisName = "Objective Coefficient Change";
+                        steps = SensitivityAnalysis.SolveApplyChangeObjectiveRow(tableau, j, newValue);
+                    }
+                    else if (j == tableau.Width - 1)
+                    {
+                        sensitivityAnalysisName = "Right Hand Side Change";
+                        steps = SensitivityAnalysis.SolveApplyChangeRHSColumn(tableau, i, newValue);
+                    }
+                    else if (tableau.IsNonBasicVariable(j))
+                    {
+                        sensitivityAnalysisName = "Non-Basic Variable Value Change";
+                        steps = SensitivityAnalysis.SolveApplyChangeNonBasicColumn(tableau, i, j, newValue);
+                    }
+                    else
+                    {
+                        steps = new List<string>() { $"Changin row:{rowName}, col:{colName} would require full resolve." };
+                        break;
+                    }
+                }
+
+                if (steps != null)
+                {
+                    var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
+                    SolutionText += $"# Sensitivity Based Change {sensitivityAnalysisName}\n\n{stepsString}\n\n";
+                }
+            }
+            catch (Exception err)
+            {
+                MessageBox.Show($"{err.Message}\n\n{err}", "File Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                label13.Text = "Failed";
+                label13.ForeColor = System.Drawing.Color.Red;
             }
         }
 
@@ -212,83 +253,57 @@ namespace LPR381
             ";
         }
 
-        private void applySensitivityAnalysis(object sender, EventArgs e)
-        {
-            try
-            {
-                label4.Text = "";
-                label4.ForeColor = System.Drawing.Color.Black;
-                if (tableau == null)
-                {
-                    SolutionText = "**No Tablueau**\n";
-                    return;
-                }
-                var newTableau = tableau.Copy();
-    
-                if (SensitivityDict.ContainsKey(SolverNameSensitivity))
-                {
-                    var steps = SolverSensitivity(newTableau);
-                    var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
-                    SolutionText += $"# Algorithim Selected: {SolverNameSensitivity}\n\n{stepsString}\n\n";
-                    tableau = newTableau;
-                }
-                else if (SensitivityDictWithTwoParams.ContainsKey(SolverNameSensitivity))
-                {
-                    string var = "";
-                    if (comboBox3.SelectedIndex != -1 && comboBox4.SelectedIndex != -1)
-                    {
-                        var = comboBox3.SelectedItem.ToString() + comboBox4.SelectedItem.ToString();
-                    } else
-                    {
-                        MessageBox.Show(
-                            "Please select an item from both the Prefix and Suffix combo boxes.",
-                            "Missing Selection",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error
-                        );
-                        return;
-                    }
-                    var steps = SolverSensitivityWithTwoParams(newTableau, new[] { Array.IndexOf(tableau.ColumnNames, var) });
-                    var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
-                    SolutionText += $"# Algorithim Selected: {SolverNameSensitivity}\n\n{stepsString}\n\n";
-                    tableau = newTableau;
-                }
-                else if (SensitivityDictWithThreeParams.ContainsKey(SolverNameSensitivity))
-                {
-                    int row;
-                    double newValue = 30;
-                    if ( comboBox4.SelectedIndex != -1)
-                    {
-                        row = int.Parse(comboBox4.SelectedItem.ToString());
-                        newValue = (double)numericUpDown1.Value;
-                    }
-                    else
-                    {
-                        MessageBox.Show(
-                            "Please select an item from both the Suffix combo box.",
-                            "Missing Selection",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error
-                        );
-                        return;
-                    }
 
-                    var steps = SolverSensitivityWithThreeParams(newTableau, row , newValue);
-                    var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
-                    SolutionText += $"# Algorithim Selected: {SolverNameSensitivity}\n\n{stepsString}\n\n";
-                    tableau = newTableau;
-                }
-            }
-            catch (Exception err)
-            {
-                MessageBox.Show(err.Message + $"\n\n{err}", "Solve Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                label4.Text = "Error";
-                label4.ForeColor = System.Drawing.Color.Red;
-            }
-            label4.ForeColor = System.Drawing.Color.Red;
-            }
+        private void UpdateSensitivityAnalysisOptions()
+        {
+            var previousRowName = comboBox2.SelectedItem?.ToString() ?? "";
+            comboBox2.Enabled = false;
+            comboBox2.Items.Clear();
+
+            var previousColName = comboBox3.SelectedItem?.ToString() ?? "";
+            comboBox3.Enabled = false;
+            comboBox3.Items.Clear();
+
+            numericUpDown1.Enabled = false;
+            numericUpDown1.Value = 0;
+
+            button5.Enabled = false;
+
+            if (tableau == null || !tableau.IsOptimal)
+                return;
+
+            comboBox2.Enabled = true;
+            foreach (var rowName in tableau.RowNames)
+                comboBox2.Items.Add(rowName);
+            var previousRowNameIndex = comboBox2.Items.IndexOf(previousRowName);
+            var rowNameIndex = comboBox2.SelectedIndex = previousRowNameIndex < 0 ? 0 : previousRowNameIndex;
+
+            comboBox3.Enabled = true;
+            foreach (var colName in tableau.ColumnNames)
+                comboBox3.Items.Add(colName);
+            var previousColNameIndex = comboBox3.Items.IndexOf(previousColName);
+            var colNameIndex = comboBox3.SelectedIndex = previousColNameIndex < 0 ? 0 : previousColNameIndex;
+
+            numericUpDown1.Enabled = true;
+            numericUpDown1.Value = (decimal)tableau[rowNameIndex, colNameIndex];
+
+            button5.Enabled = true;
+        }
+
+        private void comboBox2or3_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (tableau == null)
+                return;
+            var rowNameIndex = tableau?.RowNames /*    */?.ToList().IndexOf(comboBox2.SelectedItem as string ?? "") ?? -1;
+            var colNameIndex = tableau?.ColumnNames /* */?.ToList().IndexOf(comboBox3.SelectedItem as string ?? "") ?? -1;
+            if (rowNameIndex < 0 || colNameIndex < 0)
+                return;
+            numericUpDown1.Value = (rowNameIndex < 0 || colNameIndex < 0)
+                ? 0 
+                : (decimal)tableau[rowNameIndex, colNameIndex];
         }
     }
+}
 
 
 
