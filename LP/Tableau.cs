@@ -520,5 +520,81 @@ namespace LPR381.LP
             if (!(ColumnRestrictions.Length <= Width))
                 throw new Exception("Column Restriction Length too long");
         }
+
+        // ARMAND
+        public void AddColumn(string name, double[] column, double cost, string restriction = "urs")
+        {
+            if (column.Length != Height - 1)
+                throw new ArgumentException($"New column must have {Height - 1} values (excluding objective row)");
+            var oldValues = Values;
+            Values = new double[Height, Width + 1];
+            for (int i = 0; i < Height; i++)
+                for (int j = 0; j < Width - 1; j++)
+                    Values[i, j] = oldValues[i, j];
+            for (int i = 1; i < Height; i++)
+                Values[i, Width - 1] = column[i - 1];
+            Values[0, Width - 1] = RowNames[0].StartsWith("max") ? -cost : cost;
+            for (int i = 0; i < Height; i++)
+                Values[i, Width] = oldValues[i, Width - 1];
+            ColumnNames = ColumnNames.Take(ColumnNames.Length - 1).Append(name ?? $"x{Width}").Append("rhs").ToArray();
+            ColumnRestrictions = ColumnRestrictions.Take(ColumnRestrictions.Length - 1).Append(restriction).Append("+").ToArray();
+        }
+
+
+        public void AddRow(string name, double[] row, double rhs)
+        {
+            if (row.Length != Width - 1)
+                throw new ArgumentException($"New row must have {Width - 1} values (excluding RHS)");
+            var oldValues = Values;
+            Values = new double[Height + 1, Width];
+            for (int i = 0; i < Height; i++)
+                for (int j = 0; j < Width; j++)
+                    Values[i, j] = oldValues[i, j];
+            for (int j = 0; j < Width - 1; j++)
+                Values[Height, j] = row[j];
+            Values[Height, Width - 1] = rhs;
+            RowNames = RowNames.Append(name ?? $"c{Height}").ToArray();
+        }
+
+
+        public Tableau BuildDual()
+        {
+            int m = IndicesForConstraints.Count(); 
+            int n = IndicesForDecisionVariables.Count();
+
+            var dual = new Tableau
+            {
+                Values = new double[n + 1, m + 1],
+                RowNames = new string[n + 1],
+                ColumnNames = new string[m + 1],
+                ColumnRestrictions = new string[m + 1],
+                TableauIteration = 0
+            };
+
+            bool isPrimalMax = RowNames[0].StartsWith("max");
+            dual.RowNames[0] = isPrimalMax ? "min z" : "max z";
+            for (int i = 0; i < m; i++)
+                dual[0, i] = isPrimalMax ? Get_b()[i] : -Get_b()[i];
+
+            
+            for (int j = 0; j < n; j++)
+            {
+                for (int i = 0; i < m; i++)
+                    dual[j + 1, i] = Get_A()[i, j];
+                dual[j + 1, m] = isPrimalMax ? Get_c()[j] : -Get_c()[j];
+            }
+
+            
+            for (int j = 0; j < n; j++)
+                dual.RowNames[j + 1] = $"y{j + 1}";
+            for (int i = 0; i < m; i++)
+                dual.ColumnNames[i] = $"w{i + 1}";
+            dual.ColumnNames[m] = "rhs";
+            dual.ColumnRestrictions = Enumerable.Repeat("+", m + 1).ToArray();
+
+            return dual;
+        }
     }
+
 }
+

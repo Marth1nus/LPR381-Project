@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.LinearAlgebra.Factorization;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -18,13 +20,13 @@ namespace LPR381.LP
           6. [?] Apply and display a change of a selected constraint right-hand - side value.
           7. [x] Display the range of a selected variable in a Non-Basic Variable column.
           8. [?] Apply and display a change of a selected variable in a Non-Basic Variable column.
-          9. [ ] Add a new activity to an optimal solution.
-         10. [ ] Add a new constraint to an optimal solution.
+          9. [x] Add a new activity to an optimal solution.
+         10. [x] Add a new constraint to an optimal solution.
          11. [x] Display the shadow prices.
-         12. [ ] Duality:
-             1. [ ] Apply Duality to the programming model.
-             2. [ ] Solve the Dual Programming Model.
-             3. [ ] Verify whether the Programming Model has Strong or Weak Duality.
+         12. [x] Duality:
+             1. [x] Apply Duality to the programming model.
+             2. [x] Solve the Dual Programming Model.
+             3. [x] Verify whether the Programming Model has Strong or Weak Duality.
         */
 
         public static List<String> Solve(Tableau tableau)
@@ -417,5 +419,83 @@ namespace LPR381.LP
             sb.Length--; // remove last \n
             return sb.ToString();
         }
+
+
+        // ARMAND
+        // Adds a new decision variable (activity), checks if it improves the solution, and re-optimizes if necessary.
+        public static List<string> SolveAddActivity(Tableau optimalTableau, double[] column, double cost)
+        {
+            var steps = new List<string> { "Adding new activity..." };
+            if (!EnsureOptimal(optimalTableau, steps))
+                return steps;
+
+            var B = optimalTableau.Get_B();
+            var BInverse = B.Inverse();
+            var cBv = optimalTableau.Get_cBv();
+            var reducedCost = cost - cBv * (BInverse * Vector<double>.Build.Dense(column));
+
+            steps.Add($"Reduced cost = {Tableau.FormatDouble(reducedCost)}");
+            if (optimalTableau.RowNames[0].StartsWith("max") ? reducedCost >= 0 : reducedCost <= 0)
+            {
+                steps.Add("New activity does not improve solution → remains at 0.");
+                return steps;
+            }
+
+            steps.Add("New activity improves solution → re-optimizing...");
+            optimalTableau.AddColumn($"x{optimalTableau.Width}", column, cost, "+");
+            steps.Add($"Added new column:\n\n{optimalTableau}");
+            steps.AddRange(PrimalSimplex.Solve(optimalTableau));
+            return steps;
+        }
+
+        // Adds a new constraint, checks if the current solution remains feasible, and re-optimizes if needed.
+        public static List<string> SolveAddConstraint(Tableau optimalTableau, double[] row, double rhs)
+        {
+            var steps = new List<string> { "Adding new constraint..." };
+            if (!EnsureOptimal(optimalTableau, steps))
+                return steps;
+
+            optimalTableau.AddRow($"c{optimalTableau.Height}", row, rhs);
+            steps.Add($"Added new constraint:\n\n{optimalTableau}");
+
+            if (optimalTableau.IsFeasible)
+            {
+                steps.Add("Constraint satisfied by current solution → no change.");
+                return steps;
+            }
+
+            steps.Add("Constraint violated → re-optimizing with Dual Simplex...");
+            steps.AddRange(DualSimplex.Solve(optimalTableau));
+            return steps;
+        }
+
+        // Builds the dual problem from the primal, transposing constraints and objectives
+        // & Solves the dual problem to find its optimal solution.
+        public static List<string> SolveDual(Tableau primal)
+        {
+            var steps = new List<string> { "Building Dual Problem..." };
+            var dual = primal.BuildDual();
+            steps.Add($"Dual Tableau:\n\n{dual}");
+            steps.Add("Solving Dual...");
+            steps.AddRange(PrimalSimplex.Solve(dual));
+            steps.Add(VerifyDuality(primal, dual));
+            return steps;
+        }
+
+        // Checks if the primal and dual solutions satisfy strong or weak duality, ensuring consistency.
+        private static string VerifyDuality(Tableau primal, Tableau dual)
+        {
+            var primalValue = primal.ObjectiveValue;
+            var dualValue = dual.ObjectiveValue;
+            var diff = Math.Abs(primalValue - dualValue);
+
+            if (diff < 1e-6)
+                return $"Strong Duality holds (Primal = {Tableau.FormatDouble(primalValue)}, Dual = {Tableau.FormatDouble(dualValue)})";
+            else if (primal.RowNames[0].StartsWith("max") ? primalValue <= dualValue : primalValue >= dualValue)
+                return $"Weak Duality holds (Primal = {Tableau.FormatDouble(primalValue)}, Dual = {Tableau.FormatDouble(dualValue)})";
+            else
+                return $"Duality violated (Primal = {Tableau.FormatDouble(primalValue)}, Dual = {Tableau.FormatDouble(dualValue)}, check feasibility)";
+        }
+
     }
 }
