@@ -521,10 +521,10 @@ namespace LPR381
             colName = colName.Substring(colName.IndexOf('.') + 1).Trim();
             var colNameIndex = tableau?.ColumnNames /* */?.ToList().IndexOf(colName) ?? -1;
 
-            var newValue = numericUpDown1.Value =
-                (rowNameIndex >= 0 && colNameIndex >= 0)
-                    ? (decimal)(tableau.InitialTableau ?? tableau)[rowNameIndex, colNameIndex]
-                    : 0;
+            var newValue = (rowNameIndex >= 0 && colNameIndex >= 0)
+                ? (decimal)(tableau.InitialTableau ?? tableau)[rowNameIndex, colNameIndex]
+                : 0;
+            numericUpDown1.Value = newValue;
         }
 
         private void DisplaySolutionText()
