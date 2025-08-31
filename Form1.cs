@@ -6,7 +6,6 @@ using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -70,7 +69,7 @@ namespace LPR381
             comboBox1.Items.Clear();
             foreach (var kv in AlgorithmDict)
                 comboBox1.Items.Add(kv.Key);
-            comboBox1.SelectedIndex = Math.Max(0, comboBox1.Items.IndexOf("Primal Simplex"));
+            comboBox1.SelectedIndex = Math.Max(0, comboBox1.Items.IndexOf("Sensitivity Analysis"));
             Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
             UpdateSensitivityAnalysisOptions();
         }
@@ -411,7 +410,7 @@ namespace LPR381
                     }
                     else if (j == tableau.Width - 1)
                     {
-                        sensitivityAnalysisName = "Right Hand Side Change";
+                        sensitivityAnalysisName = "Right-Hand-Side Change";
                         steps = SensitivityAnalysis.SolveApplyChangeRHSColumn(tableau, i, newValue);
                     }
                     else if (tableau.IsNonBasicVariable(j))
@@ -437,6 +436,75 @@ namespace LPR381
                 MessageBox.Show($"{err.Message}\n\n{err}", "File Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 label13.Text = "Failed";
                 label13.ForeColor = System.Drawing.Color.Red;
+            }
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                label14.Text = "";
+                label14.ForeColor = System.Drawing.Color.Black;
+
+                var steps = (List<string>)null;
+                var sensitivityAnalysisName = "";
+                var rowName = comboBox2.SelectedItem?.ToString() ?? "0. ";
+                var colName = comboBox3.SelectedItem?.ToString() ?? "0. ";
+                var newValue = (double)numericUpDown1.Value;
+                rowName = rowName.Substring(rowName.IndexOf('.') + 1).Trim();
+                colName = colName.Substring(colName.IndexOf('.') + 1).Trim();
+
+                for (bool singleIteration = true; singleIteration; singleIteration = false)
+                {
+                    var i = tableau.RowNames.ToList().IndexOf(rowName);
+                    if (i < 0)
+                    {
+                        label14.Text = $"Row not found \"${rowName}\"";
+                        label14.ForeColor = System.Drawing.Color.Red;
+                        break;
+                    }
+
+                    var j = tableau.ColumnNames.ToList().IndexOf(colName);
+                    if (j < 0)
+                    {
+                        label14.Text = "Column not found";
+                        label14.ForeColor = System.Drawing.Color.Red;
+                        break;
+                    }
+
+                    if /**/ (i == 0)
+                    {
+                        sensitivityAnalysisName = "Objective Coefficient Range";
+                        steps = SensitivityAnalysis.SolveDisplayObjectiveRanges(tableau, new[] { j });
+                    }
+                    else if (j == tableau.Width - 1)
+                    {
+                        sensitivityAnalysisName = "Right-Hand-Side Range";
+                        steps = SensitivityAnalysis.SolveDisplayRhsRanges(tableau, new[] { i });
+                    }
+                    else if (tableau.IsNonBasicVariable(j))
+                    {
+                        sensitivityAnalysisName = "Non-Basic Variable Range";
+                        steps = SensitivityAnalysis.SolveDisplayNonBasicRanges(tableau, new[] { j });
+                    }
+                    else
+                    {
+                        steps = new List<string>() { $"Changin row:{rowName}, col:{colName} would require full resolve." };
+                        break;
+                    }
+                }
+
+                if (steps != null)
+                {
+                    var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
+                    SolutionText += $"# Sensitivity Display Range {sensitivityAnalysisName}\n\n{stepsString}\n\n";
+                }
+            }
+            catch (Exception err)
+            {
+                MessageBox.Show($"{err.Message}\n\n{err}", "File Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                label14.Text = "Failed";
+                label14.ForeColor = System.Drawing.Color.Red;
             }
         }
 
@@ -538,6 +606,7 @@ namespace LPR381
             numericUpDown1.Value = 0;
 
             button5.Enabled = false;
+            button6.Enabled = false;
 
             foreach (var component in armandComponents)
                 if (!(component is Label))
@@ -562,6 +631,7 @@ namespace LPR381
             // Value Implied updated by combox2&3 // numericUpDown1.Value = (decimal)tableau[rowNameIndex, colNameIndex];
 
             button5.Enabled = true;
+            button6.Enabled = true;
 
             foreach (var component in armandComponents)
                 if (!(component is Label))

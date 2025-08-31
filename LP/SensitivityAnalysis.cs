@@ -38,10 +38,21 @@ namespace LPR381.LP
             steps.Add($"Optimal Tableau\n\n{tableau}");
 
             // Basic + Non-Basic Variables
-            steps.Add($"Non-Basic Variables : [{String.Join(", ", tableau./*   */IndicesForBasicVariables.Select(j => tableau.ColumnNames[j]))}]  \n" +
-                      $"Basic Variables     : [{String.Join(", ", tableau./**/IndicesForNonBasicVariables.Select(j => tableau.ColumnNames[j]))}]");
-            steps.AddRange(SolveDisplayObjectiveRanges(tableau, tableau.IndicesForNonBasicVariables)); // (1. [x])
-            steps.AddRange(SolveDisplayObjectiveRanges(tableau, tableau.IndicesForBasicVariables)); // (3. [x])
+            {
+                var /*    */ basicVariableNames = tableau./*    */ IndicesForBasicVariables.Select(j => tableau.ColumnNames[j]).ToArray();
+                var /* */ nonBasicVariableNames = tableau./* */ IndicesForNonBasicVariables.Select(j => tableau.ColumnNames[j]).ToArray();
+                var width = Math.Max(basicVariableNames.Length, nonBasicVariableNames.Length);
+                steps.Add(MarkdownTable(
+                    headers: Enumerable.Repeat("", width).Prepend("Type").ToArray(),
+                    table: new[]
+                    {
+                        /* */nonBasicVariableNames.Concat(Enumerable.Repeat("", width - /* */nonBasicVariableNames.Length)).Prepend(/* */"Non-Basic").ToArray(),
+                        /*    */basicVariableNames.Concat(Enumerable.Repeat("", width - /*    */basicVariableNames.Length)).Prepend(/*     */"Basic").ToArray(),
+                    }
+                ));
+            }
+
+            steps.AddRange(SolveDisplayObjectiveRanges(tableau, tableau.IndicesForVariables)); // (1. [x]) (3. [x])
             steps.AddRange(SolveDisplayRhsRanges(tableau)); // (5. [x])
             steps.AddRange(SolveDisplayNonBasicRanges(tableau)); // (7. [?])
             steps.AddRange(SolveDisplayShadowPrices(tableau)); // (11. [x])

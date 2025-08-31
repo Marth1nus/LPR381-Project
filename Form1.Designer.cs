@@ -30,6 +30,7 @@
         {
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
+            this.label14 = new System.Windows.Forms.Label();
             this.button5 = new System.Windows.Forms.Button();
             this.label13 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
@@ -73,8 +74,9 @@
             this.sensitivityAnalysisToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-            this.label14 = new System.Windows.Forms.Label();
+            this.button6 = new System.Windows.Forms.Button();
             this.label15 = new System.Windows.Forms.Label();
+            this.label16 = new System.Windows.Forms.Label();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
             this.tableLayoutPanel4.SuspendLayout();
@@ -107,7 +109,9 @@
             this.tableLayoutPanel2.ColumnCount = 2;
             this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel2.Controls.Add(this.label15, 1, 11);
+            this.tableLayoutPanel2.Controls.Add(this.label16, 1, 12);
+            this.tableLayoutPanel2.Controls.Add(this.label15, 0, 12);
+            this.tableLayoutPanel2.Controls.Add(this.button6, 1, 11);
             this.tableLayoutPanel2.Controls.Add(this.label14, 0, 11);
             this.tableLayoutPanel2.Controls.Add(this.button5, 1, 10);
             this.tableLayoutPanel2.Controls.Add(this.label13, 0, 10);
@@ -135,7 +139,8 @@
             this.tableLayoutPanel2.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel2.Margin = new System.Windows.Forms.Padding(0);
             this.tableLayoutPanel2.Name = "tableLayoutPanel2";
-            this.tableLayoutPanel2.RowCount = 21;
+            this.tableLayoutPanel2.RowCount = 22;
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
@@ -159,6 +164,17 @@
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel2.Size = new System.Drawing.Size(266, 657);
             this.tableLayoutPanel2.TabIndex = 0;
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.label14.Location = new System.Drawing.Point(4, 239);
+            this.label14.Margin = new System.Windows.Forms.Padding(4);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(61, 13);
+            this.label14.TabIndex = 26;
+            this.label14.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // button5
             // 
@@ -266,7 +282,7 @@
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(189, 13);
             this.label9.TabIndex = 17;
-            this.label9.Text = "Sensitivity Analysis Changes";
+            this.label9.Text = "Sensitivity Analysis";
             this.label9.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // label8
@@ -672,27 +688,39 @@
             this.saveFileDialog1.Title = "Save Solved LP";
             this.saveFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.saveFileDialog1_FileOk);
             // 
-            // label14
+            // button6
             // 
-            this.label14.AutoSize = true;
-            this.label14.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label14.Location = new System.Drawing.Point(4, 239);
-            this.label14.Margin = new System.Windows.Forms.Padding(4);
-            this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(61, 13);
-            this.label14.TabIndex = 26;
-            this.label14.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.button6.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.button6.Location = new System.Drawing.Point(69, 235);
+            this.button6.Margin = new System.Windows.Forms.Padding(0);
+            this.button6.Name = "button6";
+            this.button6.Size = new System.Drawing.Size(197, 21);
+            this.button6.TabIndex = 27;
+            this.button6.Text = "Display Range";
+            this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
             // label15
             // 
             this.label15.AutoSize = true;
             this.label15.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label15.Location = new System.Drawing.Point(73, 239);
+            this.label15.Location = new System.Drawing.Point(4, 260);
             this.label15.Margin = new System.Windows.Forms.Padding(4);
             this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(189, 13);
-            this.label15.TabIndex = 27;
+            this.label15.Size = new System.Drawing.Size(61, 13);
+            this.label15.TabIndex = 28;
             this.label15.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.label16.Location = new System.Drawing.Point(73, 260);
+            this.label16.Margin = new System.Windows.Forms.Padding(4);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(189, 13);
+            this.label16.TabIndex = 29;
+            this.label16.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // Form1
             // 
@@ -770,8 +798,10 @@
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.NumericUpDown numericUpDown1;
-        private System.Windows.Forms.Label label15;
         private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.Button button6;
     }
 }
 
