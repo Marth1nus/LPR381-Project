@@ -61,7 +61,10 @@ namespace LPR381.LP
                 steps.Add($"{problemName} Primal solution is infeasible. **Branch abandoned**");
                 return;
             }
-            if (tableau.IsPrimalInoptimal) throw new Exception("Primal solution is inoptimal, but Dual solution is feasible. This should not happen in Branch&Bound.");
+            if (tableau.IsPrimalInoptimal)
+            {
+                throw new Exception("Primal solution is inoptimal, but Dual solution is feasible. This should not happen in Branch&Bound.");
+            }
 
             int fractionI = -1,
                 fractionJ = -1;
@@ -109,13 +112,11 @@ namespace LPR381.LP
                 problemName = problemNameParent + (floor ? ".1" : ".2");
                 if (problemName.StartsWith("."))
                     problemName = problemName.Substring(1);
-                tableau.InitialTableau?.AddColumn(newCol, $"{(floor ? "s" : "e")}{tableau.Height}", "+");
-                tableau/*            */.AddColumn(newCol, $"{(floor ? "s" : "e")}{tableau.Height}", "+");
+                tableau.AddColumn(newCol, $"{(floor ? "s" : "e")}{tableau.Height}", "+");
                 newRow[fractionJ /*  */ ] = floor ? 1.0 /*            */ : 1.0 /*              */;
                 newRow[tableau.Width - 2] = floor ? 1.0 /*            */ : -1.0 /*             */;
                 newRow[tableau.Width - 1] = floor ? Math.Floor(fraction) : Math.Ceiling(fraction);
-                tableau.InitialTableau?.AddRow(newRow, $"c{tableau.Height}");
-                tableau/*            */.AddRow(newRow, $"c{tableau.Height}");
+                tableau.AddRow(newRow, $"c{tableau.Height}");
                 steps.Add($"[{problemName}] Branch **{tableau.ColumnNames[fractionJ]}**{(floor ? "<=" : ">=")}{newRow[tableau.Width - 1]}\n\n{tableau}");
                 tableau[tableau.Height - 1, null] = floor ? tableau[tableau.Height - 1, null] - tableau[fractionI, null]
                                                           : tableau[fractionI, null] - tableau[tableau.Height - 1, null];

@@ -134,8 +134,15 @@ namespace LPR381.LP
             if (!IsDualOptimal)
                 return (-1, false, true); // Dual Simplex needed
             for (int j = 0; j < Width - 1; j++)
-                if (Values[0, j] < 0.0)
-                    return (j, true, false);
+            {
+                if (Values[0, j] >= 0.0)
+                    continue;
+                var rhs = this[IndicesForConstraints, Width - 1];
+                var col = this[IndicesForConstraints, j];
+                var anyRatioIsPositive = rhs.Zip(col, (r, c) => (r < 0) == (c < 0)).Any();
+                var feasible = anyRatioIsPositive;
+                return (j, feasible, false);
+            }
             return null; // Primal Optimal
         }
         public bool IsPrimalOptimal => GetPrimalInoptimal() == null;
@@ -241,6 +248,7 @@ namespace LPR381.LP
                 for (int j = 0; j < Width; j++)
                     Values[i, j] = newRow[j];
             RowNames = RowNames.Append(name ?? $"c{Height - 1}").ToArray();
+            InitialTableau = null;
         }
         public void RemoveRow(int rowI = -1)
         {
@@ -257,6 +265,7 @@ namespace LPR381.LP
             for (; i < Height; i++)
                 for (int j = 0; j < Width; j++)
                     Values[i, j] = oldValues[i + 1, j];
+            InitialTableau = null;
         }
         public void AddColumn(double[] newColumn = null, string name = null, string restriction = "urs")
         {
@@ -278,6 +287,7 @@ namespace LPR381.LP
             var columnNamesLast = ColumnNames.Length > 0 ? ColumnNames.Last() : "rhs";
             ColumnNames = ColumnNames.Take(ColumnNames.Length - 1).Append(name ?? $"s{Height}").Append(columnNamesLast).ToArray();
             ColumnRestrictions = ColumnRestrictions.Append(restriction).ToArray();
+            InitialTableau = null;
         }
         public void RemoveColumn(int colI = -2)
         {
@@ -295,6 +305,7 @@ namespace LPR381.LP
                 for (; j < Width; j++)
                     Values[i, j] = oldValues[i, j + 1];
             }
+            InitialTableau = null;
         }
 
         public int AddBinaryLessThanOneConstraints()

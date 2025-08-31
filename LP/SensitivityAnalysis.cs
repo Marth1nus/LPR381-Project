@@ -34,6 +34,9 @@ namespace LPR381.LP
             if (!EnsureOptimal(tableau, steps))
                 return steps;
 
+            steps.Add($"Initial Tableau\n\n{tableau.InitialTableau ?? tableau}");
+            steps.Add($"Optimal Tableau\n\n{tableau}");
+
             // Basic + Non-Basic Variables
             steps.Add($"Non-Basic Variables : [{String.Join(", ", tableau./*   */IndicesForBasicVariables.Select(j => tableau.ColumnNames[j]))}]  \n" +
                       $"Basic Variables     : [{String.Join(", ", tableau./**/IndicesForNonBasicVariables.Select(j => tableau.ColumnNames[j]))}]");
