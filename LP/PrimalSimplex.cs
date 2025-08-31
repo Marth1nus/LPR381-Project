@@ -153,13 +153,28 @@ namespace LPR381.LP
                     break;
                 }
 
-                var minObjective = tableau[0, null].Min();
-                if (minObjective >= 0.0)
+                var isMaxProblem = tableau.RowNames[0].Contains("max");
+                int pj = -1;
+                if (isMaxProblem)
                 {
-                    steps.Add(ConstructSolution(tableau));
-                    break;
+                    var minObjective = tableau[0, null].Min();
+                    if (minObjective >= 0.0)
+                    {
+                        steps.Add(ConstructSolution(tableau));
+                        break;
+                    }
+                    pj = Array.IndexOf(tableau[0, null].ToArray(), minObjective);
                 }
-                var pj = Array.IndexOf(tableau[0, null].ToArray(), minObjective);
+                else // isMinProblem
+                {
+                    var maxObjective = tableau[0, null].Max();
+                    if (maxObjective <= 0.0)
+                    {
+                        steps.Add(ConstructSolution(tableau));
+                        break;
+                    }
+                    pj = Array.IndexOf(tableau[0, null].ToArray(), maxObjective);
+                }
 
                 var pjV = tableau[null, pj];
                 var rhs = tableau[null, tableau.Width - 1];
