@@ -144,7 +144,7 @@ namespace LPR381.LP
                 var feasible = anyRatioIsPositive;
                 return (j, false, feasible, false);
             }
-            return (-1, true, false, false);
+            return (-1, true, true, false);
         }
         public bool IsPrimalOptimal => GetPrimalInoptimal().optimal;
         public bool IsPrimalInoptimal => !IsPrimalOptimal;

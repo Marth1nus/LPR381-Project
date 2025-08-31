@@ -28,7 +28,7 @@ namespace LPR381.LP
             else
             {
                 var bestCandidate = candidates.Aggregate((max, c) => c.tableau.ObjectiveValue > max.tableau.ObjectiveValue ? c : max);
-                steps.Add($"Best solution found: {bestCandidate.problemName} with Z={bestCandidate.tableau.ObjectiveValue}\n\n{bestCandidate.tableau}");
+                steps.Add($"Best solution found: {bestCandidate.problemName} with Z={bestCandidate.tableau.ObjectiveValue:0.###}\n\n{bestCandidate.tableau}");
                 tableau.Assign(bestCandidate.tableau);
             }
 
@@ -92,7 +92,7 @@ namespace LPR381.LP
             if (fractionJ < 0)
             {
                 steps.Add($"[{problemName}] All integer constraints satisfied");
-                steps.Add($"[{problemName}] New Candidate: {tableau.ObjectiveValue}");
+                steps.Add($"[{problemName}] New Candidate: {tableau.ObjectiveValue:0.###}");
                 candidates.Add((tableau, problemName));
                 return;
             }
@@ -100,7 +100,7 @@ namespace LPR381.LP
             var tableauParent = tableau;
             var problemNameParent = problemName;
             var fraction = tableau[fractionI, tableau.Width - 1];
-            steps.Add($"[{problemName}] Branch on **{tableau.ColumnNames[fractionJ]}**={fraction}");
+            steps.Add($"[{problemName}] Branch on **{tableau.ColumnNames[fractionJ]}**={fraction:0.###}");
             var newCol = new double[tableau.Height];
             var newRow = new double[tableau.Width + 1];
 
@@ -117,7 +117,7 @@ namespace LPR381.LP
                 newRow[tableau.Width - 2] = floor ? 1.0 /*            */ : -1.0 /*             */;
                 newRow[tableau.Width - 1] = floor ? Math.Floor(fraction) : Math.Ceiling(fraction);
                 tableau.AddRow(newRow, $"c{tableau.Height}");
-                steps.Add($"[{problemName}] Branch **{tableau.ColumnNames[fractionJ]}**{(floor ? "<=" : ">=")}{newRow[tableau.Width - 1]}\n\n{tableau}");
+                steps.Add($"[{problemName}] Branch **{tableau.ColumnNames[fractionJ]}**{(floor ? "<=" : ">=")}{newRow[tableau.Width - 1]:0.###}\n\n{tableau}");
                 tableau[tableau.Height - 1, null] = floor ? tableau[tableau.Height - 1, null] - tableau[fractionI, null]
                                                           : tableau[fractionI, null] - tableau[tableau.Height - 1, null];
                 steps.Add($"[{problemName}] Restore basic variable ({(floor ? "new=new-old" : "new=old-new")})\n\n{tableau}");

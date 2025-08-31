@@ -372,7 +372,7 @@ namespace LPR381
 
         private void button5_Click(object sender, EventArgs e)
         {
-            try
+            //try
             {
                 label13.Text = "";
                 label13.ForeColor = System.Drawing.Color.Black;
@@ -431,6 +431,7 @@ namespace LPR381
                     SolutionText += $"# Sensitivity Based Change {sensitivityAnalysisName}\n\n{stepsString}\n\n";
                 }
             }
+            try { }
             catch (Exception err)
             {
                 MessageBox.Show($"{err.Message}\n\n{err}", "File Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);

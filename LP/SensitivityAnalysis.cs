@@ -32,7 +32,10 @@ namespace LPR381.LP
         {
             var steps = new List<String>() { "Start Sensitivity Analysis" };
             if (!EnsureOptimal(tableau, steps))
+            {
+                steps.Add("End Sensitivity Analysis");
                 return steps;
+            }
 
             steps.Add($"Initial Tableau\n\n{tableau.InitialTableau ?? tableau}");
             steps.Add($"Optimal Tableau\n\n{tableau}");
@@ -97,7 +100,7 @@ namespace LPR381.LP
             var initialTableau = (optimalTableau.InitialTableau ?? optimalTableau).Copy();
             var currentValue = initialTableau[i, j];
             var range = GetRhsRanges(optimalTableau, new[] { i }).FirstOrDefault();
-            steps.Add($"{initialTableau.RowNames[j]}:rhs={range.current:0.###} can range between [{range.low:0.###}, {range.high:0.###}]");
+            steps.Add($"{initialTableau.RowNames[i]}:rhs={range.current:0.###} can range between [{range.low:0.###}, {range.high:0.###}]");
             if (range.low <= currentValue && currentValue <= range.high)
             {
                 steps.Add($"\n {newValue:0.###} does not change the optimal solution");
@@ -271,14 +274,13 @@ namespace LPR381.LP
             steps.Add("Tableau is still not Optimal  \nAttempting Branch&Bound Solve");
             attemptTableau = tableau.Copy();
             var branchAndBoundSteps = BranchAndBound.Solve(attemptTableau);
-            if (tableau.IsOptimal)
+            if (attemptTableau.IsOptimal)
             {
                 tableau.Assign(attemptTableau);
                 steps.AddRange(branchAndBoundSteps);
                 return true;
             }
             steps.Add("Sensitivity Analysis requires an optimal tableau");
-            steps.Add("End Sensitivity Analysis");
             return false;
         }
                 
