@@ -66,26 +66,21 @@ namespace LPR381.LP
             var steps = new List<String>();
             if (!EnsureOptimal(optimalTableau, steps))
                 return steps;
-            if (newValue > 0.0)
-            {
-                steps.Add($"Objective row in a max problem can not be positive");
-                return steps;
-            }
             var i = 0; // objective row
             var initialTableau = (optimalTableau.InitialTableau ?? optimalTableau).Copy();
             var currentValue = initialTableau[i, j];
             var range = GetObjectiveRanges(optimalTableau, new[] { j }).FirstOrDefault();
-            steps.Add($"{range.current}{initialTableau.ColumnNames[j]} can range between [{range.low}{initialTableau.ColumnNames[j]}, {range.high}{initialTableau.ColumnNames[j]}]");
+            steps.Add($"{range.current:0.###}{initialTableau.ColumnNames[j]} can range between [{range.low:0.###}{initialTableau.ColumnNames[j]}, {range.high:0.###}{initialTableau.ColumnNames[j]}]");
             if (range.low <= currentValue && currentValue <= range.high)
             {
-                steps.Add($"\n {newValue} does not change the optimal solution");
+                steps.Add($"\n {newValue:0.###} does not change the optimal solution");
                 initialTableau[i, j] = newValue;
                 EnsureOptimal(initialTableau, new List<String>()); // TODO: replace with math version;
                 optimalTableau.Assign(initialTableau);
             }
             else
             {
-                steps.Add($"\n {newValue} requires re-optimization");
+                steps.Add($"\n {newValue:0.###} requires re-optimization");
                 initialTableau[i, j] = newValue;
                 EnsureOptimal(initialTableau, steps);
                 optimalTableau.Assign(initialTableau);
@@ -102,17 +97,17 @@ namespace LPR381.LP
             var initialTableau = (optimalTableau.InitialTableau ?? optimalTableau).Copy();
             var currentValue = initialTableau[i, j];
             var range = GetRhsRanges(optimalTableau, new[] { i }).FirstOrDefault();
-            steps.Add($"{initialTableau.RowNames[j]}:rhs={range.current} can range between [{range.low}, {range.high}]");
+            steps.Add($"{initialTableau.RowNames[j]}:rhs={range.current:0.###} can range between [{range.low:0.###}, {range.high:0.###}]");
             if (range.low <= currentValue && currentValue <= range.high)
             {
-                steps.Add($"\n {newValue} does not change the optimal solution");
+                steps.Add($"\n {newValue:0.###} does not change the optimal solution");
                 initialTableau[i, j] = newValue;
                 EnsureOptimal(initialTableau, new List<String>()); // TODO: replace with math version;
                 optimalTableau.Assign(initialTableau);
             }
             else
             {
-                steps.Add($"\n {newValue} requires re-optimization");
+                steps.Add($"\n {newValue:0.###} requires re-optimization");
                 initialTableau[i, j] = newValue;
                 EnsureOptimal(initialTableau, steps);
                 optimalTableau.Assign(initialTableau);
@@ -138,17 +133,17 @@ namespace LPR381.LP
             var initialTableau = (optimalTableau.InitialTableau ?? optimalTableau).Copy();
             var currentValue = initialTableau[i, j];
             var range = GetRhsRanges(optimalTableau, new[] { i }).FirstOrDefault();
-            steps.Add($"{initialTableau.RowNames[j]}:rhs={range.current} can range between [{range.low}, {range.high}]");
+            steps.Add($"{initialTableau.RowNames[j]}:rhs={range.current:0.###} can range between [{range.low:0.###}, {range.high:0.###}]");
             if (range.low <= currentValue && currentValue <= range.high)
             {
-                steps.Add($"{newValue} does not change the optimal solution");
+                steps.Add($"{newValue:0.###} does not change the optimal solution");
                 initialTableau[i, j] = newValue;
                 EnsureOptimal(initialTableau, new List<String>()); // TODO: replace with math version;
                 optimalTableau.Assign(initialTableau);
             }
             else
             {
-                steps.Add($"{newValue} requires re-optimization");
+                steps.Add($"{newValue:0.###} requires re-optimization");
                 initialTableau[i, j] = newValue;
                 EnsureOptimal(initialTableau, steps);
                 optimalTableau.Assign(initialTableau);
