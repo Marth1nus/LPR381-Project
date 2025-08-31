@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using static LPR381.LP.Tableau;
 
 namespace LPR381.LP
 {
@@ -441,83 +442,209 @@ namespace LPR381.LP
 
 
         // ARMAND
-        // Adds a new decision variable (activity), checks if it improves the solution, and re-optimizes if necessary.
-        public static List<string> SolveAddActivity(Tableau optimalTableau, double[] column, double cost)
+
+        public static List<string> SolveAddActivity(Tableau tableau, double[] column, double cost)
         {
             var steps = new List<string> { "Adding new activity..." };
-            if (!EnsureOptimal(optimalTableau, steps))
-                return steps;
+            int m = tableau.Height - 1; // number of constraints
+            int n = tableau.Width - 1;  // number of variables (excluding rhs)
 
-            var B = optimalTableau.Get_B();
-            var BInverse = B.Inverse();
-            var cBv = optimalTableau.Get_cBv();
-            var reducedCost = cost - cBv * (BInverse * Vector<double>.Build.Dense(column));
+            // --- 1. Add the new column for constraints ---
+            double[] newColumn = new double[m + 1];
+            for (int i = 0; i < m; i++)
+                newColumn[i] = column[i]; // your coefficients go here
 
-            steps.Add($"Reduced cost = {Tableau.FormatDouble(reducedCost)}");
-            if (optimalTableau.RowNames[0].StartsWith("max") ? reducedCost >= 0 : reducedCost <= 0)
+            // --- 2. Compute reduced cost = cost - π^T * a_j ---
+            double reducedCost = cost;
+            for (int i = 0; i < m; i++)
+                reducedCost -= tableau[i, n] * column[i];
+
+            newColumn[m] = reducedCost;
+
+            // --- 3. Append the new column to tableau ---
+            tableau.AddColumn(newColumn, $"x{n}", "+");
+
+            // --- 4. Record step ---
+            steps.Add("Added new column:");
+            steps.Add(tableau.ToString());
+
+            // --- 5. Check if new activity is profitable and re-optimize if needed ---
+            bool isMax = tableau.RowNames[0].StartsWith("max", StringComparison.OrdinalIgnoreCase);
+            if ((isMax && reducedCost > 0) || (!isMax && reducedCost < 0))
             {
-                steps.Add("New activity does not improve solution → remains at 0.");
+                steps.Add("New activity improves the solution. Re-optimizing (primal simplex)...");
+                steps.AddRange(PrimalSimplex.Solve(tableau));
+            }
+            else
+            {
+                steps.Add("New activity does not improve the solution. Added as non-basic.");
+            }
+
+            return steps;
+        }
+        public static List<string> SolveAddConstraint(Tableau tableau, double[] row, double rhs, string inequality = "<=")
+            {
+                var steps = new List<string> { "Adding new constraint..." };
+                if (!EnsureOptimal(tableau, steps))
+                    return steps;
+
+                if (row.Length != tableau.Width - 1)
+                {
+                    steps.Add($"Row must have {tableau.Width - 1} coefficients excluding RHS.");
+                    return steps;
+                }
+
+                if (inequality != "<=" && inequality != ">=")
+                {
+                    steps.Add("Invalid inequality. Must be <= or >=.");
+                    return steps;
+                }
+
+                // Adjust for >= by negating row and rhs
+                if (inequality == ">=")
+                {
+                    row = row.Select(x => -x).ToArray();
+                    rhs = -rhs;
+                }
+
+                // Add new constraint row with slack variable
+                double[] newRow = new double[tableau.Width + 1]; // +1 for new slack column
+                for (int j = 0; j < row.Length; j++)
+                {
+                    newRow[j] = row[j];
+                }
+                newRow[tableau.Width - 1] = 1; // Slack variable coefficient
+                newRow[tableau.Width] = rhs; // RHS
+                tableau.AddColumn(new double[tableau.Height], $"s{tableau.Height}", "+"); // Add slack column
+                tableau.AddRow(newRow, $"c{tableau.Height}");
+                steps.Add($"Added new constraint and slack variable:\n\n{tableau}");
+
+                // Check feasibility
+                var B = tableau.Get_B();
+                var BInverse = B.Inverse();
+                var b = tableau.Get_b();
+                var xB = BInverse * b;
+                int newRowIndex = tableau.Height - 1;
+                int slackColIndex = tableau.Width - 2; // New slack variable
+                double newBasicValue = xB[newRowIndex - 1]; // New slack variable's value
+
+                if (newBasicValue >= 0)
+                {
+                    steps.Add("New constraint satisfied by current solution. No re-optimization needed.");
+                }
+                else
+                {
+                    steps.Add("New constraint violates feasibility. Re-optimizing with dual simplex.");
+                    steps.AddRange(DualSimplex.Solve(tableau)); // Assumes DualSimplex.Solve exists
+                }
+
                 return steps;
             }
 
-            steps.Add("New activity improves solution → re-optimizing...");
-            optimalTableau.AddColumn(column, $"x{optimalTableau.Width}", "+");
-            optimalTableau[0, optimalTableau.Width - 1] = optimalTableau.RowNames[0].StartsWith("max") ? -cost : cost;
-
-            steps.Add($"Added new column:\n\n{optimalTableau}");
-            steps.AddRange(PrimalSimplex.Solve(optimalTableau));
-            return steps;
-        }
-
-        // Adds a new constraint, checks if the current solution remains feasible, and re-optimizes if needed.
-        public static List<string> SolveAddConstraint(Tableau optimalTableau, double[] row, double rhs)
-        {
-            var steps = new List<string> { "Adding new constraint..." };
-            if (!EnsureOptimal(optimalTableau, steps))
-                return steps;
-
-            optimalTableau.AddRow(row.Append(rhs).ToArray(), $"c{optimalTableau.Height}");
-            steps.Add($"Added new constraint:\n\n{optimalTableau}");
-
-            if (optimalTableau.IsFeasible)
-            {
-                steps.Add("Constraint satisfied by current solution → no change.");
-                return steps;
-            }
-
-            steps.Add("Constraint violated → re-optimizing with Dual Simplex...");
-            steps.AddRange(DualSimplex.Solve(optimalTableau));
-            return steps;
-        }
 
         // Builds the dual problem from the primal, transposing constraints and objectives
         // & Solves the dual problem to find its optimal solution.
+
+
         public static List<string> SolveDual(Tableau primal)
         {
             var steps = new List<string> { "Building Dual Problem..." };
             var dual = primal.BuildDual();
             steps.Add($"Dual Tableau:\n\n{dual}");
             steps.Add("Solving Dual...");
-            steps.AddRange(DualSimplex.Solve(dual));
-            steps.AddRange(PrimalSimplex.Solve(dual));
+
+            // Handle excess constraints in dual if any
+            var (adjustedDual, madeChanges) = DualSimplex.DualFrom(dual, steps);
+            dual = adjustedDual;
+
+            // Check initial feasibility of dual
+            bool isFeasible = dual[dual.IndicesForConstraints, dual.Width - 1].All(r => r >= -1e-9);
+            if (isFeasible)
+            {
+                steps.Add("All RHS values are non-negative, proceeding with Primal Simplex");
+                // Validate pivot columns to avoid zero coefficients
+                var primalSteps = PrimalSimplex.Solve(dual);
+                steps.AddRange(primalSteps);
+                if (primalSteps.Any(s => s.Contains("Infeasible") || s.Contains("Unbounded") || s.Contains("NaN")))
+                {
+                    steps.Add("Dual solution is infeasible or unbounded after Primal Simplex");
+                    // Attempt Dual Simplex as fallback
+                    steps.Add("Attempting Dual Simplex to recover feasibility");
+                    var dualSteps = DualSimplex.Solve(dual);
+                    steps.AddRange(dualSteps);
+                    if (!dual.IsFeasible)
+                    {
+                        steps.Add("Dual is infeasible after Dual Simplex");
+                        return steps;
+                    }
+                    steps.Add("Proceeding with Primal Simplex to ensure optimality");
+                    primalSteps = PrimalSimplex.Solve(dual);
+                    steps.AddRange(primalSteps);
+                    if (primalSteps.Any(s => s.Contains("Infeasible") || s.Contains("Unbounded") || s.Contains("NaN")))
+                    {
+                        steps.Add("Dual solution remains infeasible or unbounded");
+                        return steps;
+                    }
+                }
+            }
+            else
+            {
+                steps.Add("Negative RHS values detected, applying Dual Simplex");
+                var dualSteps = DualSimplex.Solve(dual);
+                steps.AddRange(dualSteps);
+                if (!dual.IsFeasible)
+                {
+                    steps.Add("Dual is infeasible after Dual Simplex");
+                    return steps;
+                }
+                steps.Add("Proceeding with Primal Simplex to ensure optimality");
+                var primalSteps = PrimalSimplex.Solve(dual);
+                steps.AddRange(primalSteps);
+                if (primalSteps.Any(s => s.Contains("Infeasible") || s.Contains("Unbounded") || s.Contains("NaN")))
+                {
+                    steps.Add("Dual solution is infeasible or unbounded after Primal Simplex");
+                    return steps;
+                }
+            }
+
+            // Extract dual solution
+            var dualSolution = new Dictionary<string, double>();
+            for (int j = 0; j < dual.Width - 1; j++)
+            {
+                dualSolution[dual.ColumnNames[j]] = dual.GetVariableValue(j);
+            }
+            steps.Add($"Optimal solution found:\n{string.Join("\n", dualSolution.Select(kvp => $"{kvp.Key} = {Tableau.FormatDouble(kvp.Value)}"))}");
+            steps.Add($"Optimal Value (Z) = {Tableau.FormatDouble(dual.ObjectiveValue)}");
+
             steps.Add(VerifyDuality(primal, dual));
             return steps;
         }
-
         // Checks if the primal and dual solutions satisfy strong or weak duality, ensuring consistency.
+
         private static string VerifyDuality(Tableau primal, Tableau dual)
         {
             var primalValue = primal.ObjectiveValue;
             var dualValue = dual.ObjectiveValue;
+
+            if (double.IsNaN(dualValue) || double.IsInfinity(dualValue))
+            {
+                return $"Duality verification failed (Primal = {Tableau.FormatDouble(primalValue)}, Dual = {dualValue}, dual solution is likely infeasible)";
+            }
+
             var diff = Math.Abs(primalValue - dualValue);
+            bool isPrimalMax = primal.RowNames[0].StartsWith("max");
 
             if (diff < 1e-6 && dual.IsFeasible)
                 return $"Strong Duality holds (Primal = {Tableau.FormatDouble(primalValue)}, Dual = {Tableau.FormatDouble(dualValue)})";
-            else if (primal.RowNames[0].StartsWith("max") ? primalValue <= dualValue : primalValue >= dualValue)
+            else if (isPrimalMax ? primalValue <= dualValue + 1e-6 : primalValue >= dualValue - 1e-6)
                 return $"Weak Duality holds (Primal = {Tableau.FormatDouble(primalValue)}, Dual = {Tableau.FormatDouble(dualValue)})";
             else
                 return $"Duality violated (Primal = {Tableau.FormatDouble(primalValue)}, Dual = {Tableau.FormatDouble(dualValue)}, dual solution may be infeasible)";
         }
 
+
     }
+
 }
+
+

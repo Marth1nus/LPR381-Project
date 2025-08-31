@@ -1,5 +1,6 @@
 ﻿using LPR381.LP;
 using Markdig;
+using MathNet.Numerics.Statistics;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -58,6 +59,8 @@ namespace LPR381
         private TextBox txtRow;
         private Label lblRhs;
         private TextBox txtRhs;
+        private Label lblInequality;
+        private TextBox txtInequality;
         private Button btnAddConstraint;
         private Button btnSolveDual;
         private Control[] armandComponents;
@@ -75,6 +78,7 @@ namespace LPR381
         }
 
         // ARMAND
+
         private void InitializeNewComponents()
         {
             // Task 9: Add Activity
@@ -135,6 +139,19 @@ namespace LPR381
                 Dock = DockStyle.Fill,
                 Margin = new Padding(0),
             };
+            var lblInequality = new Label
+            {
+                Text = "Inequality (<= or >=):",
+                Dock = DockStyle.Fill,
+                Margin = new Padding(4),
+                TextAlign = System.Drawing.ContentAlignment.MiddleRight,
+            };
+            txtInequality = new TextBox
+            {
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0),
+                Text = "<=" // Default value
+            };
             btnAddConstraint = new Button
             {
                 Text = "Add Constraint",
@@ -166,6 +183,8 @@ namespace LPR381
                 txtRow,
                 lblRhs,
                 txtRhs,
+                lblInequality,
+                txtInequality,
                 new Label(),
                 btnAddConstraint,
                 new Label(),
@@ -244,15 +263,23 @@ namespace LPR381
                     return;
                 }
 
+                // Parse inequality
+                string inequality = txtInequality.Text.Trim();
+                if (inequality != "<=" && inequality != ">=")
+                {
+                    label13.Text = "Invalid inequality. Must be <= or >=.";
+                    label13.ForeColor = System.Drawing.Color.Red;
+                    return;
+                }
+
                 // Parse row coefficients
                 double[] row = txtRow.Text.Split(',')
                     .Select(s => double.Parse(s.Trim()))
                     .ToArray();
-                int expectedCoefficients = tableau.Width - 1; // Should be 13 based on the error
+                int expectedCoefficients = tableau.Width - 1;
                 if (row.Length != expectedCoefficients)
                 {
-                    label13.Text = $"Row must have {expectedCoefficients} values excluding RHS.";
-                    label13.ForeColor = System.Drawing.Color.Red;
+                    MessageBox.Show($"Row must have {expectedCoefficients} values excluding RHS. {row.Length}");
                     return;
                 }
 
@@ -265,11 +292,11 @@ namespace LPR381
                 }
 
                 // Call SolveAddConstraint
-                var newTableau = tableau.Copy(); // Copy to avoid modifying original
-                var steps = SensitivityAnalysis.SolveAddConstraint(newTableau, row, rhs);
+                var newTableau = tableau.Copy();
+                var steps = SensitivityAnalysis.SolveAddConstraint(newTableau, row, rhs, inequality);
                 var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
                 SolutionText += $"# Add New Constraint\n\n{stepsString}\n\n";
-                tableau = newTableau; // Update tableau with new solution
+                tableau = newTableau;
                 UpdateSensitivityAnalysisOptions();
             }
             catch (Exception ex)
@@ -292,12 +319,11 @@ namespace LPR381
                     return;
                 }
 
-                // Call SolveDual
-                var newTableau = tableau.Copy(); // Copy to avoid modifying original
+                var newTableau = tableau.Copy();
                 var steps = SensitivityAnalysis.SolveDual(newTableau);
                 var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
                 SolutionText += $"# Solve Dual\n\n{stepsString}\n\n";
-                tableau = newTableau; // Update tableau
+                tableau = newTableau;
                 UpdateSensitivityAnalysisOptions();
             }
             catch (Exception ex)
@@ -307,7 +333,6 @@ namespace LPR381
                 label13.ForeColor = System.Drawing.Color.Red;
             }
         }
-
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e) => openFileDialog1.ShowDialog(this);
 
