@@ -109,30 +109,31 @@ namespace LPR381.LP
         public bool IsConstraintsSatisfied => GetFirstConstraintViolationJ() == null;
         public bool IsConstraintsDissatisfied => !IsConstraintsSatisfied;
 
-        public (int i, bool feasible)? GetDualInoptimal()
+        public (int i, bool optimal, bool feasible) GetDualInoptimal()
         {
             for (int i = 1; i < Height; i++)
             {
                 if (Values[i, Width - 1] < 0.0)
                 {
                     int NegativeCount = 0;
-                    for (int j = 0; j < Width; j++)
+                    for (int j = 0; j < Width - 1; j++)
                         if (Values[i, j] < 0.0)
                             NegativeCount++;
-                    return (i, NegativeCount > 0);
+                    var feasible = NegativeCount > 0;
+                    return (i, false, feasible);
                 }
             }
-            return null; // Dual Optimal
+            return (-1, true, true);
         }
-        public bool IsDualOptimal => GetDualInoptimal() == null;
+        public bool IsDualOptimal => GetDualInoptimal().optimal;
         public bool IsDualInoptimal => !IsDualOptimal;
-        public bool IsDualFeasible => GetDualInoptimal().GetValueOrDefault((0, true)).feasible;
+        public bool IsDualFeasible => GetDualInoptimal().feasible;
         public bool IsDualInfeasible => !IsDualFeasible;
 
-        public (int j, bool feasible, bool dualNeeded)? GetPrimalInoptimal()
+        public (int j, bool optimal, bool feasible, bool dualNeeded) GetPrimalInoptimal()
         {
             if (!IsDualOptimal)
-                return (-1, false, true); // Dual Simplex needed
+                return (-1, false, false, true);
             for (int j = 0; j < Width - 1; j++)
             {
                 if (Values[0, j] >= 0.0)
@@ -141,13 +142,13 @@ namespace LPR381.LP
                 var col = this[IndicesForConstraints, j];
                 var anyRatioIsPositive = rhs.Zip(col, (r, c) => (r < 0) == (c < 0)).Any();
                 var feasible = anyRatioIsPositive;
-                return (j, feasible, false);
+                return (j, false, feasible, false);
             }
-            return null; // Primal Optimal
+            return (-1, true, false, false);
         }
-        public bool IsPrimalOptimal => GetPrimalInoptimal() == null;
+        public bool IsPrimalOptimal => GetPrimalInoptimal().optimal;
         public bool IsPrimalInoptimal => !IsPrimalOptimal;
-        public bool IsPrimalFeasible => GetPrimalInoptimal().GetValueOrDefault((0, true, false)).feasible;
+        public bool IsPrimalFeasible => GetPrimalInoptimal().feasible;
         public bool IsPrimalInfeasible => !IsPrimalFeasible;
 
         public bool IsOptimal => IsPrimalOptimal && IsConstraintsSatisfied;
@@ -488,8 +489,8 @@ namespace LPR381.LP
             var (objectiveLine, constraintLines, restrictionsLine) = FromFileValidateFile(filename);
             canonicalForm += $"# Canonical Form";
             canonicalForm += $"\n\n## Objective\n\n{objectiveLine[0]} z = {string.Join(" + ", objectiveLine.Skip(1).Select((col, j) => $"{double.Parse(col)}x{1 + j}"))}";
-            canonicalForm += $"\n\n## Constraints\n\n" + string.Join("\n", constraintLines.Select((line, i) =>
-                string.Join(" + ", line.Take(line.Length - 1).Select((col, j) => $"{double.Parse(col)}x{1 + j}")) +
+            canonicalForm += $"\n\n## Constraints\n\n" + string.Join("  \n", constraintLines.Select((line, i) =>
+                string.Join(" + ", line.Take(line.Length - 1).Select((col, j) => $"{double.Parse(col), 3}x{1 + j}")) +
                 (line.Last().StartsWith("=") || line.Last().StartsWith("<=") ? $" + s{1 + i}" : "") +
                 (line.Last().StartsWith("=") || line.Last().StartsWith(">=") ? $" + -e{1 + i}" : "") +
                 $" = {double.Parse(line.Last().Substring(line.Last().StartsWith("=") ? 1 /* = */ : 2 /* <= or >= */))}"));
@@ -531,42 +532,6 @@ namespace LPR381.LP
             if (!(ColumnRestrictions.Length <= Width))
                 throw new Exception("Column Restriction Length too long");
         }
-
-        // ARMAND
-        public void AddColumn(string name, double[] column, double cost, string restriction = "urs")
-        {
-            if (column.Length != Height - 1)
-                throw new ArgumentException($"New column must have {Height - 1} values (excluding objective row)");
-            var oldValues = Values;
-            Values = new double[Height, Width + 1];
-            for (int i = 0; i < Height; i++)
-                for (int j = 0; j < Width - 1; j++)
-                    Values[i, j] = oldValues[i, j];
-            for (int i = 1; i < Height; i++)
-                Values[i, Width - 1] = column[i - 1];
-            Values[0, Width - 1] = RowNames[0].StartsWith("max") ? -cost : cost;
-            for (int i = 0; i < Height; i++)
-                Values[i, Width] = oldValues[i, Width - 1];
-            ColumnNames = ColumnNames.Take(ColumnNames.Length - 1).Append(name ?? $"x{Width}").Append("rhs").ToArray();
-            ColumnRestrictions = ColumnRestrictions.Take(ColumnRestrictions.Length - 1).Append(restriction).Append("+").ToArray();
-        }
-
-
-        public void AddRow(string name, double[] row, double rhs)
-        {
-            if (row.Length != Width - 1)
-                throw new ArgumentException($"New row must have {Width - 1} values (excluding RHS)");
-            var oldValues = Values;
-            Values = new double[Height + 1, Width];
-            for (int i = 0; i < Height; i++)
-                for (int j = 0; j < Width; j++)
-                    Values[i, j] = oldValues[i, j];
-            for (int j = 0; j < Width - 1; j++)
-                Values[Height, j] = row[j];
-            Values[Height, Width - 1] = rhs;
-            RowNames = RowNames.Append(name ?? $"c{Height}").ToArray();
-        }
-
 
         public Tableau BuildDual()
         {

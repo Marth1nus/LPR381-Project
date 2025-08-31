@@ -453,7 +453,9 @@ namespace LPR381.LP
             }
 
             steps.Add("New activity improves solution → re-optimizing...");
-            optimalTableau.AddColumn($"x{optimalTableau.Width}", column, cost, "+");
+            optimalTableau.AddColumn(column, $"x{optimalTableau.Width}", "+");
+            optimalTableau[0, optimalTableau.Width - 1] = optimalTableau.RowNames[0].StartsWith("max") ? -cost : cost;
+
             steps.Add($"Added new column:\n\n{optimalTableau}");
             steps.AddRange(PrimalSimplex.Solve(optimalTableau));
             return steps;
@@ -466,7 +468,7 @@ namespace LPR381.LP
             if (!EnsureOptimal(optimalTableau, steps))
                 return steps;
 
-            optimalTableau.AddRow($"c{optimalTableau.Height}", row, rhs);
+            optimalTableau.AddRow(row.Append(rhs).ToArray(), $"c{optimalTableau.Height}");
             steps.Add($"Added new constraint:\n\n{optimalTableau}");
 
             if (optimalTableau.IsFeasible)

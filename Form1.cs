@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -60,7 +61,7 @@ namespace LPR381
         private TextBox txtRhs;
         private Button btnAddConstraint;
         private Button btnSolveDual;
-        private Control[] armandComponrnets;
+        private Control[] armandComponents;
 
         public Form1()
         {
@@ -69,7 +70,7 @@ namespace LPR381
             comboBox1.Items.Clear();
             foreach (var kv in AlgorithmDict)
                 comboBox1.Items.Add(kv.Key);
-            comboBox1.SelectedIndex = Math.Max(0, comboBox1.Items.IndexOf("Sensitivity Analysis"));
+            comboBox1.SelectedIndex = Math.Max(0, comboBox1.Items.IndexOf("Primal Simplex"));
             Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
             UpdateSensitivityAnalysisOptions();
         }
@@ -152,7 +153,7 @@ namespace LPR381
             };
             btnSolveDual.Click += BtnSolveDual_Click;
 
-            armandComponrnets = new Control[]
+            armandComponents = new Control[]
             {
                 lblColumn,
                 txtColumn,
@@ -176,7 +177,7 @@ namespace LPR381
                 new Label(),
             };
             tableLayoutPanel2.RowCount = 30;
-            foreach (var component in armandComponrnets)
+            foreach (var component in armandComponents)
             {
                 component.Dock = DockStyle.Fill;
                 component.Margin = new Padding(0);
@@ -328,6 +329,7 @@ namespace LPR381
                 var stepsString = string.Join("\n\n", steps.Select(step => "> " + step.Replace("\n", "\n> ")));
                 SolutionText += $"# Algorithim Selected: {SolverName}\n\n{stepsString}\n\n";
                 tableau = newTableau;
+                UpdateSensitivityAnalysisOptions();
             }
             catch (Exception err)
             {
@@ -335,7 +337,6 @@ namespace LPR381
                 label4.Text = "Error";
                 label4.ForeColor = System.Drawing.Color.Red;
             }
-                UpdateSensitivityAnalysisOptions();
         }
 
         private void clearOutputToolStripMenuItem_Click(object sender, EventArgs e) => SolutionText = "";
@@ -436,7 +437,6 @@ namespace LPR381
                 MessageBox.Show($"{err.Message}\n\n{err}", "File Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 label13.Text = "Failed";
                 label13.ForeColor = System.Drawing.Color.Red;
-                throw;
             }
         }
 
@@ -444,13 +444,19 @@ namespace LPR381
         {
             if (tableau == null)
                 return;
-            var rowNameIndex = tableau?.RowNames /*    */?.ToList().IndexOf(comboBox2.SelectedItem as string ?? "") ?? -1;
-            var colNameIndex = tableau?.ColumnNames /* */?.ToList().IndexOf(comboBox3.SelectedItem as string ?? "") ?? -1;
-            if (rowNameIndex < 0 || colNameIndex < 0)
-                return;
-            numericUpDown1.Value = (rowNameIndex < 0 || colNameIndex < 0)
-                ? 0
-                : (decimal)tableau[rowNameIndex, colNameIndex];
+
+            var rowName = comboBox2.SelectedItem?.ToString() ?? "0. ";
+            rowName = rowName.Substring(rowName.IndexOf('.') + 1).Trim();
+            var rowNameIndex = tableau?.RowNames /*    */?.ToList().IndexOf(rowName) ?? -1;
+
+            var colName = comboBox3.SelectedItem?.ToString() ?? "0. ";
+            colName = colName.Substring(colName.IndexOf('.') + 1).Trim();
+            var colNameIndex = tableau?.ColumnNames /* */?.ToList().IndexOf(colName) ?? -1;
+
+            var newValue = numericUpDown1.Value =
+                (rowNameIndex >= 0 && colNameIndex >= 0)
+                    ? (decimal)(tableau.InitialTableau ?? tableau)[rowNameIndex, colNameIndex]
+                    : 0;
         }
 
         private void DisplaySolutionText()
@@ -533,7 +539,7 @@ namespace LPR381
 
             button5.Enabled = false;
 
-            foreach (var component in armandComponrnets)
+            foreach (var component in armandComponents)
                 if (!(component is Label))
                     component.Enabled = false;
 
@@ -553,11 +559,11 @@ namespace LPR381
             var colNameIndex = comboBox3.SelectedIndex = previousColNameIndex < 0 ? 0 : previousColNameIndex;
 
             numericUpDown1.Enabled = true;
-            numericUpDown1.Value = (decimal)tableau[rowNameIndex, colNameIndex];
+            // Value Implied updated by combox2&3 // numericUpDown1.Value = (decimal)tableau[rowNameIndex, colNameIndex];
 
             button5.Enabled = true;
 
-            foreach (var component in armandComponrnets)
+            foreach (var component in armandComponents)
                 if (!(component is Label))
                     component.Enabled = true;
         }
