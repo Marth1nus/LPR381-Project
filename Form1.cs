@@ -1,10 +1,8 @@
 ﻿using LPR381.LP;
 using Markdig;
-using Markdig.Syntax.Inlines;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -62,6 +60,7 @@ namespace LPR381
         private TextBox txtRhs;
         private Button btnAddConstraint;
         private Button btnSolveDual;
+        private Control[] armandComponrnets;
 
         public Form1()
         {
@@ -70,7 +69,7 @@ namespace LPR381
             comboBox1.Items.Clear();
             foreach (var kv in AlgorithmDict)
                 comboBox1.Items.Add(kv.Key);
-            comboBox1.SelectedIndex = 4;
+            comboBox1.SelectedIndex = Math.Max(0, comboBox1.Items.IndexOf("Sensitivity Analysis"));
             Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
             UpdateSensitivityAnalysisOptions();
         }
@@ -83,29 +82,31 @@ namespace LPR381
             {
                 Text = "New Column Coefficients (comma-separated):",
                 Dock = DockStyle.Fill,
-                Margin = new Padding(4)
+                Margin = new Padding(4),
+                TextAlign = System.Drawing.ContentAlignment.MiddleRight,
             };
             txtColumn = new TextBox
             {
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0)
+                Margin = new Padding(0),
             };
             lblCost = new Label
             {
                 Text = "Cost/Profit:",
                 Dock = DockStyle.Fill,
-                Margin = new Padding(4)
+                Margin = new Padding(4),
+                TextAlign = System.Drawing.ContentAlignment.MiddleRight,
             };
             txtCost = new TextBox
             {
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0)
+                Margin = new Padding(0),
             };
             btnAddActivity = new Button
             {
                 Text = "Add Activity",
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0)
+                Margin = new Padding(0),
             };
             btnAddActivity.Click += BtnAddActivity_Click;
 
@@ -114,29 +115,31 @@ namespace LPR381
             {
                 Text = "New Row Coefficients (comma-separated):",
                 Dock = DockStyle.Fill,
-                Margin = new Padding(4)
+                Margin = new Padding(4),
+                TextAlign = System.Drawing.ContentAlignment.MiddleRight,
             };
             txtRow = new TextBox
             {
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0)
+                Margin = new Padding(0),
             };
             lblRhs = new Label
             {
                 Text = "RHS:",
                 Dock = DockStyle.Fill,
-                Margin = new Padding(4)
+                Margin = new Padding(4),
+                TextAlign = System.Drawing.ContentAlignment.MiddleRight,
             };
             txtRhs = new TextBox
             {
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0)
+                Margin = new Padding(0),
             };
             btnAddConstraint = new Button
             {
                 Text = "Add Constraint",
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0)
+                Margin = new Padding(0),
             };
             btnAddConstraint.Click += BtnAddConstraint_Click;
 
@@ -145,27 +148,39 @@ namespace LPR381
             {
                 Text = "Solve Dual",
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0)
+                Margin = new Padding(0),
             };
             btnSolveDual.Click += BtnSolveDual_Click;
 
-            // Add to tableLayoutPanel2 (adjust row indices based on existing layout)
-            tableLayoutPanel2.Controls.Add(lblColumn, 0, 11); // New row 11
-            tableLayoutPanel2.Controls.Add(txtColumn, 1, 11);
-            tableLayoutPanel2.Controls.Add(lblCost, 0, 12);   // New row 12
-            tableLayoutPanel2.Controls.Add(txtCost, 1, 12);
-            tableLayoutPanel2.Controls.Add(btnAddActivity, 1, 13); // New row 13
-            tableLayoutPanel2.Controls.Add(lblRow, 0, 14);    // New row 14
-            tableLayoutPanel2.Controls.Add(txtRow, 1, 14);
-            tableLayoutPanel2.Controls.Add(lblRhs, 0, 15);    // New row 15
-            tableLayoutPanel2.Controls.Add(txtRhs, 1, 15);
-            tableLayoutPanel2.Controls.Add(btnAddConstraint, 1, 16); // New row 16
-            tableLayoutPanel2.Controls.Add(btnSolveDual, 1, 17);    // New row 17
-
-            // Ensure tableLayoutPanel2 has enough rows
-            while (tableLayoutPanel2.RowCount <= 17)
+            armandComponrnets = new Control[]
             {
-                tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                lblColumn,
+                txtColumn,
+                lblCost,
+                txtCost,
+                new Label(),
+                btnAddActivity,
+                new Label(),
+                new Label(),
+                lblRow,
+                txtRow,
+                lblRhs,
+                txtRhs,
+                new Label(),
+                btnAddConstraint,
+                new Label(),
+                new Label(),
+                new Label(),
+                btnSolveDual,
+                new Label(),
+                new Label(),
+            };
+            tableLayoutPanel2.RowCount = 30;
+            foreach (var component in armandComponrnets)
+            {
+                component.Dock = DockStyle.Fill;
+                component.Margin = new Padding(0);
+                tableLayoutPanel2.Controls.Add(component);
             }
         }
 
@@ -364,16 +379,18 @@ namespace LPR381
 
                 var steps = (List<string>)null;
                 var sensitivityAnalysisName = "";
-                var rowName = comboBox2.SelectedText;
-                var colName = comboBox3.SelectedText;
+                var rowName = comboBox2.SelectedItem?.ToString() ?? "0. ";
+                var colName = comboBox3.SelectedItem?.ToString() ?? "0. ";
                 var newValue = (double)numericUpDown1.Value;
+                rowName = rowName.Substring(rowName.IndexOf('.') + 1).Trim();
+                colName = colName.Substring(colName.IndexOf('.') + 1).Trim();
 
                 for (bool singleIteration = true; singleIteration; singleIteration = false)
                 {
                     var i = tableau.RowNames.ToList().IndexOf(rowName);
                     if (i < 0)
                     {
-                        label13.Text = "Row not found";
+                        label13.Text = $"Row not found \"${rowName}\"";
                         label13.ForeColor = System.Drawing.Color.Red;
                         break;
                     }
@@ -419,7 +436,21 @@ namespace LPR381
                 MessageBox.Show($"{err.Message}\n\n{err}", "File Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 label13.Text = "Failed";
                 label13.ForeColor = System.Drawing.Color.Red;
+                throw;
             }
+        }
+
+        private void comboBox2or3_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (tableau == null)
+                return;
+            var rowNameIndex = tableau?.RowNames /*    */?.ToList().IndexOf(comboBox2.SelectedItem as string ?? "") ?? -1;
+            var colNameIndex = tableau?.ColumnNames /* */?.ToList().IndexOf(comboBox3.SelectedItem as string ?? "") ?? -1;
+            if (rowNameIndex < 0 || colNameIndex < 0)
+                return;
+            numericUpDown1.Value = (rowNameIndex < 0 || colNameIndex < 0)
+                ? 0
+                : (decimal)tableau[rowNameIndex, colNameIndex];
         }
 
         private void DisplaySolutionText()
@@ -485,14 +516,15 @@ namespace LPR381
             ";
         }
 
-
         private void UpdateSensitivityAnalysisOptions()
         {
-            var previousRowName = comboBox2.SelectedItem?.ToString() ?? "";
+            var previousRowName = comboBox2.SelectedItem?.ToString() ?? "0. ";
+            previousRowName = previousRowName.Substring(previousRowName.IndexOf('.') + 1).Trim();
             comboBox2.Enabled = false;
             comboBox2.Items.Clear();
 
-            var previousColName = comboBox3.SelectedItem?.ToString() ?? "";
+            var previousColName = comboBox3.SelectedItem?.ToString() ?? "0. ";
+            previousColName = previousColName.Substring(previousColName.IndexOf('.') + 1).Trim();
             comboBox3.Enabled = false;
             comboBox3.Items.Clear();
 
@@ -501,17 +533,21 @@ namespace LPR381
 
             button5.Enabled = false;
 
+            foreach (var component in armandComponrnets)
+                if (!(component is Label))
+                    component.Enabled = false;
+
             if (tableau == null || !tableau.IsOptimal)
                 return;
 
             comboBox2.Enabled = true;
-            foreach (var rowName in tableau.RowNames)
+            foreach (var rowName in tableau.RowNames.Select((s, i) => $"{1 + i,3}. {s,6}"))
                 comboBox2.Items.Add(rowName);
             var previousRowNameIndex = comboBox2.Items.IndexOf(previousRowName);
             var rowNameIndex = comboBox2.SelectedIndex = previousRowNameIndex < 0 ? 0 : previousRowNameIndex;
 
             comboBox3.Enabled = true;
-            foreach (var colName in tableau.ColumnNames)
+            foreach (var colName in tableau.ColumnNames.Select((s, i) => $"{1 + i,3}. {s,6}"))
                 comboBox3.Items.Add(colName);
             var previousColNameIndex = comboBox3.Items.IndexOf(previousColName);
             var colNameIndex = comboBox3.SelectedIndex = previousColNameIndex < 0 ? 0 : previousColNameIndex;
@@ -520,20 +556,12 @@ namespace LPR381
             numericUpDown1.Value = (decimal)tableau[rowNameIndex, colNameIndex];
 
             button5.Enabled = true;
+
+            foreach (var component in armandComponrnets)
+                if (!(component is Label))
+                    component.Enabled = true;
         }
 
-        private void comboBox2or3_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (tableau == null)
-                return;
-            var rowNameIndex = tableau?.RowNames /*    */?.ToList().IndexOf(comboBox2.SelectedItem as string ?? "") ?? -1;
-            var colNameIndex = tableau?.ColumnNames /* */?.ToList().IndexOf(comboBox3.SelectedItem as string ?? "") ?? -1;
-            if (rowNameIndex < 0 || colNameIndex < 0)
-                return;
-            numericUpDown1.Value = (rowNameIndex < 0 || colNameIndex < 0)
-                ? 0 
-                : (decimal)tableau[rowNameIndex, colNameIndex];
-        }
     }
 }
 

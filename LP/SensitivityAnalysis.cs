@@ -1,5 +1,4 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Factorization;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -44,11 +43,6 @@ namespace LPR381.LP
             steps.AddRange(SolveDisplayNonBasicRanges(tableau)); // (7. [?])
             steps.AddRange(SolveDisplayShadowPrices(tableau)); // (11. [x])
 
-            // More code here <3
-            //
-            steps.AddRange(SolveDisplayNonBasicRanges(tableau, new[] { Array.IndexOf(tableau.ColumnNames, "s3") }));
-            //
-
             steps.Add("End Sensitivity Analysis");
             return steps;
         }
@@ -58,6 +52,11 @@ namespace LPR381.LP
             var steps = new List<String>();
             if (!EnsureOptimal(optimalTableau, steps))
                 return steps;
+            if (newValue > 0.0)
+            {
+                steps.Add($"Objective row in a max problem can not be positive");
+                return steps;
+            }
             var i = 0; // objective row
             var initialTableau = (optimalTableau.InitialTableau ?? optimalTableau).Copy();
             var currentValue = initialTableau[i, j];
@@ -65,16 +64,19 @@ namespace LPR381.LP
             steps.Add($"{range.current}{initialTableau.ColumnNames[j]} can range between [{range.low}{initialTableau.ColumnNames[j]}, {range.high}{initialTableau.ColumnNames[j]}]");
             if (range.low <= currentValue && currentValue <= range.high)
             {
-                steps.Add($"\n {newValue}{initialTableau.ColumnNames[j]} does not change the optimal solution");
+                steps.Add($"\n {newValue} does not change the optimal solution");
                 initialTableau[i, j] = newValue;
+                EnsureOptimal(initialTableau, new List<String>()); // TODO: replace with math version;
+                optimalTableau.Assign(initialTableau);
             }
             else
             {
-                steps.Add($"\n {newValue}{initialTableau.ColumnNames[j]} requires re-optimization");
+                steps.Add($"\n {newValue} requires re-optimization");
                 initialTableau[i, j] = newValue;
+                EnsureOptimal(initialTableau, steps);
+                optimalTableau.Assign(initialTableau);
             }
-            var manualSolveSteps = new List<String>();
-            EnsureOptimal(optimalTableau.Assign(initialTableau), manualSolveSteps); // TODO: replace with math version;
+            steps.Add($"New Optimal Tableau\n\n{optimalTableau}");
             return steps;
         }
         public static List<String> SolveApplyChangeRHSColumn /*      */ (Tableau optimalTableau, int i, double newValue)
@@ -91,14 +93,17 @@ namespace LPR381.LP
             {
                 steps.Add($"\n {newValue} does not change the optimal solution");
                 initialTableau[i, j] = newValue;
+                EnsureOptimal(initialTableau, new List<String>()); // TODO: replace with math version;
+                optimalTableau.Assign(initialTableau);
             }
             else
             {
                 steps.Add($"\n {newValue} requires re-optimization");
                 initialTableau[i, j] = newValue;
+                EnsureOptimal(initialTableau, steps);
+                optimalTableau.Assign(initialTableau);
             }
-            var manualSolveSteps = new List<String>();
-            EnsureOptimal(optimalTableau.Assign(initialTableau), manualSolveSteps); // TODO: replace with math version;
+            steps.Add($"New Optimal Tableau\n\n{optimalTableau}");
             return steps;
         }
         public static List<String> SolveApplyChangeNonBasicColumn /* */ (Tableau optimalTableau, int i, int j, double newValue)
@@ -122,16 +127,19 @@ namespace LPR381.LP
             steps.Add($"{initialTableau.RowNames[j]}:rhs={range.current} can range between [{range.low}, {range.high}]");
             if (range.low <= currentValue && currentValue <= range.high)
             {
-                steps.Add($"\n {newValue} does not change the optimal solution");
+                steps.Add($"{newValue} does not change the optimal solution");
                 initialTableau[i, j] = newValue;
+                EnsureOptimal(initialTableau, new List<String>()); // TODO: replace with math version;
+                optimalTableau.Assign(initialTableau);
             }
             else
             {
-                steps.Add($"\n {newValue} requires re-optimization");
+                steps.Add($"{newValue} requires re-optimization");
                 initialTableau[i, j] = newValue;
+                EnsureOptimal(initialTableau, steps);
+                optimalTableau.Assign(initialTableau);
             }
-            var manualSolveSteps = new List<String>();
-            EnsureOptimal(optimalTableau.Assign(initialTableau), manualSolveSteps); // TODO: replace with math version;
+            steps.Add($"Optimal Tableau\n\n{optimalTableau}");
             return steps;
         }
         public static List<String> SolveDisplayObjectiveRanges /*    */ (Tableau optimalTableau, IEnumerable<int> variableIndices = null)
