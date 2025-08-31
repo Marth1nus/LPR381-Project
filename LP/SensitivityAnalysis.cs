@@ -74,7 +74,7 @@ namespace LPR381.LP
             var currentValue = initialTableau[i, j];
             var range = GetObjectiveRanges(optimalTableau, new[] { j }).FirstOrDefault();
             steps.Add($"{range.current:0.###}{initialTableau.ColumnNames[j]} can range between [{range.low:0.###}{initialTableau.ColumnNames[j]}, {range.high:0.###}{initialTableau.ColumnNames[j]}]");
-            if (range.low <= currentValue && currentValue <= range.high)
+            if (range.low <= newValue && newValue <= range.high)
             {
                 steps.Add($"\n {newValue:0.###} does not change the optimal solution");
                 initialTableau[i, j] = newValue;
@@ -101,7 +101,7 @@ namespace LPR381.LP
             var currentValue = initialTableau[i, j];
             var range = GetRhsRanges(optimalTableau, new[] { i }).FirstOrDefault();
             steps.Add($"{initialTableau.RowNames[i]}:rhs={range.current:0.###} can range between [{range.low:0.###}, {range.high:0.###}]");
-            if (range.low <= currentValue && currentValue <= range.high)
+            if (range.low <= newValue && newValue <= range.high)
             {
                 steps.Add($"\n {newValue:0.###} does not change the optimal solution");
                 initialTableau[i, j] = newValue;
@@ -137,7 +137,7 @@ namespace LPR381.LP
             var currentValue = initialTableau[i, j];
             var range = GetRhsRanges(optimalTableau, new[] { i }).FirstOrDefault();
             steps.Add($"{initialTableau.RowNames[j]}:rhs={range.current:0.###} can range between [{range.low:0.###}, {range.high:0.###}]");
-            if (range.low <= currentValue && currentValue <= range.high)
+            if (range.low <= newValue && newValue <= range.high)
             {
                 steps.Add($"{newValue:0.###} does not change the optimal solution");
                 initialTableau[i, j] = newValue;
