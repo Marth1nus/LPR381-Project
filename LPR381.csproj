@@ -98,6 +98,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <None Include="example inputs\Assignment1RelaxedNoLessThan1.wsv" />
     <None Include="example inputs\Assignment1Relaxed.wsv" />
     <None Include="example inputs\Assignment1.wsv" />
     <None Include="packages.config" />

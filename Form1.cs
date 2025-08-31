@@ -181,6 +181,7 @@ namespace LPR381
                 component.Dock = DockStyle.Fill;
                 component.Margin = new Padding(0);
                 tableLayoutPanel2.Controls.Add(component);
+                if (component is Label) (component as Label).TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             }
         }
 

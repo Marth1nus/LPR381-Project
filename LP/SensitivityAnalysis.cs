@@ -498,6 +498,7 @@ namespace LPR381.LP
             var dual = primal.BuildDual();
             steps.Add($"Dual Tableau:\n\n{dual}");
             steps.Add("Solving Dual...");
+            steps.AddRange(DualSimplex.Solve(dual));
             steps.AddRange(PrimalSimplex.Solve(dual));
             steps.Add(VerifyDuality(primal, dual));
             return steps;
